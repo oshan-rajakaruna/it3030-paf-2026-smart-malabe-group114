@@ -1,0 +1,305 @@
+import { MessageSquareText, PlusCircle, UserRoundCog, Wrench } from 'lucide-react';
+import { useDeferredValue, useState } from 'react';
+
+import styles from './TicketsPage.module.css';
+import fieldStyles from '../components/ui/Field.module.css';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import DataTable from '../components/ui/DataTable';
+import FilterPanel from '../components/ui/FilterPanel';
+import FormField from '../components/ui/FormField';
+import Modal from '../components/ui/Modal';
+import PageHeader from '../components/ui/PageHeader';
+import SearchBar from '../components/ui/SearchBar';
+import SelectField from '../components/ui/SelectField';
+import StatusBadge from '../components/ui/StatusBadge';
+import TextAreaField from '../components/ui/TextAreaField';
+import { mockFacilities } from '../data/facilities';
+import { mockTickets } from '../data/tickets';
+import { mockUsers } from '../data/users';
+import { useAuth } from '../hooks/useAuth';
+import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
+import { formatDateTime } from '../utils/formatters';
+
+const initialForm = {
+  resourceName: '',
+  category: '',
+  priority: 'Medium',
+  preferredContact: '',
+  description: '',
+};
+
+export default function TicketsPage() {
+  const { currentUser } = useAuth();
+  const [tickets, setTickets] = useState(mockTickets);
+  const [form, setForm] = useState(initialForm);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [submitMessage, setSubmitMessage] = useState('');
+  const deferredQuery = useDeferredValue(searchQuery.toLowerCase());
+  const technicianOptions = mockUsers.filter((user) => user.role === ROLES.TECHNICIAN);
+
+  const visibleTickets = tickets.filter((ticket) => {
+    const matchesRole =
+      currentUser.role === ROLES.ADMIN ||
+      (currentUser.role === ROLES.TECHNICIAN && ticket.technicianId === currentUser.id) ||
+      ticket.reporterId === currentUser.id;
+
+    const matchesStatus = statusFilter === 'ALL' || ticket.status === statusFilter;
+    const matchesQuery =
+      !deferredQuery ||
+      [ticket.title, ticket.resourceName, ticket.category, ticket.technicianName].join(' ').toLowerCase().includes(deferredQuery);
+
+    return matchesRole && matchesStatus && matchesQuery;
+  });
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const nextTicket = {
+      id: `tic-demo-${Date.now()}`,
+      title: `${form.category || 'General'} incident reported`,
+      resourceName: form.resourceName,
+      location: mockFacilities.find((facility) => facility.name === form.resourceName)?.location ?? 'Campus',
+      category: form.category,
+      priority: form.priority,
+      status: 'OPEN',
+      reporterId: currentUser.id,
+      reporterName: currentUser.name,
+      technicianId: technicianOptions[0]?.id ?? '',
+      technicianName: technicianOptions[0]?.name ?? 'Unassigned',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      preferredContact: form.preferredContact,
+      description: form.description,
+      resolution: 'Awaiting triage and technician assignment.',
+      comments: [],
+    };
+
+    setTickets((current) => [nextTicket, ...current]);
+    setForm(initialForm);
+    setSubmitMessage('Mock ticket created. It now appears in the incident queue as OPEN.');
+  };
+
+  const ticketColumns = [
+    {
+      key: 'title',
+      header: 'Ticket',
+      render: (ticket) => (
+        <div className={styles.primaryCell}>
+          <strong>{ticket.title}</strong>
+          <span>{ticket.resourceName}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+    },
+    {
+      key: 'technician',
+      header: 'Assigned',
+      render: (ticket) => ticket.technicianName,
+    },
+    {
+      key: 'updatedAt',
+      header: 'Updated',
+      render: (ticket) => formatDateTime(ticket.updatedAt),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (ticket) => <StatusBadge status={ticket.status} />,
+    },
+    {
+      key: 'actions',
+      header: 'Details',
+      align: 'right',
+      render: (ticket) => (
+        <Button variant="secondary" size="sm" onClick={() => setSelectedTicket(ticket)}>
+          View ticket
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <div className={styles.page}>
+      <PageHeader
+        eyebrow="Maintenance & Incident Tickets"
+        title="Report, assign, and track maintenance issues"
+        description="The ticket page is already split into creation, filtering, status badges, comments, and assignment placeholders so it is easy to connect later to a real incident workflow."
+        actions={<Button icon={PlusCircle}>Create incident flow</Button>}
+      />
+
+      <section className={styles.topGrid}>
+        <Card title="Create incident ticket" subtitle="Keep the form realistic so mapping to the API stays straightforward.">
+          <form className={styles.formGrid} onSubmit={handleSubmit}>
+            <SelectField
+              id="resourceName"
+              label="Resource or location"
+              name="resourceName"
+              value={form.resourceName}
+              onChange={handleInputChange}
+              options={mockFacilities.map((facility) => facility.name)}
+              placeholder="Select a resource"
+            />
+            <FormField id="category" label="Category">
+              <input
+                id="category"
+                name="category"
+                className={fieldStyles.control}
+                value={form.category}
+                onChange={handleInputChange}
+                placeholder="e.g. HVAC, AV Equipment, Access Control"
+              />
+            </FormField>
+            <SelectField
+              id="priority"
+              label="Priority"
+              name="priority"
+              value={form.priority}
+              onChange={handleInputChange}
+              options={PRIORITY_OPTIONS}
+            />
+            <FormField id="preferredContact" label="Preferred contact">
+              <input
+                id="preferredContact"
+                name="preferredContact"
+                className={fieldStyles.control}
+                value={form.preferredContact}
+                onChange={handleInputChange}
+                placeholder="Phone or email for updates"
+              />
+            </FormField>
+            <TextAreaField
+              id="description"
+              label="Incident description"
+              name="description"
+              value={form.description}
+              onChange={handleInputChange}
+              hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
+            />
+            <Button type="submit" icon={Wrench}>
+              Submit ticket
+            </Button>
+            {submitMessage ? <p className={styles.submitMessage}>{submitMessage}</p> : null}
+          </form>
+        </Card>
+
+        <Card title="Technician assignment placeholder" subtitle="The UI already reserves a clean space for assignment and SLA workflows.">
+          <div className={styles.sidePanelList}>
+            <div className={styles.sidePanelItem}>
+              <strong>Assignment</strong>
+              <span>Admins can later assign technicians by workload, skill, or location.</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>Status progression</strong>
+              <span>OPEN → IN_PROGRESS → RESOLVED → CLOSED, with REJECTED when necessary.</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>Comments and evidence</strong>
+              <span>Ticket conversations and image attachments can plug into the modal panel below.</span>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <FilterPanel title="Incident queue" description="Role-aware filtering keeps the page useful for users, technicians, and admins.">
+        <div className={styles.filterGrid}>
+          <SearchBar
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search tickets..."
+          />
+          <select className={styles.select} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            {TICKET_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {status === 'ALL' ? 'All Statuses' : status.replace('_', ' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+      </FilterPanel>
+
+      <Card title="Ticket list" subtitle="Comments, assignment, and future evidence previews can all branch from this shared table row.">
+        <DataTable
+          columns={ticketColumns}
+          rows={visibleTickets}
+          emptyState={{
+            icon: MessageSquareText,
+            title: 'No tickets to show',
+            description: 'Try adjusting the filter or submit a new incident from the form above.',
+          }}
+        />
+      </Card>
+
+      <Modal
+        isOpen={Boolean(selectedTicket)}
+        onClose={() => setSelectedTicket(null)}
+        title={selectedTicket?.title}
+        description="Detail modal placeholder for comments, assignment, and resolution notes."
+        footer={
+          selectedTicket ? (
+            <>
+              <Button variant="secondary" onClick={() => setSelectedTicket(null)}>
+                Close
+              </Button>
+              <Button>Update workflow placeholder</Button>
+            </>
+          ) : null
+        }
+      >
+        {selectedTicket ? (
+          <div className={styles.modalGrid}>
+            <div className={styles.modalBlock}>
+              <span>Status</span>
+              <StatusBadge status={selectedTicket.status} />
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Assigned technician</span>
+              <select className={styles.select} defaultValue={selectedTicket.technicianId}>
+                {technicianOptions.map((technician) => (
+                  <option key={technician.id} value={technician.id}>
+                    {technician.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Resolution note</span>
+              <p>{selectedTicket.resolution}</p>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Preferred contact</span>
+              <strong>{selectedTicket.preferredContact}</strong>
+            </div>
+            <div className={styles.commentsPanel}>
+              <div className={styles.commentsHeader}>
+                <strong>Comments placeholder</strong>
+                <UserRoundCog size={18} />
+              </div>
+              {selectedTicket.comments.length ? (
+                selectedTicket.comments.map((comment) => (
+                  <article key={comment.id} className={styles.comment}>
+                    <strong>{comment.author}</strong>
+                    <span>{formatDateTime(comment.createdAt)}</span>
+                    <p>{comment.message}</p>
+                  </article>
+                ))
+              ) : (
+                <p className={styles.emptyComment}>No comments yet for this mock ticket.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  );
+}

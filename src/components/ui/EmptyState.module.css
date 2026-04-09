@@ -1,0 +1,34 @@
+.state {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  padding: 1.4rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--surface-muted) 0%, transparent 100%);
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 16px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.copy h3 {
+  font-size: 1rem;
+}
+
+.copy p {
+  color: var(--text-muted);
+  max-width: 36rem;
+}

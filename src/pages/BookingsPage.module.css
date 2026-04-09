@@ -1,0 +1,73 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1rem;
+}
+
+.formGrid,
+.previewList,
+.modalGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 0.9rem;
+}
+
+.select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.submitMessage {
+  color: var(--success);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.previewItem,
+.modalBlock {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.previewItem strong,
+.primaryCell strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.previewItem span,
+.primaryCell span,
+.modalBlock span {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.modalBlock p {
+  color: var(--text);
+}
+
+@media (max-width: 980px) {
+  .topGrid,
+  .filterGrid {
+    grid-template-columns: 1fr;
+  }
+}

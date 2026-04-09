@@ -1,0 +1,175 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0 1.25rem;
+  backdrop-filter: blur(14px);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex: 1;
+}
+
+.menuButton,
+.iconButton {
+  width: 2.9rem;
+  height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.searchWrap {
+  width: min(540px, 100%);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userMenuWrap {
+  position: relative;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.8rem 0.45rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.avatar {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  font-weight: 800;
+}
+
+.userCopy {
+  display: grid;
+  text-align: left;
+}
+
+.userCopy strong {
+  font-size: 0.92rem;
+}
+
+.userCopy small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.chevron {
+  color: var(--text-soft);
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: min(260px, 80vw);
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.menuHeader {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.35rem 0.2rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.menuHeader span {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.menuLink {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.7rem;
+  padding: 0 0.7rem;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.menuLink:hover {
+  background: var(--surface-muted);
+}
+
+@media (min-width: 1024px) {
+  .menuButton {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .leftSection,
+  .actions,
+  .searchWrap {
+    width: 100%;
+  }
+
+  .actions {
+    justify-content: space-between;
+  }
+
+  .userCopy {
+    display: none;
+  }
+}

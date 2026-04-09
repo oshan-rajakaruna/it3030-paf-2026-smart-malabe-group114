@@ -1,0 +1,70 @@
+.card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-height: 10.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.card[data-tone='secondary'] .iconWrap {
+  background: var(--secondary-soft);
+  color: var(--secondary);
+}
+
+.card[data-tone='success'] .iconWrap {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.card[data-tone='warning'] .iconWrap {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.trend {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.body {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2vw, 2.15rem);
+  letter-spacing: -0.04em;
+}
+
+.meta {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}

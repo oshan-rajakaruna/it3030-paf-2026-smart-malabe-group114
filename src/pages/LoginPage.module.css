@@ -1,0 +1,199 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1.5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.heroPanel,
+.formPanel {
+  min-height: calc(100vh - 2rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+.heroPanel {
+  display: grid;
+  align-content: center;
+  gap: 1.5rem;
+  padding: clamp(1.8rem, 5vw, 3.2rem);
+  color: white;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(67, 56, 202, 0.96) 0%, rgba(8, 145, 178, 0.92) 100%);
+}
+
+.badge,
+.formEyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.heroPanel h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 5vw, 4.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+  max-width: 14ch;
+}
+
+.subtitle {
+  max-width: 36rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.04rem;
+}
+
+.heroCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.25rem;
+  max-width: 34rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.heroCardTop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+}
+
+.heroCard strong {
+  font-size: 1.2rem;
+}
+
+.heroCard p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.highlightGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.highlightCard {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.highlightCard strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.highlightCard span {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+}
+
+.formPanel {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+}
+
+.formCard {
+  width: min(100%, 32rem);
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.4rem, 4vw, 2rem);
+}
+
+.formHeader {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.formEyebrow {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.formHeader h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.formHeader p {
+  color: var(--text-muted);
+}
+
+.roleGrid,
+.formFields {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.roleButton {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.roleButton span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.roleButton:hover,
+.roleButtonActive {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+}
+
+.footerNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 1024px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .heroPanel,
+  .formPanel {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .highlightGrid {
+    grid-template-columns: 1fr;
+  }
+}

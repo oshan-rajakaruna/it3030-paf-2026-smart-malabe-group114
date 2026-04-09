@@ -1,0 +1,72 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.primaryCell strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.primaryCell span {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: 0.55rem;
+}
+
+.technicianGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.technicianCard {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface-muted);
+}
+
+.technicianHeader,
+.technicianMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.technicianHeader span,
+.technicianCard p,
+.technicianMeta span {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.technicianMeta strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+@media (max-width: 1080px) {
+  .statsGrid,
+  .technicianGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,126 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 3.3rem;
+  height: 3.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}
+
+.profileCard p,
+.preferenceItem p,
+.roleButton p,
+.placeholderCard p,
+.themeChoice span,
+.infoGrid span {
+  color: var(--text-muted);
+}
+
+.infoGrid,
+.preferenceList,
+.roleList,
+.placeholderGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.infoGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.infoGrid span {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 0.2rem;
+}
+
+.themeSection,
+.themeButtons {
+  display: grid;
+  gap: 1rem;
+}
+
+.themeButtons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.themeChoice,
+.roleButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  color: var(--text);
+  text-align: left;
+}
+
+.themeChoiceActive {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.preferenceItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.preferenceItem input {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.placeholderGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.placeholderCard {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.placeholderCard svg {
+  color: var(--primary);
+}
+
+@media (max-width: 1080px) {
+  .grid,
+  .themeButtons,
+  .placeholderGrid {
+    grid-template-columns: 1fr;
+  }
+}

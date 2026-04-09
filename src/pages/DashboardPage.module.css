@@ -1,0 +1,147 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.statsGrid,
+.mainGrid,
+.secondaryGrid,
+.bottomGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.statsGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mainGrid {
+  grid-template-columns: 1.55fr 0.95fr;
+}
+
+.secondaryGrid,
+.bottomGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tablePrimary,
+.ticketList,
+.pulseList,
+.notificationList,
+.skeletonStack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.tablePrimary strong,
+.ticketItem strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.tablePrimary span,
+.ticketItem p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.roleMetric {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  letter-spacing: -0.05em;
+}
+
+.actionList {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.actionItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--text-muted);
+}
+
+.ticketItem,
+.pulseItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.ticketMeta {
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+}
+
+.ticketMeta span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+}
+
+.pulseItem {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.pulseItem span {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.pulseItem strong {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+
+.pulseItem small {
+  color: var(--text-soft);
+}
+
+.skeletonTitle {
+  height: 1.2rem;
+  width: 55%;
+}
+
+.skeletonLine {
+  height: 1rem;
+}
+
+.skeletonCard {
+  height: 10rem;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 1180px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mainGrid,
+  .secondaryGrid,
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ticketItem {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ticketMeta {
+    justify-items: start;
+  }
+}
