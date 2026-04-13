@@ -78,3 +78,4 @@ Later, connect this UI to the Spring Boot REST API by introducing:
 
 ## Contributors
 - Pulmi Vihansa
+- Sanugi Silva
