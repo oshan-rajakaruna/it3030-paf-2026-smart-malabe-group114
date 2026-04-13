@@ -75,3 +75,6 @@ Later, connect this UI to the Spring Boot REST API by introducing:
 - `src/lib/httpClient.js` for token-aware requests
 - DTO mapping helpers between API payloads and UI models
 - Route-level loading and error states backed by real async calls
+
+## Contributors
+- Pulmi Vihansa
