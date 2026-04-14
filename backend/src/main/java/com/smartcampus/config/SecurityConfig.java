@@ -1,44 +1,43 @@
 package com.smartcampus.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+      .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+        .anyRequest().authenticated()
+      )
+      .oauth2Login(oauth -> oauth
+        .defaultSuccessUrl("http://localhost:5173/oauth2/success", true)
+      )
+      .logout(logout -> logout.logoutSuccessUrl("/"));
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.build();
+  }
 
-        http
-            // Disable CSRF (for testing / frontend integration)
-            .csrf(csrf -> csrf.disable())
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
 
-            // Authorize requests
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        "/", 
-                        "/login**", 
-                        "/error**", 
-                        "/oauth2/**", 
-                        "/api/test"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-
-            // Enable Google OAuth2 Login
-            .oauth2Login(oauth -> oauth
-                // After successful login → redirect to frontend dashboard
-                .defaultSuccessUrl("http://localhost:5173/dashboard", true)
-            )
-
-            // Logout config (optional but good)
-            .logout(logout -> logout
-                .logoutSuccessUrl("http://localhost:5173/login")
-                .permitAll()
-            );
-
-        return http.build();
-    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }
