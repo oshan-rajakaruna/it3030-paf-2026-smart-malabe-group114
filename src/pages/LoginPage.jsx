@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import styles from './LoginPage.module.css';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { useAuth } from '../hooks/useAuth';
 import { resolveRoleAndPath } from '../utils/authRouting';
+import { ROLES } from '../utils/constants';
 
 export default function LoginPage() {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, currentUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [toastMessage, setToastMessage] = useState('Done');
@@ -41,10 +43,32 @@ export default function LoginPage() {
       const normalizedEmail = oauthEmail.trim().toLowerCase();
       localStorage.setItem('oauth_last_email', normalizedEmail);
       const { role, path } = resolveRoleAndPath(normalizedEmail);
-      login(role);
-      navigate(path, { replace: true });
+      const didLogin = login(role);
+      if (!didLogin) {
+        setFormError('Unable to map your Google account to an app role.');
+        return;
+      }
+
+      // Clear OAuth params and defer navigation to ensure auth state is committed.
+      window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+      setTimeout(() => {
+        navigate(path, { replace: true });
+      }, 0);
     }
   }, [login, navigate]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (location.pathname !== ROUTE_PATHS.LOGIN) {
+      return;
+    }
+
+    const targetPath = currentUser?.role === ROLES.ADMIN ? ROUTE_PATHS.ADMIN : ROUTE_PATHS.DASHBOARD;
+    navigate(targetPath, { replace: true });
+  }, [isAuthenticated, currentUser, location.pathname, navigate]);
 
   const showToast = (message, duration = 3000) => {
     setToastMessage(message);

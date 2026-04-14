@@ -55,7 +55,7 @@ public class SecurityConfig {
       }
 
       String encodedEmail = UriUtils.encode(email, java.nio.charset.StandardCharsets.UTF_8);
-      response.sendRedirect("http://localhost:5173/dashboard?oauth=google&email=" + encodedEmail);
+      response.sendRedirect("http://localhost:5173/login?oauth=google&email=" + encodedEmail);
     };
   }
 
