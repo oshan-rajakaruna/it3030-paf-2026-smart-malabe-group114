@@ -19,19 +19,7 @@ export default function LoginPage() {
   const googleAuthUrl = `${apiBaseUrl}/oauth2/authorization/google`;
   const microsoftAuthUrl = `${apiBaseUrl}/oauth2/authorization/microsoft`;
 
-  const resolveRoleAndPath = (normalizedEmail) => {
-    if (/^.+admin@sliit\.lk$/.test(normalizedEmail)) {
-      return { role: ROLES.ADMIN, path: ROUTE_PATHS.ADMIN };
-    }
-    if (/^.+tech@sliit\.lk$/.test(normalizedEmail)) {
-      return { role: ROLES.TECHNICIAN, path: ROUTE_PATHS.DASHBOARD };
-    }
-    return { role: ROLES.USER, path: ROUTE_PATHS.DASHBOARD };
-  };
-
-  const toastTimerRef = useRef(null);
-  const socialTimerRef = useRef(null);
-
+  
   useEffect(() => {
     return () => {
       if (toastTimerRef.current) {
