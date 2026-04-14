@@ -77,5 +77,6 @@ Later, connect this UI to the Spring Boot REST API by introducing:
 - Route-level loading and error states backed by real async calls
 
 ## Contributors
+-Oshan Rajakaruna
 - Pulmi Vihansa
 - Sanugi Silva
