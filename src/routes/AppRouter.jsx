@@ -9,6 +9,7 @@ import FacilitiesPage from '../pages/FacilitiesPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import NotificationsPage from '../pages/NotificationsPage';
+import OAuthSuccess from '../pages/OAuthSuccess';
 import SettingsPage from '../pages/SettingsPage';
 import TicketsPage from '../pages/TicketsPage';
 import { useAuth } from '../hooks/useAuth';
@@ -25,6 +26,7 @@ export default function AppRouter() {
     <Routes>
       <Route index element={<HomeRedirect />} />
       <Route path={ROUTE_PATHS.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTE_PATHS.OAUTH_SUCCESS} element={<OAuthSuccess />} />
 
       <Route
         element={

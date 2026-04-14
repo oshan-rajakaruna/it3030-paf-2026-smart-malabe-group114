@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 import styles from './LoginPage.module.css';
 import { ROUTE_PATHS } from '../routes/routeConfig';
-import { ROLES } from '../utils/constants';
 import { useAuth } from '../hooks/useAuth';
+import { resolveRoleAndPath } from '../utils/authRouting';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -15,19 +15,8 @@ export default function LoginPage() {
   const [toastVisible, setToastVisible] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-  const googleAuthUrl = `${apiBaseUrl}/oauth2/authorization/google`;
-  const microsoftAuthUrl = `${apiBaseUrl}/oauth2/authorization/microsoft`;
-
-  const resolveRoleAndPath = (normalizedEmail) => {
-    if (/^.+admin@sliit\.lk$/.test(normalizedEmail)) {
-      return { role: ROLES.ADMIN, path: ROUTE_PATHS.ADMIN };
-    }
-    if (/^.+tech@sliit\.lk$/.test(normalizedEmail)) {
-      return { role: ROLES.TECHNICIAN, path: ROUTE_PATHS.DASHBOARD };
-    }
-    return { role: ROLES.USER, path: ROUTE_PATHS.DASHBOARD };
-  };
+  const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
+  const microsoftAuthUrl = 'http://localhost:8080/oauth2/authorization/microsoft';
 
   const toastTimerRef = useRef(null);
   const socialTimerRef = useRef(null);
@@ -50,6 +39,7 @@ export default function LoginPage() {
 
     if (oauthProvider && oauthEmail) {
       const normalizedEmail = oauthEmail.trim().toLowerCase();
+      localStorage.setItem('oauth_last_email', normalizedEmail);
       const { role, path } = resolveRoleAndPath(normalizedEmail);
       login(role);
       navigate(path, { replace: true });
