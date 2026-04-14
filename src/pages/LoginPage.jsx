@@ -38,12 +38,17 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const oauthProvider = params.get('oauth');
     const oauthEmail = params.get('email');
+    const oauthName = params.get('name');
 
     if (oauthProvider && oauthEmail) {
       const normalizedEmail = oauthEmail.trim().toLowerCase();
+      const normalizedName = oauthName?.trim();
       localStorage.setItem('oauth_last_email', normalizedEmail);
       const { role, path } = resolveRoleAndPath(normalizedEmail);
-      const didLogin = login(role);
+      const didLogin = login(role, undefined, {
+        name: normalizedName || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
+      });
       if (!didLogin) {
         setFormError('Unable to map your Google account to an app role.');
         return;

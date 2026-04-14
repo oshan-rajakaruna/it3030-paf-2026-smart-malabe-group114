@@ -53,9 +53,15 @@ public class SecurityConfig {
         response.sendRedirect("http://localhost:5173/login");
         return;
       }
+      String name = oauthUser.getAttribute("name");
+      if (name == null || name.isBlank()) {
+        int at = email.indexOf('@');
+        name = at > 0 ? email.substring(0, at) : "Google User";
+      }
 
       String encodedEmail = UriUtils.encode(email, java.nio.charset.StandardCharsets.UTF_8);
-      response.sendRedirect("http://localhost:5173/login?oauth=google&email=" + encodedEmail);
+      String encodedName = UriUtils.encode(name, java.nio.charset.StandardCharsets.UTF_8);
+      response.sendRedirect("http://localhost:5173/login?oauth=google&email=" + encodedEmail + "&name=" + encodedName);
     };
   }
 

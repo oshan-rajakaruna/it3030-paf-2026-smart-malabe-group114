@@ -8,9 +8,16 @@ export const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useLocalStorage('smart-campus-session', null);
 
-  const currentUser = mockUsers.find((user) => user.id === session?.userId) ?? null;
+  const baseUser = mockUsers.find((user) => user.id === session?.userId) ?? null;
+  const currentUser = baseUser
+    ? {
+        ...baseUser,
+        name: session?.oauthName || baseUser.name,
+        email: session?.oauthEmail || baseUser.email,
+      }
+    : null;
 
-  const login = (role, userId) => {
+  const login = (role, userId, oauthProfile = null) => {
     const targetUser =
       mockUsers.find((user) => user.id === userId) ??
       mockUsers.find((user) => user.role === role);
@@ -22,6 +29,8 @@ export function AuthProvider({ children }) {
     setSession({
       userId: targetUser.id,
       role: targetUser.role,
+      oauthName: oauthProfile?.name || null,
+      oauthEmail: oauthProfile?.email || null,
       loggedInAt: new Date().toISOString(),
     });
 
