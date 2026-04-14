@@ -11,6 +11,7 @@ backend/target/
 *.log
 
 # IDE / Editor
+.idea/
 .vscode/
 
 # OS files
