@@ -3,71 +3,1227 @@
   gap: 1.5rem;
 }
 
-.topGrid {
+.pageNav,
+.pageNavActions,
+.calendarToolbar,
+.modeToggle,
+.calendarNav,
+.notificationRow,
+.bookingFacts,
+.bookingActions,
+.scannerControls,
+.footerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pageNav {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(124, 140, 255, 0.2), transparent 35%),
+    linear-gradient(135deg, rgba(9, 18, 37, 0.88), rgba(33, 16, 68, 0.84));
+  box-shadow: var(--shadow-soft);
+}
+
+.pageNavBrand {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.2rem;
+}
+
+.pageNavEyebrow,
+.statLabel {
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pageNavBrand strong,
+.statValue {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.pageNavActions {
+  flex-wrap: wrap;
+}
+
+.pageNavLink,
+.modeButton,
+.iconAction,
+.scannerToggle {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.pageNavLink {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
+
+.modeButton {
+  min-height: 3.15rem;
+  padding: 0 1.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.pageNavLink:hover,
+.modeButton:hover,
+.iconAction:hover,
+.scannerToggle:hover,
+.upcomingItem:hover,
+.monthCell:hover,
+.weeklyBookingBlock:hover,
+.monthBookingBlock:hover,
+.slotButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(124, 140, 255, 0.34);
+}
+
+.pageNavActive,
+.modeButtonActive,
+.scannerToggleActive {
+  background: linear-gradient(135deg, rgba(124, 140, 255, 0.18), rgba(34, 211, 238, 0.16));
+  border-color: rgba(124, 140, 255, 0.3);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.statsGrid,
+.overviewGrid,
+.createGrid,
+.filterGrid,
+.formSplit {
+  display: grid;
   gap: 1rem;
 }
 
+.statsGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.statCard,
+.panelCard,
+.filterCard,
+.bookingCard,
+.monthCell,
+.weekSlot,
+.resourceCard,
+.conflictPanel,
+.noSlots,
+.detailSummary,
+.timelineStep,
+.scannerResult,
+.reminderStrip,
+.upcomingItem {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    rgba(7, 17, 31, 0.44);
+}
+
+.statCard {
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  padding: 1.35rem;
+}
+
+.statGlow {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  right: -28px;
+  bottom: -40px;
+  border-radius: 999px;
+  filter: blur(6px);
+  opacity: 0.6;
+}
+
+.statGlowprimary { background: rgba(124, 140, 255, 0.24); }
+.statGlowsuccess { background: rgba(34, 197, 94, 0.2); }
+.statGlowwarning { background: rgba(245, 158, 11, 0.2); }
+.statGlowdanger { background: rgba(248, 113, 113, 0.2); }
+
+.overviewGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.overviewWideCard {
+  grid-column: 1 / -1;
+}
+
+.bookingList,
+.notificationPreview,
 .formGrid,
-.previewList,
-.modalGrid {
+.availabilityPanel,
+.resourceHighlights,
+.detailModal,
+.timeline,
+.tabContent,
+.myBookingsList,
+.myBookingTop,
+.myBookingHeader,
+.detailFields {
   display: grid;
   gap: 1rem;
+}
+
+.upcomingItem {
+  width: 100%;
+  padding: 1rem;
+  color: inherit;
+  text-align: left;
+}
+
+.upcomingCards {
+  display: grid;
+  gap: 1rem;
+}
+
+.upcomingBookingCard {
+  width: 100%;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  background: rgba(51, 65, 85, 0.62);
+  color: inherit;
+  text-align: left;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.upcomingBookingCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 140, 255, 0.3);
+  background: rgba(51, 65, 85, 0.72);
+}
+
+.upcomingBookingTop,
+.upcomingMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.upcomingBookingMain {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.upcomingBookingMain strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.upcomingLocation,
+.upcomingMetaRow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.notificationRow {
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.notificationRow p,
+.readState,
+.resourceCard p,
+.timelineStep p,
+.monthCellEmpty,
+.timeLabel,
+.weekDayHeader span,
+.monthCellHeader span,
+.qrMeta p {
+  color: var(--text-muted);
+}
+
+.markRead {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font-weight: 700;
 }
 
 .filterGrid {
-  display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
-  gap: 0.9rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
-.select {
+.select,
+.textarea {
   width: 100%;
-  min-height: 3rem;
-  padding: 0 0.95rem;
   border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-strong);
+  border-radius: 18px;
+  background: rgba(7, 17, 31, 0.42);
   color: var(--text);
 }
 
+.select {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+}
+
+.textarea {
+  padding: 0.9rem 1rem;
+  resize: vertical;
+}
+
+.iconAction {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monthlyCalendar,
+.weeklyPlanner {
+  display: grid;
+  gap: 1rem;
+}
+
+.monthHeaderRow,
+.weeklyHeader,
+.weekRow {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.monthHeaderRow,
+.weeklyHeader {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.monthHeaderCell,
+.weekDayHeader {
+  display: grid;
+  justify-items: start;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  background: rgba(31, 41, 55, 0.82);
+}
+
+.monthHeaderCell {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.monthlyGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.monthCell {
+  min-height: 156px;
+  padding: 0.8rem;
+  transition: transform var(--transition-base), border-color var(--transition-base);
+}
+
+.monthCellMuted {
+  opacity: 0.55;
+}
+
+.monthCellHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.monthCellBody {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.monthCellEmpty {
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  font-size: 0.84rem;
+}
+
+.bookingBlock {
+  color: white;
+  border-radius: 14px;
+  padding: 0.7rem 0.75rem;
+  cursor: grab;
+}
+
+.bookingBlock strong,
+.monthBookingBlock strong,
+.weeklyBookingBlock strong {
+  display: block;
+  font-size: 0.84rem;
+}
+
+.bookingBlock span,
+.monthBookingBlock span,
+.weeklyBookingBlock span,
+.upcomingItem span,
+.resourceCard span,
+.detailSummary span,
+.detailSummary small {
+  color: rgba(236, 244, 255, 0.74);
+  font-size: 0.8rem;
+}
+
+.blockApproved { background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(22, 101, 52, 0.92)); }
+.blockPending { background: linear-gradient(180deg, rgba(245, 158, 11, 0.92), rgba(180, 83, 9, 0.92)); }
+.blockRejected { background: linear-gradient(180deg, rgba(248, 113, 113, 0.92), rgba(185, 28, 28, 0.92)); }
+
+.monthBookingBlock {
+  min-height: 56px;
+}
+
+.weeklyHeader {
+  grid-template-columns: 100px repeat(7, minmax(0, 1fr));
+}
+
+.timeHeaderCell {
+  display: grid;
+  place-items: center start;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: #030712;
+  color: white;
+  font-weight: 700;
+}
+
+.weeklyBody {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.weekRow {
+  grid-template-columns: 100px repeat(7, minmax(0, 1fr));
+}
+
+.timeLabel {
+  display: grid;
+  place-items: center start;
+  min-height: 72px;
+  padding: 0 0.75rem;
+  border-radius: 14px;
+  background: #020617;
+}
+
+.weekSlot {
+  min-height: 72px;
+  padding: 0.45rem;
+}
+
+.weeklyBookingBlock {
+  min-height: 100%;
+}
+
+.createGrid {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.myBookingsList {
+  gap: 1rem;
+}
+
+.myBookingsHeader,
+.createBookingHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.myBookingsHeader h2,
+.createBookingHeader h2 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.04em;
+}
+
+.myBookingsHeader p,
+.createBookingHeader p {
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+}
+
+.myBookingCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.myBookingTop {
+  flex: 1;
+}
+
+.myBookingHeader {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.myBookingHeader h3 {
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.bookingDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+}
+
+.bookingInfoItem,
+.bookingTimelineInline,
+.detailFields label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bookingInfoItem,
+.bookingTimelineInline {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.bookingCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.timelineStateDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+
+.timelineApproved {
+  background: var(--success);
+}
+
+.timelinePending {
+  background: var(--warning);
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.08);
+}
+
+.timelineRejected {
+  background: var(--danger);
+}
+
+.deleteButton {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--danger);
+}
+
+.deleteButton:hover {
+  background: var(--danger-soft);
+}
+
+.emptyBookingsCard {
+  padding: 2rem;
+}
+
+.emptyBookingsInner {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  text-align: center;
+}
+
+.createBookingView,
+.createBookingForm,
+.createBookingSideColumn,
+.tipCardBody,
+.supportCardBody,
+.tipList {
+  display: grid;
+  gap: 1rem;
+}
+
+.createBookingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 1.25rem;
+}
+
+.createBookingFormCard,
+.tipCard,
+.supportCard {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 34%),
+    rgba(8, 10, 18, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.createBookingFormCard {
+  padding: 1.85rem;
+}
+
+.createBookingForm {
+  gap: 1.35rem;
+}
+
+.createBookingSplit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.createInput,
+.createSelect,
+.createTextarea {
+  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 14px;
+  background: rgba(15, 17, 23, 0.92);
+  color: var(--text);
+}
+
+.createInput,
+.createSelect {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+}
+
+.createTextarea {
+  min-height: 128px;
+  padding: 0.95rem 1rem;
+  resize: vertical;
+}
+
+.createInput:focus,
+.createSelect:focus,
+.createTextarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.bookingNotice {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.bookingNoticeSuccess {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
+
+.bookingNoticeDanger {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+
+.tipCard,
+.supportCard {
+  padding: 1.5rem;
+}
+
+.tipCard h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.tipList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+}
+
+.tipList li {
+  position: relative;
+  padding-left: 1.1rem;
+}
+
+.tipList li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.supportCardBody {
+  min-height: 100%;
+  align-content: center;
+  text-align: center;
+}
+
+.supportCardBody p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.formField {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.formField > span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.formSplit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.conflictPanel,
+.noSlots,
+.slotButton,
+.scannerResult,
+.reminderStrip,
+.bookingFacts > div,
+.qrModal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.slotButton {
+  justify-content: flex-start;
+  padding: 1rem;
+  color: var(--text);
+  text-align: left;
+}
+
+.conflictSuccess,
+.validResult { color: var(--success); }
+.conflictDanger,
+.invalidResult { color: var(--danger); }
+
 .submitMessage {
-  color: var(--success);
+  color: var(--secondary);
   font-size: 0.9rem;
   font-weight: 600;
 }
 
-.previewItem,
-.modalBlock {
+.bookingCard h3 { font-size: 1.1rem; }
+.bookingFacts { flex-wrap: wrap; justify-content: flex-start; }
+.bookingActions { justify-content: flex-start; flex-wrap: wrap; }
+
+.detailSummary,
+.timelineStep,
+.scannerResult,
+.reminderStrip,
+.resourceCard { padding: 1rem; }
+
+.detailFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detailFields > div {
   display: grid;
   gap: 0.35rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--surface-muted);
 }
 
-.previewItem strong,
-.primaryCell strong {
-  display: block;
-  font-size: 0.96rem;
-}
-
-.previewItem span,
-.primaryCell span,
-.modalBlock span {
+.detailFields label {
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.modalBlock p {
+.detailFields p {
+  line-height: 1.5;
+}
+
+.timeline {
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  top: 0.8rem;
+  bottom: 0.8rem;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.24);
+}
+
+.timelineStep {
+  position: relative;
+  margin-left: 1.6rem;
+}
+
+.timelineDot {
+  position: absolute;
+  left: -1.45rem;
+  top: 1.1rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+  box-shadow: 0 0 0 6px rgba(7, 17, 31, 1);
+}
+
+.timelineStepActive .timelineDot { background: var(--secondary); }
+.timelineStepCancelled .timelineDot { background: var(--danger); }
+
+.qrModal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.qrCard {
+  padding: 1rem;
+  border-radius: 24px;
+  background: white;
+}
+
+.qrGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 16px);
+  gap: 4px;
+}
+
+.qrPixel,
+.qrPixelFilled {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #dbeafe;
+}
+
+.qrPixelFilled { background: #111827; }
+.qrMeta { display: grid; gap: 0.5rem; }
+
+.qrImage {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
+.qrLoading {
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  color: #111827;
+  font-weight: 700;
+}
+
+.cameraFrame {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(7, 17, 31, 0.9), rgba(17, 29, 49, 0.8));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.scanFrame {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(34, 211, 238, 0.35);
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.scanLine {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+  animation: scan 2.2s linear infinite;
+}
+
+@keyframes scan {
+  from { top: 12%; }
+  to { top: 88%; }
+}
+
+.scannerLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.scannerColumn,
+.scannerPanelCenter,
+.scannerActionStack,
+.resultInfoStack,
+.resultInfoGrid,
+.cameraFeedInner {
+  display: grid;
+  gap: 1rem;
+}
+
+.scannerPanel {
+  padding: 1.25rem;
+}
+
+.scannerPanelCenter,
+.scannerWaiting {
+  justify-items: center;
+  text-align: center;
+}
+
+.scannerHeroIcon {
+  width: 3.4rem;
+  height: 3.4rem;
+  color: var(--primary);
+  opacity: 0.55;
+}
+
+.cameraFeed {
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(2, 6, 23, 0.82);
+  border: 1px dashed rgba(124, 140, 255, 0.24);
+}
+
+.cameraFeedInner {
+  justify-items: center;
+  color: white;
+  text-align: center;
+}
+
+.cameraFeedInner p {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.cameraFeedInner span,
+.cameraHint,
+.lastScanned,
+.resultInfoStack p,
+.resultInfoGrid p {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.uploadLabel {
+  display: block;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadButton {
+  width: 100%;
+  min-height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  font-weight: 700;
+}
+
+.scannerTestPanel {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(7, 17, 31, 0.44));
+}
+
+.scannerWaiting {
+  padding: 3rem 1.5rem;
+}
+
+.validBadgeWrap {
+  display: grid;
+  justify-items: center;
+}
+
+.validBadgeCircle {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c55e, #10b981);
+  color: white;
+}
+
+.resultInfoGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resultInfoStack strong,
+.resultInfoGrid strong {
+  font-size: 0.98rem;
+}
+
+.statusPillRow {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.validStatusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--success);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.checkInSummary {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.invalidPanel {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.invalidPanel h4 {
+  color: var(--danger);
+}
+
+.invalidList {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 1rem;
+  color: var(--text-muted);
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statValid {
+  color: var(--success);
+}
+
+.statInvalid {
+  color: var(--danger);
+}
+
+.skeletonHero,
+.skeletonGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.skeletonHero {
+  padding: 2rem;
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgba(9, 18, 37, 0.92), rgba(33, 16, 68, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.skeletonGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.skeletonTitle { width: min(420px, 100%); height: 52px; }
+.skeletonLine { width: min(620px, 100%); height: 18px; }
+.skeletonButtonRow { width: 240px; height: 42px; }
+.skeletonCard { min-height: 180px; border-radius: 24px; }
+
+:global(:root:not([data-theme='dark'])) .pageNav {
+  background:
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.12), transparent 35%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 244, 251, 0.96));
+}
+
+:global(:root:not([data-theme='dark'])) .pageNavLink,
+:global(:root:not([data-theme='dark'])) .modeButton,
+:global(:root:not([data-theme='dark'])) .iconAction,
+:global(:root:not([data-theme='dark'])) .scannerToggle {
+  background: rgba(255, 255, 255, 0.82);
   color: var(--text);
 }
 
-@media (max-width: 980px) {
-  .topGrid,
-  .filterGrid {
+:global(:root:not([data-theme='dark'])) .statCard,
+:global(:root:not([data-theme='dark'])) .panelCard,
+:global(:root:not([data-theme='dark'])) .filterCard,
+:global(:root:not([data-theme='dark'])) .bookingCard,
+:global(:root:not([data-theme='dark'])) .monthCell,
+:global(:root:not([data-theme='dark'])) .weekSlot,
+:global(:root:not([data-theme='dark'])) .resourceCard,
+:global(:root:not([data-theme='dark'])) .conflictPanel,
+:global(:root:not([data-theme='dark'])) .noSlots,
+:global(:root:not([data-theme='dark'])) .detailSummary,
+:global(:root:not([data-theme='dark'])) .timelineStep,
+:global(:root:not([data-theme='dark'])) .scannerResult,
+:global(:root:not([data-theme='dark'])) .reminderStrip,
+:global(:root:not([data-theme='dark'])) .upcomingItem,
+:global(:root:not([data-theme='dark'])) .createBookingFormCard,
+:global(:root:not([data-theme='dark'])) .tipCard,
+:global(:root:not([data-theme='dark'])) .supportCard,
+:global(:root:not([data-theme='dark'])) .scannerPanel,
+:global(:root:not([data-theme='dark'])) .scannerInfoCard,
+:global(:root:not([data-theme='dark'])) .statsCard {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.78)),
+    var(--surface);
+  border-color: var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .upcomingBookingCard {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .upcomingBookingCard:hover {
+  background: rgba(255, 255, 255, 0.97);
+}
+
+:global(:root:not([data-theme='dark'])) .monthHeaderCell,
+:global(:root:not([data-theme='dark'])) .weekDayHeader,
+:global(:root:not([data-theme='dark'])) .timeHeaderCell,
+:global(:root:not([data-theme='dark'])) .timeLabel {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .timeHeaderCell,
+:global(:root:not([data-theme='dark'])) .timeLabel {
+  border: 1px solid var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .select,
+:global(:root:not([data-theme='dark'])) .textarea,
+:global(:root:not([data-theme='dark'])) .createInput,
+:global(:root:not([data-theme='dark'])) .createSelect,
+:global(:root:not([data-theme='dark'])) .createTextarea {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+:global(:root:not([data-theme='dark'])) .submitMessage {
+  color: var(--primary-strong);
+}
+
+:global(:root:not([data-theme='dark'])) .bookingNoticeSuccess {
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .bookingNoticeDanger {
+  color: #b91c1c;
+}
+
+:global(:root:not([data-theme='dark'])) .emptyScannerFrame,
+:global(:root:not([data-theme='dark'])) .cameraFrame {
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(241, 245, 249, 0.96), rgba(226, 232, 240, 0.92));
+}
+
+:global(:root:not([data-theme='dark'])) .emptyScannerFrame p,
+:global(:root:not([data-theme='dark'])) .cameraFrame p,
+:global(:root:not([data-theme='dark'])) .cameraFrame span {
+  color: var(--text);
+}
+
+@media (max-width: 1180px) {
+  .statsGrid,
+  .overviewGrid,
+  .createGrid,
+  .createBookingLayout,
+  .filterGrid,
+  .detailFields,
+  .bookingDetailGrid,
+  .scannerLayout,
+  .resultInfoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monthlyGrid,
+  .monthHeaderRow,
+  .weeklyHeader,
+  .weekRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .timeHeaderCell,
+  .timeLabel {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .statsGrid,
+  .overviewGrid,
+  .createGrid,
+  .createBookingLayout,
+  .createBookingSplit,
+  .filterGrid,
+  .formSplit,
+  .bookingDetailGrid,
+  .detailFields,
+  .scannerLayout,
+  .resultInfoGrid,
+  .monthlyGrid,
+  .monthHeaderRow,
+  .weeklyHeader,
+  .weekRow,
+  .qrModal {
     grid-template-columns: 1fr;
+  }
+
+  .upcomingBookingTop,
+  .upcomingMetaRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .myBookingCard {
+    flex-direction: column;
+  }
+
+  .myBookingsHeader,
+  .createBookingHeader {
+    display: grid;
+  }
+
+  .pageNavLink,
+  .modeButton {
+    width: 100%;
   }
 }

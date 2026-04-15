@@ -1,0 +1,246 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.header p,
+.helper,
+.cameraInner span,
+.infoStack p,
+.infoGrid p,
+.lastScanned {
+  color: var(--text-muted);
+}
+
+.layout,
+.infoGrid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.layout {
+  grid-template-columns: 1fr 1fr;
+}
+
+.column,
+.centered,
+.actionStack,
+.infoStack,
+.cameraInner {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel,
+.waitingCard,
+.confirmCard,
+.invalidPanel {
+  padding: 1.25rem;
+}
+
+.centered,
+.waitingCard {
+  justify-items: center;
+  text-align: center;
+}
+
+.heroIcon {
+  width: 3.4rem;
+  height: 3.4rem;
+  color: var(--primary);
+  opacity: 0.55;
+}
+
+.cameraFeed {
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(2, 6, 23, 0.82);
+  border: 1px dashed rgba(124, 140, 255, 0.24);
+}
+
+.cameraInner {
+  justify-items: center;
+  color: white;
+  text-align: center;
+}
+
+.cameraInner p {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.scanFrame {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(34, 211, 238, 0.35);
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.scanLine {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+  animation: scan 2.2s linear infinite;
+}
+
+@keyframes scan {
+  from {
+    top: 12%;
+  }
+
+  to {
+    top: 88%;
+  }
+}
+
+.uploadLabel {
+  display: block;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadButton {
+  width: 100%;
+  min-height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  font-weight: 700;
+}
+
+.testPanel {
+  padding: 1.25rem;
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(7, 17, 31, 0.44));
+}
+
+.waitingCard {
+  min-height: 240px;
+}
+
+.validAlert,
+.invalidAlert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 18px;
+  font-weight: 700;
+}
+
+.validAlert {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+}
+
+.invalidAlert {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+}
+
+.validBadgeWrap {
+  display: grid;
+  justify-items: center;
+}
+
+.validBadgeCircle {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c55e, #10b981);
+  color: white;
+}
+
+.infoGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.infoStack strong,
+.infoGrid strong {
+  font-size: 0.98rem;
+}
+
+.statusRow {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--success);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.confirmCard {
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.invalidPanel {
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.invalidPanel h4 {
+  color: var(--danger);
+}
+
+.invalidList {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 1rem;
+  color: var(--text-muted);
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statValid {
+  color: var(--success);
+}
+
+.statInvalid {
+  color: var(--danger);
+}
+
+@media (max-width: 1100px) {
+  .layout,
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}

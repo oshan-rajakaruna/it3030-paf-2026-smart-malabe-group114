@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { LogOut, X } from 'lucide-react';
 
 import styles from './Sidebar.module.css';
-import campusMark from '../../assets/campus-mark.svg';
+import campusMark from '../../assets/campus-mark.png';
 import { useAuth } from '../../hooks/useAuth';
 import { NAV_ITEMS } from '../../utils/constants';
 import { formatRoleLabel, getInitials, joinClassNames } from '../../utils/formatters';
@@ -18,8 +18,8 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className={styles.brand}>
           <img src={campusMark} alt="Smart Campus Operations Hub" className={styles.brandMark} />
           <div>
-            <strong>Smart Campus</strong>
-            <span>Operations Hub</span>
+            <strong>UniMatrix</strong>
+            <span>Smart Resources & Facility Management</span>
           </div>
         </div>
         <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close navigation">

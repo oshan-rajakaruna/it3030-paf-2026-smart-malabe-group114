@@ -1,0 +1,235 @@
+.card {
+  overflow: hidden;
+}
+
+.controls,
+.content,
+.footer,
+.dots {
+  display: flex;
+  align-items: center;
+}
+
+.controls,
+.dots {
+  gap: 0.5rem;
+}
+
+.viewport {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.slide {
+  position: relative;
+  min-width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 48px rgba(2, 8, 23, 0.34);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.slide:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 26px 54px rgba(2, 8, 23, 0.42);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.themeblue {
+  background: linear-gradient(135deg, rgba(13, 101, 255, 0.88), rgba(110, 58, 255, 0.84));
+}
+
+.themeteal {
+  background: linear-gradient(135deg, rgba(12, 181, 176, 0.84), rgba(44, 107, 255, 0.82));
+}
+
+.themeamber {
+  background: linear-gradient(135deg, rgba(204, 126, 24, 0.9), rgba(140, 47, 166, 0.82));
+}
+
+.themeviolet {
+  background: linear-gradient(135deg, rgba(24, 46, 104, 0.9), rgba(214, 68, 155, 0.82));
+}
+
+.shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, transparent 34%, rgba(255, 255, 255, 0.12) 48%, transparent 62%);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  min-height: 132px;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.25rem;
+}
+
+.iconBadge {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  color: #fff7ed;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: rgba(255, 247, 237, 0.9);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.title {
+  color: white;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  letter-spacing: -0.03em;
+}
+
+.description {
+  margin-top: 0.2rem;
+  color: rgba(255, 247, 237, 0.92);
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.actionArea {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 132px;
+  flex-shrink: 0;
+}
+
+.actionButton,
+.metaPill,
+.navButton,
+.viewAll,
+.dot {
+  transition:
+    transform var(--transition-base),
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  font-weight: 700;
+  backdrop-filter: blur(18px);
+}
+
+.actionButton:hover,
+.navButton:hover,
+.viewAll:hover {
+  transform: translateY(-1px);
+}
+
+.actionButton:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fef08a;
+  font-weight: 800;
+}
+
+.footer {
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.4rem;
+}
+
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.32);
+}
+
+.dotActive {
+  width: 1.8rem;
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+}
+
+.navButton:hover,
+.dot:hover {
+  border-color: rgba(124, 140, 255, 0.34);
+}
+
+.viewAll {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .content {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .actionArea {
+    justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
