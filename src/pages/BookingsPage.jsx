@@ -23,6 +23,7 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import SmartSuggestionsCard from '../components/dashboard/SmartSuggestionsCard';
 import Modal from '../components/ui/Modal';
+import QRScannerPage from './QRScannerPage';
 import SearchBar from '../components/ui/SearchBar';
 import SkeletonBlock from '../components/ui/SkeletonBlock';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -30,6 +31,7 @@ import { mockBookings } from '../data/bookings';
 import { mockFacilities } from '../data/facilities';
 import { mockNotifications } from '../data/notifications';
 import { useAuth } from '../hooks/useAuth';
+import { ROLES } from '../utils/constants';
 import { formatDate, formatDateTime, joinClassNames } from '../utils/formatters';
 
 const CALENDAR_MODES = ['Weekly', 'Monthly'];
@@ -41,6 +43,12 @@ const PAGE_SECTIONS = {
 const CREATE_VIEW_MODES = {
   LIST: 'LIST',
   FORM: 'FORM',
+};
+const ADMIN_TABS = {
+  ALL: 'ALL',
+  PENDING: 'PENDING',
+  ANALYTICS: 'ANALYTICS',
+  QR: 'QR',
 };
 const DAY_MINUTES_START = 8 * 60;
 const DAY_MINUTES_END = 19 * 60;
@@ -199,8 +207,11 @@ function drawHexBadge(pdf, x, y, radius, fillColor) {
 export default function BookingsPage() {
   const { currentUser } = useAuth();
   const student = currentUser ?? { id: 'user-001', name: 'Student', department: 'Smart Campus' };
+  const isAdmin = student.role === ROLES.ADMIN;
 
-  const [bookings, setBookings] = useState(mockBookings.filter((booking) => booking.requesterId === student.id));
+  const [bookings, setBookings] = useState(
+    isAdmin ? mockBookings : mockBookings.filter((booking) => booking.requesterId === student.id),
+  );
   const [activeSection, setActiveSection] = useState(PAGE_SECTIONS.OVERVIEW);
   const [calendarMode, setCalendarMode] = useState('Weekly');
   const [calendarAnchor, setCalendarAnchor] = useState(new Date('2026-04-15T00:00:00'));
@@ -215,12 +226,21 @@ export default function BookingsPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [notifications, setNotifications] = useState(mockNotifications);
   const [createViewMode, setCreateViewMode] = useState(CREATE_VIEW_MODES.LIST);
+  const [adminTab, setAdminTab] = useState(ADMIN_TABS.ALL);
+  const [processingBookingId, setProcessingBookingId] = useState(null);
+  const [processingAction, setProcessingAction] = useState('');
+  const [reviewMode, setReviewMode] = useState('approve');
+  const [rejectReason, setRejectReason] = useState('');
   const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setLoading(false), 950);
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    setBookings(isAdmin ? mockBookings : mockBookings.filter((booking) => booking.requesterId === student.id));
+  }, [isAdmin, student.id]);
 
   useEffect(() => {
     if (!qrBooking) {
@@ -386,6 +406,68 @@ export default function BookingsPage() {
     setNotifications((current) =>
       current.map((notification) => (notification.id === notificationId ? { ...notification, read: true } : notification)),
     );
+  };
+
+  const updateBookingStatus = (bookingId, status, adminNote) => {
+    setBookings((current) =>
+      current.map((booking) => (booking.id === bookingId ? { ...booking, status, adminNote } : booking)),
+    );
+  };
+
+  const handleAdminAction = (booking, action) => {
+    setProcessingBookingId(booking.id);
+    setProcessingAction(action);
+
+    window.setTimeout(() => {
+      if (action === 'approve') {
+        updateBookingStatus(booking.id, 'APPROVED', 'Approved by admin after schedule and capacity review.');
+      }
+
+      if (action === 'cancel') {
+        updateBookingStatus(booking.id, 'CANCELLED', 'Cancelled by admin after manual review.');
+      }
+
+      setProcessingBookingId(null);
+      setProcessingAction('');
+    }, 700);
+  };
+
+  const handleRejectSubmit = () => {
+    if (!selectedBooking) return;
+
+    setProcessingBookingId(selectedBooking.id);
+    setProcessingAction('reject');
+
+    window.setTimeout(() => {
+      updateBookingStatus(
+        selectedBooking.id,
+        'REJECTED',
+        rejectReason.trim() || 'Rejected by admin after booking review.',
+      );
+      setProcessingBookingId(null);
+      setProcessingAction('');
+      setSelectedBooking(null);
+      setRejectReason('');
+    }, 700);
+  };
+
+  const handleApproveSubmit = () => {
+    if (!selectedBooking) return;
+
+    setProcessingBookingId(selectedBooking.id);
+    setProcessingAction('approve');
+
+    window.setTimeout(() => {
+      updateBookingStatus(
+        selectedBooking.id,
+        'APPROVED',
+        'Approved by admin after booking review.',
+      );
+      setProcessingBookingId(null);
+      setProcessingAction('');
+      setSelectedBooking(null);
+      setRejectReason('');
+    }, 700);
   };
 
   const buildBookingQrValue = (booking) =>
@@ -940,6 +1022,12 @@ export default function BookingsPage() {
     { label: 'Pending', value: pendingCount, tone: 'warning' },
     { label: 'Rejected', value: rejectedCount, tone: 'danger' },
   ];
+  const adminStats = [
+    { label: 'Total requests', value: bookings.length, tone: 'primary' },
+    { label: 'Pending approvals', value: pendingCount, tone: 'warning' },
+    { label: 'Approved today', value: approvedCount, tone: 'success' },
+    { label: 'Rejected or cancelled', value: rejectedCount + bookings.filter((booking) => booking.status === 'CANCELLED').length, tone: 'danger' },
+  ];
 
   const renderPageNav = () => (
     <section className={styles.pageNav}>
@@ -995,6 +1083,351 @@ export default function BookingsPage() {
       </div>
     </>
   );
+
+  const renderAdminView = () => {
+    const allRows = filteredBookings;
+    const pendingRows = filteredBookings.filter((booking) => booking.status === 'PENDING');
+    const tableRows = adminTab === ADMIN_TABS.PENDING ? pendingRows : allRows;
+    const resourceCounts = filteredBookings.reduce((accumulator, booking) => {
+      accumulator[booking.facilityName] = (accumulator[booking.facilityName] ?? 0) + 1;
+      return accumulator;
+    }, {});
+    const topResources = Object.entries(resourceCounts)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 5);
+    const peakHours = Array.from({ length: 8 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`).map((hour) => ({
+      hour,
+      count: filteredBookings.filter((booking) => booking.startTime.startsWith(hour.slice(0, 2))).length,
+    }));
+    const statusDistribution = ['APPROVED', 'PENDING', 'REJECTED', 'CANCELLED'].map((status) => ({
+      status,
+      value: filteredBookings.filter((booking) => booking.status === status).length,
+      tone:
+        status === 'APPROVED'
+          ? '#22c55e'
+          : status === 'PENDING'
+            ? '#f59e0b'
+            : status === 'REJECTED'
+              ? '#f87171'
+              : '#64748b',
+    }));
+    const totalStatusValue = Math.max(1, statusDistribution.reduce((sum, item) => sum + item.value, 0));
+    let currentPieOffset = 0;
+    const pieStops = statusDistribution
+      .map((item) => {
+        const start = currentPieOffset;
+        currentPieOffset += (item.value / totalStatusValue) * 100;
+        return `${item.tone} ${start}% ${currentPieOffset}%`;
+      })
+      .join(', ');
+    const linePoints = peakHours
+      .map((point, index) => {
+        const x = 24 + index * 44;
+        const y = 120 - (point.count / Math.max(1, ...peakHours.map((item) => item.count), 1)) * 72;
+        return `${x},${y}`;
+      })
+      .join(' ');
+
+    const renderAdminStatusPill = (status) => (
+      <span
+        className={joinClassNames(
+          styles.adminStatusPill,
+          status === 'APPROVED'
+            ? styles.adminStatusApproved
+            : status === 'PENDING'
+              ? styles.adminStatusPending
+              : styles.adminStatusRejected,
+        )}
+      >
+        {status === 'APPROVED' ? <CheckCircle2 size={15} /> : status === 'PENDING' ? <Clock3 size={15} /> : <XCircle size={15} />}
+        {status.charAt(0) + status.slice(1).toLowerCase()}
+      </span>
+    );
+
+    const renderActionButtons = (booking) => {
+      return (
+        <div className={styles.adminRowActions}>
+          {booking.status === 'PENDING' ? (
+            <button
+              type="button"
+              className={styles.adminReviewButton}
+              onClick={() => {
+                setSelectedBooking(booking);
+                setReviewMode('approve');
+                setRejectReason('');
+              }}
+            >
+              Review
+            </button>
+          ) : (
+            <span className={styles.adminActionState}>
+              {booking.status === 'APPROVED'
+                ? 'Approved'
+                : booking.status === 'REJECTED'
+                  ? 'Rejected'
+                  : 'Cancelled'}
+            </span>
+          )}
+        </div>
+      );
+    };
+
+    const renderAdminTable = (rows, pendingOnly = false) => (
+      <div className={styles.adminTableWrap}>
+        <table className={styles.adminTable}>
+          <thead>
+            <tr>
+              <th>Booking Details</th>
+              <th>Date &amp; Time</th>
+              <th>Student Name</th>
+              <th>Attendees</th>
+              <th>Status</th>
+              <th className={styles.adminTableActionsHead}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading
+              ? Array.from({ length: 5 }, (_, index) => (
+                  <tr key={`admin-skeleton-${index}`}>
+                    {Array.from({ length: 6 }, (_, cell) => (
+                      <td key={cell}>
+                        <SkeletonBlock className={styles.adminTableSkeleton} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              : rows.map((booking) => (
+                  <tr
+                    key={booking.id}
+                    className={joinClassNames(
+                      pendingOnly && styles.adminTableRowPending,
+                      processingBookingId === booking.id && styles.adminTableRowProcessing,
+                    )}
+                  >
+                    <td>
+                      <div className={styles.adminPrimaryCell}>
+                        <strong>{booking.purpose}</strong>
+                        <span>{booking.facilityName}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.adminPrimaryCell}>
+                        <strong>{formatDate(booking.date)}</strong>
+                        <span>{formatTimeRange(booking.startTime, booking.endTime)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.adminPrimaryCell}>
+                        <strong>{booking.requesterName}</strong>
+                        <span>{booking.requesterId.toUpperCase()}</span>
+                      </div>
+                    </td>
+                    <td>{booking.attendees}</td>
+                    <td>
+                      {renderAdminStatusPill(booking.status)}
+                    </td>
+                    <td>{renderActionButtons(booking)}</td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+        {!loading && !rows.length ? (
+          <div className={styles.adminEmptyState}>
+            <strong>No bookings found</strong>
+            <span>Try adjusting the filters or search terms to widen the result set.</span>
+          </div>
+        ) : null}
+      </div>
+    );
+
+    return (
+      <>
+        <section className={styles.pageNav}>
+          <div className={styles.pageNavBrand}>
+            <span className={styles.pageNavEyebrow}>Admin Booking Management</span>
+            <strong>Approve requests, monitor trends, and validate check-ins</strong>
+          </div>
+          <div className={styles.adminRolePill}>
+            <StatusBadge status={student.role} />
+          </div>
+        </section>
+
+        <section className={styles.statsGrid}>
+          {adminStats.map((stat) => (
+            <Card key={stat.label} className={styles.statCard}>
+              <span className={styles.statLabel}>{stat.label}</span>
+              <strong className={styles.statValue}>{stat.value}</strong>
+              <span className={joinClassNames(styles.statGlow, styles[`statGlow${stat.tone}`])} />
+            </Card>
+          ))}
+        </section>
+
+        <Card
+          title="Filters"
+          subtitle="Refine by date range, status, resource type, capacity, or live search."
+          className={styles.filterCard}
+        >
+          <div className={styles.filterGrid}>
+            <SearchBar
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search student or resource"
+            />
+            <select className={styles.select} value={filters.status} onChange={(event) => handleFilterChange('status', event.target.value)}>
+              <option value="ALL">All statuses</option>
+              <option value="APPROVED">Approved</option>
+              <option value="PENDING">Pending</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+            <select className={styles.select} value={filters.type} onChange={(event) => handleFilterChange('type', event.target.value)}>
+              <option value="ALL">All resources</option>
+              {[...new Set(mockFacilities.map((facility) => facility.type))].map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            <select className={styles.select} value={filters.capacity} onChange={(event) => handleFilterChange('capacity', event.target.value)}>
+              <option value="ALL">All capacities</option>
+              <option value="1-20">1-20</option>
+              <option value="21-50">21-50</option>
+              <option value="51-120">51-120</option>
+              <option value="120+">120+</option>
+            </select>
+            <input type="date" className={fieldStyles.control} value={filters.startDate} onChange={(event) => handleFilterChange('startDate', event.target.value)} />
+            <input type="date" className={fieldStyles.control} value={filters.endDate} onChange={(event) => handleFilterChange('endDate', event.target.value)} />
+          </div>
+        </Card>
+
+        <div className={styles.adminTabBar}>
+          <button
+            type="button"
+            className={joinClassNames(styles.adminTabButton, adminTab === ADMIN_TABS.ALL && styles.adminTabButtonActive)}
+            onClick={() => setAdminTab(ADMIN_TABS.ALL)}
+          >
+            All Bookings
+          </button>
+          <button
+            type="button"
+            className={joinClassNames(styles.adminTabButton, adminTab === ADMIN_TABS.PENDING && styles.adminTabButtonActive)}
+            onClick={() => setAdminTab(ADMIN_TABS.PENDING)}
+          >
+            Pending Requests
+          </button>
+          <button
+            type="button"
+            className={joinClassNames(styles.adminTabButton, adminTab === ADMIN_TABS.ANALYTICS && styles.adminTabButtonActive)}
+            onClick={() => setAdminTab(ADMIN_TABS.ANALYTICS)}
+          >
+            Analytics
+          </button>
+          <button
+            type="button"
+            className={joinClassNames(styles.adminTabButton, adminTab === ADMIN_TABS.QR && styles.adminTabButtonActive)}
+            onClick={() => setAdminTab(ADMIN_TABS.QR)}
+          >
+            QR Scanner
+          </button>
+        </div>
+
+        {adminTab === ADMIN_TABS.ALL ? (
+          <Card
+            title="All bookings"
+            subtitle="Every request across the campus in one premium management table."
+            className={styles.panelCard}
+          >
+            {renderAdminTable(tableRows)}
+          </Card>
+        ) : null}
+
+        {adminTab === ADMIN_TABS.PENDING ? (
+          <Card
+            title="Pending requests"
+            subtitle="Highlight active requests and clear the review queue faster."
+            className={styles.panelCard}
+          >
+            {renderAdminTable(tableRows, true)}
+          </Card>
+        ) : null}
+
+        {adminTab === ADMIN_TABS.ANALYTICS ? (
+          <section className={styles.adminAnalyticsGrid}>
+            <Card title="Top Resources" subtitle="Most requested resources in the current dataset." className={styles.panelCard}>
+              <div className={styles.chartStack}>
+                {topResources.map(([resource, count]) => (
+                  <div key={resource} className={styles.barRow}>
+                    <div className={styles.barLabelRow}>
+                      <span>{resource}</span>
+                      <strong>{count}</strong>
+                    </div>
+                    <div className={styles.barTrack}>
+                      <div
+                        className={styles.barFill}
+                        style={{ width: `${(count / Math.max(1, topResources[0]?.[1] ?? 1)) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card title="Peak Booking Hours" subtitle="Booking request concentration across the day." className={styles.panelCard}>
+              <div className={styles.lineChartWrap}>
+                <svg viewBox="0 0 360 150" className={styles.lineChart}>
+                  <polyline
+                    fill="none"
+                    stroke="url(#bookingLineGradient)"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={linePoints}
+                  />
+                  <defs>
+                    <linearGradient id="bookingLineGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+                      <stop offset="0%" stopColor="#22d3ee" />
+                      <stop offset="100%" stopColor="#7c8cff" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className={styles.lineChartLabels}>
+                  {peakHours.map((point) => (
+                    <span key={point.hour}>{point.hour}</span>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Booking Status Distribution" subtitle="Current request mix across the filtered dataset." className={styles.panelCard}>
+              <div className={styles.pieChartLayout}>
+                <div className={styles.pieChart} style={{ background: `conic-gradient(${pieStops})` }} />
+                <div className={styles.pieLegend}>
+                  {statusDistribution.map((item) => (
+                    <div key={item.status} className={styles.pieLegendItem}>
+                      <span className={styles.pieLegendDot} style={{ background: item.tone }} />
+                      <div>
+                        <strong>{item.status}</strong>
+                        <span>{item.value} bookings</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </section>
+        ) : null}
+
+        {adminTab === ADMIN_TABS.QR ? (
+          <Card
+            title="QR Scanner"
+            subtitle="Validate campus bookings through camera scan, upload, or manual booking ID entry."
+            className={styles.panelCard}
+          >
+            <QRScannerPage />
+          </Card>
+        ) : null}
+
+      </>
+    );
+  };
 
   const renderOverviewPanels = () => (
     <section className={styles.overviewGrid}>
@@ -1417,6 +1850,8 @@ export default function BookingsPage() {
     <div className={styles.page}>
       {loading ? (
         renderSkeletons()
+      ) : isAdmin ? (
+        renderAdminView()
       ) : (
         <>
           {renderPageNav()}
@@ -1432,7 +1867,98 @@ export default function BookingsPage() {
       )}
 
       <Modal
-        isOpen={Boolean(selectedBooking)}
+        isOpen={Boolean(isAdmin && selectedBooking?.status === 'PENDING')}
+        onClose={() => {
+          setSelectedBooking(null);
+          setRejectReason('');
+          setReviewMode('approve');
+        }}
+        title={reviewMode === 'approve' ? 'Approve Booking' : 'Reject Booking'}
+        description={selectedBooking ? `Booking: ${selectedBooking.purpose}` : ''}
+        footer={
+          isAdmin && selectedBooking?.status === 'PENDING' ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedBooking(null);
+                  setRejectReason('');
+                  setReviewMode('approve');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={reviewMode === 'approve' ? 'success' : 'danger'}
+                onClick={reviewMode === 'approve' ? handleApproveSubmit : handleRejectSubmit}
+                disabled={
+                  processingBookingId === selectedBooking.id &&
+                  processingAction === (reviewMode === 'approve' ? 'approve' : 'reject')
+                    ? true
+                    : reviewMode === 'reject' && !rejectReason.trim()
+                }
+              >
+                {processingBookingId === selectedBooking.id &&
+                processingAction === (reviewMode === 'approve' ? 'approve' : 'reject')
+                  ? reviewMode === 'approve'
+                    ? 'Confirming...'
+                    : 'Rejecting...'
+                  : reviewMode === 'approve'
+                    ? 'Confirm Approval'
+                    : 'Confirm Rejection'}
+              </Button>
+            </>
+          ) : null
+        }
+      >
+        {isAdmin && selectedBooking?.status === 'PENDING' ? (
+          <div className={styles.reviewModalBody}>
+            <div className={styles.reviewModeSwitch}>
+              <button
+                type="button"
+                className={joinClassNames(styles.reviewModeButton, reviewMode === 'approve' && styles.reviewModeApproveActive)}
+                onClick={() => setReviewMode('approve')}
+              >
+                <CheckCircle2 size={18} />
+                Approve
+              </button>
+              <button
+                type="button"
+                className={joinClassNames(styles.reviewModeButton, reviewMode === 'reject' && styles.reviewModeRejectActive)}
+                onClick={() => setReviewMode('reject')}
+              >
+                <XCircle size={18} />
+                Reject
+              </button>
+            </div>
+
+            {reviewMode === 'reject' ? (
+              <textarea
+                className={styles.reviewReasonInput}
+                rows="5"
+                value={rejectReason}
+                onChange={(event) => setRejectReason(event.target.value)}
+                placeholder="Enter reason for rejection (e.g., time conflict, facility unavailable)..."
+                required
+              />
+            ) : null}
+
+            <div
+              className={joinClassNames(
+                styles.reviewNotice,
+                reviewMode === 'approve' ? styles.reviewNoticeApprove : styles.reviewNoticeReject,
+              )}
+            >
+              {reviewMode === 'approve'
+                ? 'This booking will be approved and the student will be notified.'
+                : 'The student will receive the rejection reason via email.'}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(selectedBooking && (!isAdmin || selectedBooking.status !== 'PENDING'))}
         onClose={() => setSelectedBooking(null)}
         title={selectedBooking?.facilityName}
         description="Booking details"

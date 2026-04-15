@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Camera, CheckCircle2, Upload } from 'lucide-react';
 
 import styles from './QRScannerPage.module.css';
@@ -9,6 +9,28 @@ export default function QRScannerPage() {
   const [scannedCode, setScannedCode] = useState(null);
   const [scannerState, setScannerState] = useState(null);
   const [bookingInfo, setBookingInfo] = useState(null);
+  const [manualCode, setManualCode] = useState('');
+  const [cameraState, setCameraState] = useState('idle');
+  const [cameraMessage, setCameraMessage] = useState('Enable camera access to start scanning automatically.');
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const scanIntervalRef = useRef(null);
+
+  const stopCamera = () => {
+    if (scanIntervalRef.current) {
+      window.clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   const handleScanCode = (code) => {
     setScannedCode(code);
@@ -31,6 +53,74 @@ export default function QRScannerPage() {
     setBookingInfo(null);
   };
 
+  const startDetectionLoop = () => {
+    if (
+      typeof window === 'undefined' ||
+      !('BarcodeDetector' in window) ||
+      !videoRef.current
+    ) {
+      setCameraMessage('Live camera is active. Auto QR detection is not supported in this browser yet.');
+      return;
+    }
+
+    const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+
+    scanIntervalRef.current = window.setInterval(async () => {
+      if (!videoRef.current || videoRef.current.readyState < 2) {
+        return;
+      }
+
+      try {
+        const codes = await detector.detect(videoRef.current);
+        if (codes.length > 0 && codes[0].rawValue) {
+          handleScanCode(codes[0].rawValue);
+        }
+      } catch {
+        setCameraMessage('Camera is live, but QR detection could not read the current frame.');
+      }
+    }, 1200);
+  };
+
+  const startCamera = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraState('unsupported');
+      setCameraMessage('This browser does not support camera access. Use upload or manual booking ID entry.');
+      return;
+    }
+
+    setCameraState('requesting');
+    setCameraMessage('Requesting camera access...');
+
+    try {
+      stopCamera();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      setCameraState('live');
+      setCameraMessage('Camera is live. Point it at a QR code to scan automatically.');
+      startDetectionLoop();
+    } catch (error) {
+      setCameraState('blocked');
+      setCameraMessage(
+        error?.name === 'NotAllowedError'
+          ? 'Camera permission was denied. Allow access and try again.'
+          : 'Unable to start the camera. Check if another app is using it, then try again.',
+      );
+    }
+  };
+
   const handleUploadQr = (event) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -44,11 +134,19 @@ export default function QRScannerPage() {
     setBookingInfo(null);
   };
 
+  useEffect(() => {
+    startCamera();
+
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1>QR Check-In System</h1>
-        <p>Scan QR codes to verify student check-ins</p>
+        <h1>QR Scanner</h1>
+        <p>Validate campus bookings through camera scan, upload, or manual booking ID entry.</p>
       </header>
 
       <section className={styles.layout}>
@@ -62,16 +160,34 @@ export default function QRScannerPage() {
 
             <div className={styles.cameraFeed}>
               <div className={styles.cameraInner}>
-                <Camera size={42} />
-                <p>Camera Feed</p>
-                <span>Enable camera access</span>
-                <div className={styles.scanFrame}>
-                  <div className={styles.scanLine} />
-                </div>
+                {cameraState === 'live' ? (
+                  <div className={styles.videoShell}>
+                    <video ref={videoRef} className={styles.cameraVideo} autoPlay muted playsInline />
+                    <div className={styles.scanFrame}>
+                      <div className={styles.scanLine} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Camera size={42} />
+                    <p>Camera Feed</p>
+                    <span>{cameraMessage}</span>
+                    <div className={styles.scanFrame}>
+                      <div className={styles.scanLine} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            <p className={styles.helper}>Point the camera at the QR code to scan automatically.</p>
+            <div className={styles.cameraFooter}>
+              <p className={styles.helper}>{cameraMessage}</p>
+              {cameraState !== 'live' ? (
+                <Button variant="secondary" size="sm" onClick={startCamera}>
+                  Retry Camera
+                </Button>
+              ) : null}
+            </div>
           </Card>
 
           <Card className={styles.panel}>
@@ -84,10 +200,18 @@ export default function QRScannerPage() {
                   Upload QR Code Image
                 </span>
               </label>
-              <Button variant="secondary" onClick={() => handleScanCode('12345678')}>
-                <Camera size={16} />
-                Enter Booking ID Manually
-              </Button>
+              <div className={styles.manualEntry}>
+                <input
+                  type="text"
+                  className={styles.manualInput}
+                  value={manualCode}
+                  onChange={(event) => setManualCode(event.target.value)}
+                  placeholder="Enter booking ID"
+                />
+                <Button variant="secondary" icon={Camera} onClick={() => handleScanCode(manualCode || 'invalid')}>
+                  Verify ID
+                </Button>
+              </div>
             </div>
           </Card>
 

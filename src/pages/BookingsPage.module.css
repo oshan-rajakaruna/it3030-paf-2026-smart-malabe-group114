@@ -251,6 +251,442 @@
   padding: 1rem;
 }
 
+.adminGrid,
+.adminInsightStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.adminTabBar,
+.adminTableActionsHead,
+.pieLegend,
+.pieLegendItem,
+.barLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.adminGrid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+}
+
+.adminTabBar {
+  flex-wrap: wrap;
+  padding: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  background: rgba(7, 17, 31, 0.42);
+}
+
+.adminTabButton {
+  min-height: 3rem;
+  padding: 0 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  transition:
+    transform var(--transition-base),
+    color var(--transition-base),
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.adminTabButton:hover {
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+.adminTabButtonActive {
+  background: linear-gradient(135deg, rgba(124, 140, 255, 0.2), rgba(34, 211, 238, 0.18));
+  border-color: rgba(124, 140, 255, 0.28);
+  color: var(--text);
+}
+
+.adminAnalyticsGrid,
+.chartStack,
+.pieChartLayout,
+.adminScannerLayout,
+.adminScannerColumn,
+.adminScannerActions,
+.adminScannerInfoList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.adminAnalyticsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.adminScannerLayout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.adminPrimaryCell {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.adminPrimaryCell span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.adminRowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.adminReviewButton {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.adminReviewButton:hover {
+  color: #67e8f9;
+}
+
+.adminActionState {
+  color: var(--text-muted);
+}
+
+.adminStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.adminStatusApproved {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: #86efac;
+}
+
+.adminStatusPending {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #fcd34d;
+}
+
+.adminStatusRejected {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fca5a5;
+}
+
+.adminScannerInput {
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.42);
+  color: var(--text);
+}
+
+.adminVerifyButton {
+  min-height: 3.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.52);
+  color: var(--text);
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.adminVerifyButton:hover {
+  border-color: rgba(124, 140, 255, 0.28);
+}
+
+.adminScannerTestCard {
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.adminScannerInfoRow,
+.adminCheckinStat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.adminScannerInfoRow span,
+.adminScannerMuted,
+.adminCheckinStat span {
+  color: var(--text-muted);
+}
+
+.adminCheckinStatsCompact {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.adminCheckinStat {
+  padding: 0.2rem 0;
+}
+
+.adminCheckinValid {
+  color: var(--success);
+}
+
+.adminCheckinInvalid {
+  color: var(--danger);
+}
+
+.adminTableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  background: rgba(7, 17, 31, 0.26);
+}
+
+.adminTable {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.adminTable th,
+.adminTable td {
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  vertical-align: middle;
+}
+
+.adminTable th {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.adminTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.adminTable tbody tr:hover {
+  background: rgba(124, 140, 255, 0.05);
+}
+
+.adminTable td {
+  font-size: 0.94rem;
+}
+
+.adminTableRowPending {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent 42%);
+}
+
+.adminTableRowProcessing {
+  opacity: 0.8;
+}
+
+.adminTableSkeleton {
+  height: 2.9rem;
+  border-radius: 14px;
+}
+
+.adminEmptyState {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.adminInsightCard {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.adminInsightCard strong {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.adminInsightCard span,
+.adminRolePill {
+  color: var(--text-muted);
+}
+
+.barRow {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.barLabelRow {
+  justify-content: space-between;
+}
+
+.barTrack {
+  height: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.barFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.95), rgba(124, 140, 255, 0.95));
+}
+
+.lineChartWrap {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lineChart {
+  width: 100%;
+  height: 180px;
+}
+
+.lineChartLabels {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.pieChartLayout {
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+}
+
+.pieChart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 18px rgba(7, 17, 31, 0.72);
+}
+
+.pieLegend {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.pieLegendItem {
+  align-items: flex-start;
+}
+
+.pieLegendItem div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.pieLegendItem span {
+  color: var(--text-muted);
+}
+
+.pieLegendDot {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.25rem;
+  border-radius: 999px;
+}
+
+.rejectForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.rejectForm p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.reviewModalBody,
+.reviewModeSwitch {
+  display: grid;
+  gap: 1rem;
+}
+
+.reviewModeSwitch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reviewModeButton {
+  min-height: 3.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(226, 232, 240, 0.12);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.reviewModeApproveActive {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.92));
+  border-color: rgba(34, 197, 94, 0.42);
+  color: white;
+}
+
+.reviewModeRejectActive {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.96), rgba(239, 68, 68, 0.94));
+  border-color: rgba(248, 113, 113, 0.4);
+  color: white;
+}
+
+.reviewReasonInput {
+  width: 100%;
+  min-height: 132px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  color: var(--text);
+  resize: vertical;
+}
+
+.reviewNotice {
+  padding: 1rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  font-size: 0.98rem;
+}
+
+.reviewNoticeApprove {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.24);
+  color: #16a34a;
+}
+
+.reviewNoticeReject {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.24);
+  color: #dc2626;
+}
+
 .notificationRow p,
 .readState,
 .resourceCard p,
@@ -665,11 +1101,16 @@
   font-size: 1.15rem;
 }
 
+.tipCardBody {
+  gap: 0.55rem;
+}
+
 .tipList {
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--text-muted);
+  gap: 0.7rem;
 }
 
 .tipList li {
@@ -1165,6 +1606,9 @@
   .statsGrid,
   .overviewGrid,
   .createGrid,
+  .adminGrid,
+  .adminAnalyticsGrid,
+  .adminScannerLayout,
   .createBookingLayout,
   .filterGrid,
   .detailFields,
@@ -1191,6 +1635,9 @@
   .statsGrid,
   .overviewGrid,
   .createGrid,
+  .adminGrid,
+  .adminAnalyticsGrid,
+  .adminScannerLayout,
   .createBookingLayout,
   .createBookingSplit,
   .filterGrid,
@@ -1222,7 +1669,21 @@
     display: grid;
   }
 
+  .adminRowActions {
+    justify-content: flex-start;
+  }
+
+  .adminTabBar,
+  .pieChartLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .adminTabBar {
+    display: grid;
+  }
+
   .pageNavLink,
+  .adminTabButton,
   .modeButton {
     width: 100%;
   }
