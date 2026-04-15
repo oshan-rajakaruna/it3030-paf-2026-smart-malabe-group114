@@ -7,9 +7,7 @@ import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.model.Ticket;
 import com.smartcampus.model.enums.TicketStatus;
 import com.smartcampus.repository.TicketRepository;
-import org.springframework.stereotype.Service;
 
-@Service
 public class TicketService {
 
     private final TicketRepository ticketRepository;
