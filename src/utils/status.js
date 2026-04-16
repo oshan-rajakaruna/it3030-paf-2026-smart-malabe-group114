@@ -6,7 +6,7 @@ const STATUS_TONES = {
   PENDING: 'warning',
   IN_PROGRESS: 'secondary',
   LIMITED: 'secondary',
-  CANCELLED: 'neutral',
+  CANCELLED: 'danger',
   CLOSED: 'neutral',
   REJECTED: 'danger',
   OUT_OF_SERVICE: 'danger',

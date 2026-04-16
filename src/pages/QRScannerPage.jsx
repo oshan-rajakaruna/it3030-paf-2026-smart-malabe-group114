@@ -9,6 +9,7 @@ export default function QRScannerPage() {
   const [scannedCode, setScannedCode] = useState(null);
   const [scannerState, setScannerState] = useState(null);
   const [bookingInfo, setBookingInfo] = useState(null);
+  const [checkInState, setCheckInState] = useState('idle');
   const [manualCode, setManualCode] = useState('');
   const [cameraState, setCameraState] = useState('idle');
   const [cameraMessage, setCameraMessage] = useState('Enable camera access to start scanning automatically.');
@@ -34,6 +35,7 @@ export default function QRScannerPage() {
 
   const handleScanCode = (code) => {
     setScannedCode(code);
+    setCheckInState('idle');
     const valid = /^[0-9]{8}$/.test(code);
     setScannerState(valid ? 'valid' : 'invalid');
 
@@ -132,6 +134,11 @@ export default function QRScannerPage() {
     setScannedCode(null);
     setScannerState(null);
     setBookingInfo(null);
+    setCheckInState('idle');
+  };
+
+  const handleConfirmCheckIn = () => {
+    setCheckInState('confirmed');
   };
 
   useEffect(() => {
@@ -288,25 +295,45 @@ export default function QRScannerPage() {
                   <span className={styles.statusPill}>{bookingInfo.status}</span>
                 </div>
 
-                <Button>Confirm Check-In</Button>
+                <Button onClick={handleConfirmCheckIn}>Confirm Check-In</Button>
               </Card>
 
-              <Card className={styles.confirmCard}>
-                <h4>Check-In Confirmed</h4>
-                <p>
-                  {bookingInfo.student} has successfully checked in to {bookingInfo.resource}
-                </p>
-                <div className={styles.infoStack}>
-                  <div className={styles.statRow}>
-                    <span>Check-in Time</span>
-                    <strong>2:00 PM</strong>
+              {checkInState === 'confirmed' ? (
+                <Card className={styles.confirmCard}>
+                  <div className={styles.confirmHero}>
+                    <div className={styles.confirmOrb}>
+                      <CheckCircle2 size={30} />
+                    </div>
+                    <div>
+                      <span className={styles.confirmEyebrow}>Campus Access Granted</span>
+                      <h4>Check-In Confirmed</h4>
+                      <p>
+                        {bookingInfo.student} is now marked present for {bookingInfo.resource}.
+                      </p>
+                    </div>
                   </div>
-                  <div className={styles.statRow}>
-                    <span>Remaining Time</span>
-                    <strong>2 hours</strong>
+
+                  <div className={styles.confirmGrid}>
+                    <div className={styles.confirmTile}>
+                      <span>Check-in Time</span>
+                      <strong>2:00 PM</strong>
+                    </div>
+                    <div className={styles.confirmTile}>
+                      <span>Remaining Time</span>
+                      <strong>2 hours</strong>
+                    </div>
+                    <div className={styles.confirmTile}>
+                      <span>Access Zone</span>
+                      <strong>Level 3 Entry</strong>
+                    </div>
                   </div>
-                </div>
-              </Card>
+
+                  <div className={styles.confirmRibbon}>
+                    <span className={styles.confirmPulse} />
+                    Entry log synced with today&apos;s attendance stream.
+                  </div>
+                </Card>
+              ) : null}
             </>
           ) : null}
 
