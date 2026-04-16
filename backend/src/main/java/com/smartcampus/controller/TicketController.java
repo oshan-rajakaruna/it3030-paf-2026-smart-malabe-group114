@@ -5,6 +5,7 @@ import java.util.List;
 import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketResponse;
+import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.service.TicketService;
 import org.springframework.http.HttpStatus;
@@ -57,5 +58,13 @@ public class TicketController {
         @RequestBody AssignTechnicianRequest request
     ) {
         return ResponseEntity.ok(ticketService.assignTechnician(id, request));
+    }
+
+    @PutMapping("/{id}/resolution")
+    public ResponseEntity<TicketResponse> updateResolutionNotes(
+        @PathVariable Long id,
+        @RequestBody UpdateResolutionRequest request
+    ) {
+        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, request));
     }
 }
