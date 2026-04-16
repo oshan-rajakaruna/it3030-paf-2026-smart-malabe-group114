@@ -1176,9 +1176,26 @@
 .invalidResult { color: var(--danger); }
 
 .submitMessage {
+  padding: 0.9rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.submitMessageSuccess {
+  background: rgba(8, 145, 178, 0.12);
+  border-color: rgba(8, 145, 178, 0.18);
   color: var(--secondary);
-  font-size: 0.9rem;
-  font-weight: 600;
+}
+
+.submitMessageError {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.24);
+  color: #fca5a5;
 }
 
 .bookingCard h3 { font-size: 1.1rem; }
@@ -1581,6 +1598,18 @@
   color: var(--primary-strong);
 }
 
+:global(:root:not([data-theme='dark'])) .submitMessageSuccess {
+  background: rgba(8, 145, 178, 0.1);
+  border-color: rgba(8, 145, 178, 0.18);
+  color: #0f766e;
+}
+
+:global(:root:not([data-theme='dark'])) .submitMessageError {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.16);
+  color: #b91c1c;
+}
+
 :global(:root:not([data-theme='dark'])) .bookingNoticeSuccess {
   color: #166534;
 }
@@ -1600,6 +1629,95 @@
 :global(:root:not([data-theme='dark'])) .cameraFrame p,
 :global(:root:not([data-theme='dark'])) .cameraFrame span {
   color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabBar {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButton {
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButton:hover {
+  color: var(--text);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(8, 145, 178, 0.1));
+  border-color: rgba(79, 70, 229, 0.16);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTableWrap {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable th {
+  background: rgba(248, 250, 252, 0.94);
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable td {
+  color: var(--text);
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable tbody tr:hover {
+  background: rgba(79, 70, 229, 0.04);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTableRowPending {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.09), rgba(255, 255, 255, 0.9) 42%);
+}
+
+:global(:root:not([data-theme='dark'])) .adminPrimaryCell span,
+:global(:root:not([data-theme='dark'])) .adminActionState,
+:global(:root:not([data-theme='dark'])) .adminEmptyState,
+:global(:root:not([data-theme='dark'])) .lineChartLabels,
+:global(:root:not([data-theme='dark'])) .pieLegendItem span,
+:global(:root:not([data-theme='dark'])) .adminInsightCard span,
+:global(:root:not([data-theme='dark'])) .adminRolePill {
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .barTrack {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+:global(:root:not([data-theme='dark'])) .pieChart {
+  box-shadow: inset 0 0 0 18px rgba(255, 255, 255, 0.96);
+}
+
+:global(:root:not([data-theme='dark'])) .reviewModeButton {
+  background: rgba(248, 250, 252, 0.92);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .reviewReasonInput,
+:global(:root:not([data-theme='dark'])) .adminScannerInput {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminVerifyButton {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminScannerTestCard {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 235, 0.96), rgba(255, 255, 255, 0.92)),
+    var(--surface);
+  border-color: rgba(245, 158, 11, 0.24);
 }
 
 @media (max-width: 1180px) {

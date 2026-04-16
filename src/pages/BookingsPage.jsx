@@ -27,7 +27,6 @@ import QRScannerPage from './QRScannerPage';
 import SearchBar from '../components/ui/SearchBar';
 import SkeletonBlock from '../components/ui/SkeletonBlock';
 import StatusBadge from '../components/ui/StatusBadge';
-import { mockBookings } from '../data/bookings';
 import { mockFacilities } from '../data/facilities';
 import { mockNotifications } from '../data/notifications';
 import { useAuth } from '../hooks/useAuth';
@@ -178,6 +177,58 @@ function getDurationHours(startTime, endTime) {
   return ((toMinutes(endTime) - toMinutes(startTime)) / 60).toFixed(1).replace('.0', '');
 }
 
+function mapBackendResource(resource) {
+  return {
+    id: String(resource.id),
+    name: resource.name,
+    type: resource.type ?? 'Resource',
+    location: resource.location ?? 'Campus resource hub',
+    capacity: resource.capacity ?? 0,
+    status: resource.status ?? 'AVAILABLE',
+    description: resource.description ?? '',
+  };
+}
+
+function mapBackendBooking(booking, resources, currentUser, isAdminView) {
+  const facility = resources.find(
+    (resource) => resource.id === String(booking.resourceId)
+  );
+
+  const requesterId = booking.userId
+    ? `user-${String(booking.userId).padStart(3, '0')}`
+    : currentUser.id;
+
+  return {
+    id: booking.id ? `bk-${booking.id}` : `bk-${Date.now()}`,
+
+    facilityId: String(booking.resourceId),
+    facilityName: facility?.name ?? `Resource ${booking.resourceId}`,
+
+    requesterId,
+    requesterName:
+      !isAdminView &&
+      Number(booking.userId) === extractNumericId(currentUser.id, 1)
+        ? currentUser.name
+        : `User ${booking.userId}`,
+
+    // 🔥 FIXED MAPPING
+    date: booking.bookingDate,
+    startTime: booking.startTime?.slice(0, 5),
+    endTime: booking.endTime?.slice(0, 5),
+
+    purpose: booking.description ?? "Booking request",
+    attendees: Number(booking.attendeesCount ?? 0),
+
+    status: booking.status ?? "PENDING",
+    adminNote: booking.rejectionReason ?? "",
+  };
+}
+
+function extractNumericId(value, fallback = 1) {
+  const digits = String(value ?? '').match(/\d+/)?.[0];
+  return digits ? Number(digits) : fallback;
+}
+
 function inferFloor(location) {
   if (location.includes('Block A')) return 'Floor 1';
   if (location.includes('Block B')) return 'Floor 2';
@@ -209,9 +260,7 @@ export default function BookingsPage() {
   const student = currentUser ?? { id: 'user-001', name: 'Student', department: 'Smart Campus' };
   const isAdmin = student.role === ROLES.ADMIN;
 
-  const [bookings, setBookings] = useState(
-    isAdmin ? mockBookings : mockBookings.filter((booking) => booking.requesterId === student.id),
-  );
+  const [bookings, setBookings] = useState([]);
   const [activeSection, setActiveSection] = useState(PAGE_SECTIONS.OVERVIEW);
   const [calendarMode, setCalendarMode] = useState('Weekly');
   const [calendarAnchor, setCalendarAnchor] = useState(new Date('2026-04-15T00:00:00'));
@@ -226,6 +275,7 @@ export default function BookingsPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [notifications, setNotifications] = useState(mockNotifications);
   const [createViewMode, setCreateViewMode] = useState(CREATE_VIEW_MODES.LIST);
+  const [backendResources, setBackendResources] = useState([]);
   const [adminTab, setAdminTab] = useState(ADMIN_TABS.ALL);
   const [processingBookingId, setProcessingBookingId] = useState(null);
   const [processingAction, setProcessingAction] = useState('');
@@ -239,8 +289,50 @@ export default function BookingsPage() {
   }, []);
 
   useEffect(() => {
-    setBookings(isAdmin ? mockBookings : mockBookings.filter((booking) => booking.requesterId === student.id));
-  }, [isAdmin, student.id]);
+    const loadResources = async () => {
+      try {
+        const response = await fetch('http://localhost:8081/api/resources');
+        if (!response.ok) {
+          throw new Error('Failed to load resources');
+        }
+
+        const resources = await response.json();
+        setBackendResources(resources.map(mapBackendResource));
+      } catch (error) {
+        console.error('Failed to load backend resources:', error);
+        setBackendResources([]);
+      }
+    };
+
+    loadResources();
+  }, []);
+
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        const response = await fetch('http://localhost:8081/api/bookings');
+        if (!response.ok) {
+          throw new Error('Failed to load bookings');
+        }
+
+        const data = await response.json();
+        const resourcesForMapping = backendResources.length ? backendResources : mockFacilities;
+        const mappedBookings = data.map((booking) =>
+          mapBackendBooking(booking, resourcesForMapping, student, isAdmin),
+        );
+        const visibleBookings = isAdmin
+          ? mappedBookings
+          : mappedBookings.filter((booking) => booking.requesterId === student.id);
+
+        setBookings(visibleBookings);
+      } catch (error) {
+        console.error('Failed to load backend bookings:', error);
+        setBookings([]);
+      }
+    };
+
+    loadBookings();
+  }, [backendResources, isAdmin, student.id, student.name]);
 
   useEffect(() => {
     if (!qrBooking) {
@@ -354,10 +446,12 @@ export default function BookingsPage() {
     setActiveSection(PAGE_SECTIONS.BOOKINGS);
   };
 
-  const handleCreateBooking = (event) => {
+  const handleCreateBooking = async (event) => {
     event.preventDefault();
 
-    const facility = mockFacilities.find((item) => item.id === form.facilityId);
+    const facility =
+      backendResources.find((item) => item.id === form.facilityId) ??
+      mockFacilities.find((item) => item.id === form.facilityId);
     if (!facility) return;
 
     const hasConflict = bookings.some((booking) => {
@@ -373,26 +467,67 @@ export default function BookingsPage() {
       return;
     }
 
-    const nextBooking = {
-      id: `bk-${Date.now()}`,
-      facilityId: facility.id,
-      facilityName: facility.name,
-      requesterId: student.id,
-      requesterName: student.name,
-      date: form.date,
-      startTime: form.startTime,
-      endTime: form.endTime,
-      purpose: form.purpose,
-      attendees: Number(form.attendees || 0),
-      status: 'PENDING',
-      adminNote: 'Student request captured and queued for approval.',
-    };
+    const bookingPayload = {
+  userId: extractNumericId(student.id, 1),
+  resourceId: Number(facility.id),
 
-    setBookings((current) => [nextBooking, ...current]);
-    setSubmitMessage('Booking request created and added to My Bookings as a pending item.');
-    setCreateViewMode(CREATE_VIEW_MODES.LIST);
-    setForm(initialForm);
-    setActiveSection(PAGE_SECTIONS.CREATE);
+  bookingDate: form.date,        // ✅ FIX
+  startTime: form.startTime,
+  endTime: form.endTime,
+
+  description: form.purpose,     // ✅ FIX
+  attendeesCount: Number(form.attendees), // ✅ FIX
+};
+
+    try {
+      const response = await fetch('http://localhost:8081/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          errorText?.trim()
+            ? `Backend error ${response.status}: ${errorText}`
+            : `Backend error ${response.status}: ${response.statusText || 'Request failed'}`,
+        );
+      }
+
+      const savedBooking = await response.json();
+
+      const nextBooking = {
+        id: savedBooking.id ? `bk-${savedBooking.id}` : `bk-${Date.now()}`,
+        facilityId: facility.id,
+        facilityName: facility.name,
+        requesterId: student.id,
+        requesterName: student.name,
+        date: savedBooking.bookingDate ?? form.date,
+startTime: savedBooking.startTime?.slice(0, 5) ?? form.startTime,
+endTime: savedBooking.endTime?.slice(0, 5) ?? form.endTime,
+purpose: savedBooking.description ?? form.purpose,
+attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
+status: savedBooking.status ?? 'PENDING',
+        adminNote: 'Student request captured and queued for approval.',
+      };
+
+      setBookings((current) => [nextBooking, ...current]);
+      setSubmitMessage('Booking created and synced with the backend successfully.');
+      setCreateViewMode(CREATE_VIEW_MODES.LIST);
+      setForm(initialForm);
+      setActiveSection(PAGE_SECTIONS.CREATE);
+    } catch (error) {
+      console.error('Booking creation failed:', error);
+      if (error instanceof TypeError) {
+        setSubmitMessage('Could not reach the backend at http://localhost:8081. Check whether the server is running and accessible.');
+        return;
+      }
+
+      setSubmitMessage(error.message || 'Booking creation failed due to an unexpected backend error.');
+    }
   };
 
   const handleBookingDrop = (event, nextDate) => {
@@ -1620,7 +1755,14 @@ export default function BookingsPage() {
   );
 
   const renderCreateView = () => {
+    const createResources = backendResources.length
+      ? backendResources.filter((resource) => resource.status !== 'MAINTENANCE')
+      : [];
+    const selectedFacility =
+      createResources.find((facility) => facility.id === form.facilityId) ??
+      mockFacilities.find((facility) => facility.id === form.facilityId);
     const durationHours = Math.max(1, Math.round((toMinutes(form.endTime) - toMinutes(form.startTime)) / 60) || 2);
+    const submitMessageIsError = /could not|backend error|failed|unexpected/i.test(submitMessage);
 
     const handleDurationChange = (event) => {
       const nextDuration = Math.max(1, Number(event.target.value || 1));
@@ -1651,8 +1793,7 @@ export default function BookingsPage() {
                 <span>Select Resource</span>
                 <select name="facilityId" className={styles.createSelect} value={form.facilityId} onChange={handleFormChange} required>
                   <option value="">Choose a resource...</option>
-                  {mockFacilities
-                    .filter((facility) => facility.status !== 'OUT_OF_SERVICE')
+                  {createResources
                     .map((facility) => (
                       <option key={facility.id} value={facility.id}>
                         {facility.name}
@@ -1678,6 +1819,33 @@ export default function BookingsPage() {
                 </label>
               </div>
 
+              <div className={styles.createBookingSplit}>
+                <label className={styles.formField}>
+                  <span>Attendees</span>
+                  <input
+                    type="number"
+                    name="attendees"
+                    min="1"
+                    className={styles.createInput}
+                    value={form.attendees}
+                    onChange={handleFormChange}
+                    placeholder="Enter attendee count"
+                    required
+                  />
+                </label>
+
+                <label className={styles.formField}>
+                  <span>Place</span>
+                  <input
+                    type="text"
+                    className={styles.createInput}
+                    value={selectedFacility?.location ?? ''}
+                    placeholder="Select a resource to see the location"
+                    readOnly
+                  />
+                </label>
+              </div>
+
               <label className={styles.formField}>
                 <span>Description (Optional)</span>
                 <textarea
@@ -1696,7 +1864,16 @@ export default function BookingsPage() {
                 </p>
               ) : null}
 
-              {submitMessage ? <p className={styles.submitMessage}>{submitMessage}</p> : null}
+              {submitMessage ? (
+                <p
+                  className={joinClassNames(
+                    styles.submitMessage,
+                    submitMessageIsError ? styles.submitMessageError : styles.submitMessageSuccess,
+                  )}
+                >
+                  {submitMessage}
+                </p>
+              ) : null}
 
               <Button type="submit" size="lg" fullWidth>
                 Request Booking
