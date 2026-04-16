@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketResponse;
+import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.model.Ticket;
 import com.smartcampus.model.enums.TicketStatus;
 import com.smartcampus.repository.TicketRepository;
@@ -45,6 +46,16 @@ public class TicketService {
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         return mapToResponse(ticket);
+    }
+
+    public TicketResponse updateTicketStatus(Long id, UpdateTicketStatusRequest request) {
+        Ticket ticket = ticketRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+
+        ticket.setStatus(request.getStatus());
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+        return mapToResponse(updatedTicket);
     }
 
     private TicketResponse mapToResponse(Ticket ticket) {

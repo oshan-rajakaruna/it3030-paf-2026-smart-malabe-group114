@@ -4,12 +4,14 @@ import java.util.List;
 
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketResponse;
+import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.service.TicketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,5 +40,13 @@ public class TicketController {
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<TicketResponse> updateTicketStatus(
+        @PathVariable Long id,
+        @RequestBody UpdateTicketStatusRequest request
+    ) {
+        return ResponseEntity.ok(ticketService.updateTicketStatus(id, request));
     }
 }

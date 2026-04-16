@@ -18,6 +18,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/test").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tickets", "/api/tickets/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/tickets").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/tickets/*/status", "/api/tickets/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());
