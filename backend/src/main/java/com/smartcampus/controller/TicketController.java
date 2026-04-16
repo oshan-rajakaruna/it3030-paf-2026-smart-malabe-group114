@@ -2,8 +2,10 @@ package com.smartcampus.controller;
 
 import java.util.List;
 
+import com.smartcampus.dto.ticket.AddTicketCommentRequest;
 import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
+import com.smartcampus.dto.ticket.TicketCommentResponse;
 import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
@@ -66,5 +68,14 @@ public class TicketController {
         @RequestBody UpdateResolutionRequest request
     ) {
         return ResponseEntity.ok(ticketService.updateResolutionNotes(id, request));
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<TicketCommentResponse> addComment(
+        @PathVariable Long id,
+        @RequestBody AddTicketCommentRequest request
+    ) {
+        TicketCommentResponse response = ticketService.addComment(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
