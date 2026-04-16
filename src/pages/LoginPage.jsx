@@ -5,27 +5,57 @@ import axios from 'axios';
 import styles from './LoginPage.module.css';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { useAuth } from '../hooks/useAuth';
-import { resolveRoleAndPath } from '../utils/authRouting';
 import { createPendingSignup } from '../utils/adminStorage';
 import { ROLES } from '../utils/constants';
+import GoogleMfaQrSetup from '../components/auth/GoogleMfaQrSetup';
+import logoImage from '../assets/logo.jpeg';
 
 const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
 const LOGIN_API_URL = 'http://localhost:8080/api/auth/login';
+const OAUTH_SIGNUP_API_URL = 'http://localhost:8080/api/auth/oauth/signup';
+const OAUTH_LOGIN_API_URL = 'http://localhost:8080/api/auth/oauth/login';
+const OAUTH_VERIFY_OTP_API_URL = 'http://localhost:8080/api/auth/oauth/verify-otp';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [toastMessage, setToastMessage] = useState('Done');
   const [toastVisible, setToastVisible] = useState(false);
   const [formError, setFormError] = useState('');
+  const [googleChallenge, setGoogleChallenge] = useState(null);
+  const [googleOtpCode, setGoogleOtpCode] = useState('');
+  const [isVerifyingGoogleOtp, setIsVerifyingGoogleOtp] = useState(false);
 
   const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
-  const microsoftAuthUrl = 'http://localhost:8080/oauth2/authorization/microsoft';
 
   const toastTimerRef = useRef(null);
   const socialTimerRef = useRef(null);
+
+  const completeGoogleSession = (verifyData, fallbackName, fallbackEmail, provider = 'google') => {
+    const backendRole = (verifyData?.role || 'USER').toUpperCase();
+    const didLogin = login(backendRole, verifyData?.id, {
+      id: verifyData?.id,
+      name: verifyData?.name || fallbackName || fallbackEmail.split('@')[0],
+      email: verifyData?.email || fallbackEmail,
+      role: backendRole,
+      provider,
+    });
+
+    if (!didLogin) {
+      setFormError('Unable to start session after Google verification.');
+      return false;
+    }
+
+    const targetPath = backendRole === ROLES.ADMIN ? ROUTE_PATHS.ADMIN : ROUTE_PATHS.DASHBOARD;
+    setGoogleChallenge(null);
+    setGoogleOtpCode('');
+    setTimeout(() => {
+      navigate(targetPath, { replace: true });
+    }, 0);
+    return true;
+  };
 
   useEffect(() => {
     return () => {
@@ -45,58 +75,113 @@ export default function LoginPage() {
     const oauthName = params.get('name');
 
     if (oauthProvider && oauthEmail) {
-      let signupIntent = null;
-      try {
-        const raw = localStorage.getItem(SIGNUP_INTENT_KEY);
-        signupIntent = raw ? JSON.parse(raw) : null;
-      } catch (error) {
-        signupIntent = null;
-      }
+      const processGoogleOAuth = async () => {
+        try {
+          const provider = oauthProvider.trim().toLowerCase();
+          if (provider !== 'google') {
+            setFormError('Only Google OAuth is supported right now.');
+            return;
+          }
 
-      const normalizedEmail = oauthEmail.trim().toLowerCase();
-      const normalizedName = oauthName?.trim();
-      const isFreshIntent =
-        typeof signupIntent?.createdAt === 'number' ? Date.now() - signupIntent.createdAt < 20 * 60 * 1000 : false;
+          const normalizedEmail = oauthEmail.trim().toLowerCase();
+          const normalizedName = oauthName?.trim();
 
-      if (signupIntent?.provider === oauthProvider && signupIntent?.role && signupIntent?.name && isFreshIntent) {
-        logout();
-        localStorage.removeItem(SIGNUP_INTENT_KEY);
-        const request = createPendingSignup({
-          mode: 'oauth',
-          provider: oauthProvider,
-          role: signupIntent.role,
-          name: signupIntent.name,
-          userId: signupIntent.userId || '',
-          email: normalizedEmail,
-          submittedAt: new Date().toISOString(),
-        });
-        window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
-        setTimeout(() => {
-          navigate(ROUTE_PATHS.SIGNUP_PENDING, { replace: true, state: { signupId: request.id } });
-        }, 0);
-        return;
-      }
-      localStorage.removeItem(SIGNUP_INTENT_KEY);
+          let signupIntent = null;
+          try {
+            const raw = localStorage.getItem(SIGNUP_INTENT_KEY);
+            signupIntent = raw ? JSON.parse(raw) : null;
+          } catch (error) {
+            signupIntent = null;
+          }
 
-      localStorage.setItem('oauth_last_email', normalizedEmail);
-      const { role, path } = resolveRoleAndPath(normalizedEmail);
-      const didLogin = login(role, undefined, {
-        name: normalizedName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-        provider: oauthProvider,
-      });
-      if (!didLogin) {
-        setFormError('Unable to map your Google account to an app role.');
-        return;
-      }
+          const isFreshIntent =
+            typeof signupIntent?.createdAt === 'number' ? Date.now() - signupIntent.createdAt < 20 * 60 * 1000 : false;
 
-      // Clear OAuth params and defer navigation to ensure auth state is committed.
-      window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
-      setTimeout(() => {
-        navigate(path, { replace: true });
-      }, 0);
+          if (signupIntent?.provider === provider && signupIntent?.role && signupIntent?.name && signupIntent?.userId && isFreshIntent) {
+            const signupPayload = {
+              provider,
+              role: signupIntent.role,
+              name: signupIntent.name,
+              idNumber: signupIntent.userId,
+              email: normalizedEmail,
+            };
+            console.log('Sending Google OAuth signup request', signupPayload);
+            const { data: signupData } = await axios.post(OAUTH_SIGNUP_API_URL, signupPayload, {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            localStorage.removeItem(SIGNUP_INTENT_KEY);
+
+            if ((signupData?.status || '').toUpperCase() === 'PENDING') {
+              const request = createPendingSignup({
+                mode: 'oauth',
+                provider,
+                role: signupData?.role || signupIntent.role,
+                name: signupData?.name || signupIntent.name,
+                userId: signupData?.idNumber || signupIntent.userId,
+                email: signupData?.email || normalizedEmail,
+                backendUserId: signupData?.id || null,
+                submittedAt: new Date().toISOString(),
+              });
+
+              window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+              setTimeout(() => {
+                navigate(ROUTE_PATHS.SIGNUP_PENDING, { replace: true, state: { signupId: request.id } });
+              }, 0);
+              return;
+            }
+          } else {
+            localStorage.removeItem(SIGNUP_INTENT_KEY);
+          }
+
+          console.log('Sending Google OAuth login challenge request', { email: normalizedEmail, provider });
+          const { data: challenge } = await axios.post(
+            OAUTH_LOGIN_API_URL,
+            {
+              email: normalizedEmail,
+              provider,
+              name: normalizedName || normalizedEmail.split('@')[0],
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+          if (!challenge?.mfaRequired) {
+            setFormError('Google MFA challenge was not returned. Please try again.');
+            window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+            return;
+          }
+
+          setGoogleChallenge({
+            email: normalizedEmail,
+            provider,
+            fallbackName: normalizedName || normalizedEmail.split('@')[0],
+            message: challenge?.message || 'Enter your Google Authenticator code.',
+            mfaSetupRequired: Boolean(challenge?.mfaSetupRequired),
+            otpAuthUrl: challenge?.otpAuthUrl || '',
+          });
+          setGoogleOtpCode('');
+          setFormError('');
+          window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+          return;
+        } catch (error) {
+          console.error('Google OAuth flow error', error);
+          const backendMessage = toFriendlyAuthError(error, 'Google sign-in failed. Please try again.');
+          setFormError(backendMessage);
+          window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+        }
+      };
+
+      void processGoogleOAuth();
+      return;
     }
-  }, [login, logout, navigate]);
+
+    // no-op when regular login page
+    return undefined;
+  }, [login, navigate]);
 
   const showToast = (message, duration = 3000) => {
     setToastMessage(message);
@@ -109,6 +194,61 @@ export default function LoginPage() {
     }, duration);
   };
 
+  const toFriendlyAuthError = (error, fallbackMessage) => {
+    const rawMessage = error?.response?.data?.message || error?.response?.data?.error || fallbackMessage;
+    if (!rawMessage) {
+      return fallbackMessage;
+    }
+
+    if (rawMessage.toLowerCase().includes('waiting for admin approval')) {
+      return 'Your Google account is pending admin approval. Please wait until an admin approves it.';
+    }
+
+    return rawMessage;
+  };
+
+  const handleVerifyGoogleOtp = async () => {
+    if (!googleChallenge?.email) {
+      setFormError('Google sign-in session expired. Please click Sign in with Google again.');
+      return;
+    }
+
+    const parsedCode = Number.parseInt(googleOtpCode.trim(), 10);
+    if (!Number.isInteger(parsedCode)) {
+      setFormError('Enter a valid 6-digit authenticator code.');
+      return;
+    }
+
+    setIsVerifyingGoogleOtp(true);
+    setFormError('');
+    try {
+      const { data: verifyData } = await axios.post(
+        OAUTH_VERIFY_OTP_API_URL,
+        {
+          email: googleChallenge.email,
+          code: parsedCode,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      completeGoogleSession(
+        verifyData,
+        googleChallenge.fallbackName,
+        googleChallenge.email,
+        googleChallenge.provider || 'google',
+      );
+    } catch (error) {
+      console.error('Google OTP verification error', error);
+      setFormError(toFriendlyAuthError(error, 'Invalid authenticator code. Please try again.'));
+    } finally {
+      setIsVerifyingGoogleOtp(false);
+    }
+  };
+
   const handleSignIn = async () => {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -118,6 +258,8 @@ export default function LoginPage() {
     }
 
     setFormError('');
+    setGoogleChallenge(null);
+    setGoogleOtpCode('');
     showToast('Authenticating...', 1500);
     console.log('Login button clicked');
     console.log('Sending login request to backend', LOGIN_API_URL, { email: normalizedEmail });
@@ -155,20 +297,16 @@ export default function LoginPage() {
       navigate(targetPath, { replace: true });
     } catch (error) {
       console.error('Login API error', error);
-      const backendMessage =
-        error?.response?.data?.message || error?.response?.data?.error || 'Login failed. Please try again.';
+      const backendMessage = toFriendlyAuthError(error, 'Login failed. Please try again.');
       setFormError(backendMessage);
     }
   };
 
   const handleGoogleSignIn = () => {
     setFormError('');
+    setGoogleChallenge(null);
+    setGoogleOtpCode('');
     window.location.href = googleAuthUrl;
-  };
-
-  const handleMicrosoftSignIn = () => {
-    setFormError('');
-    window.location.href = microsoftAuthUrl;
   };
 
   const handleSocial = (provider) => {
@@ -502,21 +640,9 @@ export default function LoginPage() {
 
           <div className={styles.leftContent}>
             <div className={styles.leftLogo}>
-              <div className={styles.leftLogoIcon}>
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="rgba(212,168,67,0.9)"
-                  strokeWidth="1.5"
-                >
-                  <path d="M12 2L3 7v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7L12 2z" />
-                  <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              <img className={styles.leftLogoImage} src={logoImage} alt="UniMatrix logo" />
               <div>
-                <div className={styles.leftLogoText}>CampusHub</div>
+                <div className={styles.leftLogoText}>UniMatrix</div>
                 <span className={styles.leftLogoSub}>Smart Operations Platform</span>
               </div>
             </div>
@@ -586,7 +712,12 @@ export default function LoginPage() {
               id="email"
               placeholder="you@sliit.lk"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (formError) {
+                  setFormError('');
+                }
+              }}
             />
           </div>
 
@@ -600,7 +731,12 @@ export default function LoginPage() {
               id="password"
               placeholder="Enter your password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (formError) {
+                  setFormError('');
+                }
+              }}
             />
           </div>
 
@@ -611,7 +747,7 @@ export default function LoginPage() {
           </div>
 
           <button type="button" className={styles.primaryBtn} onClick={handleSignIn}>
-            Sign in to CampusHub
+            Sign in to UniMatrix
           </button>
           {formError ? <p className={styles.formError}>{formError}</p> : null}
 
@@ -641,16 +777,43 @@ export default function LoginPage() {
               </svg>
               <span>Sign in with Google</span>
             </button>
-            <button type="button" className={styles.socialBtn} onClick={handleMicrosoftSignIn}>
-              <svg className={styles.socialIcon} viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="1" y="1" width="10.5" height="10.5" fill="#F25022" />
-                <rect x="12.5" y="1" width="10.5" height="10.5" fill="#7FBA00" />
-                <rect x="1" y="12.5" width="10.5" height="10.5" fill="#00A4EF" />
-                <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900" />
-              </svg>
-              <span>Sign in with Microsoft</span>
-            </button>
           </div>
+
+          {googleChallenge ? (
+            <div className={styles.mfaPanel}>
+              <p className={styles.mfaHint}>{googleChallenge.message}</p>
+              {googleChallenge.mfaSetupRequired && googleChallenge.otpAuthUrl ? (
+                <GoogleMfaQrSetup email={googleChallenge.email} otpAuthUrlFallback={googleChallenge.otpAuthUrl} />
+              ) : null}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="google-otp">
+                  Google Authenticator Code
+                </label>
+                <input
+                  className={styles.formInput}
+                  type="text"
+                  id="google-otp"
+                  inputMode="numeric"
+                  placeholder="Enter 6-digit code"
+                  value={googleOtpCode}
+                  onChange={(event) => {
+                    setGoogleOtpCode(event.target.value);
+                    if (formError) {
+                      setFormError('');
+                    }
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={handleVerifyGoogleOtp}
+                disabled={isVerifyingGoogleOtp}
+              >
+                {isVerifyingGoogleOtp ? 'Verifying...' : 'Verify Code & Sign In'}
+              </button>
+            </div>
+          ) : null}
 
           <p className={styles.legalText}>
             No account yet?{' '}

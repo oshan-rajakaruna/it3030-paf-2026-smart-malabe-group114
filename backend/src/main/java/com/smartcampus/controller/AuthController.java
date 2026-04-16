@@ -3,16 +3,23 @@ package com.smartcampus.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.smartcampus.dto.LoginRequest;
 import com.smartcampus.dto.LoginResponse;
+import com.smartcampus.dto.OAuthLoginChallengeResponse;
+import com.smartcampus.dto.OAuthLoginRequest;
+import com.smartcampus.dto.OAuthOtpVerifyRequest;
+import com.smartcampus.dto.OAuthSignupRequest;
 import com.smartcampus.dto.SignupRequest;
 import com.smartcampus.dto.SignupResponse;
+import com.smartcampus.dto.TwoFactorQrResponse;
 import com.smartcampus.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -41,5 +48,29 @@ public class AuthController {
   public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
     log.info("LOGIN API HIT - email={}", request.getEmail());
     return ResponseEntity.ok(authService.login(request));
+  }
+
+  @PostMapping("/oauth/signup")
+  public ResponseEntity<SignupResponse> signupWithGoogle(@Valid @RequestBody OAuthSignupRequest request) {
+    log.info("GOOGLE OAUTH SIGNUP API HIT - email={}, idNumber={}", request.getEmail(), request.getIdNumber());
+    return ResponseEntity.status(HttpStatus.CREATED).body(authService.signupWithGoogle(request));
+  }
+
+  @PostMapping("/oauth/login")
+  public ResponseEntity<OAuthLoginChallengeResponse> loginWithGoogle(@Valid @RequestBody OAuthLoginRequest request) {
+    log.info("GOOGLE OAUTH LOGIN API HIT - email={}", request.getEmail());
+    return ResponseEntity.ok(authService.initiateGoogleLogin(request));
+  }
+
+  @PostMapping("/oauth/verify-otp")
+  public ResponseEntity<LoginResponse> verifyGoogleOtp(@Valid @RequestBody OAuthOtpVerifyRequest request) {
+    log.info("GOOGLE OAUTH OTP VERIFY API HIT - email={}", request.getEmail());
+    return ResponseEntity.ok(authService.verifyGoogleOtp(request));
+  }
+
+  @GetMapping("/2fa/qr")
+  public ResponseEntity<TwoFactorQrResponse> getTwoFactorQr(@RequestParam("email") String email) {
+    log.info("2FA QR API HIT - email={}", email);
+    return ResponseEntity.ok(authService.getTwoFactorQr(email));
   }
 }

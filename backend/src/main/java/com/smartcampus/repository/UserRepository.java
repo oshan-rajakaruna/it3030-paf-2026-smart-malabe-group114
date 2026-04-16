@@ -11,6 +11,7 @@ import com.smartcampus.model.UserStatus;
 
 public interface UserRepository extends JpaRepository<User, Long> {
   Optional<User> findByEmailIgnoreCase(String email);
+  Optional<User> findByIdNumberIgnoreCase(String idNumber);
   boolean existsByEmailIgnoreCase(String email);
   boolean existsByIdNumber(String idNumber);
   boolean existsByIdNumberIgnoreCase(String idNumber);

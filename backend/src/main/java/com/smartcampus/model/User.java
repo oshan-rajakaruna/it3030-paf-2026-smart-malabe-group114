@@ -56,9 +56,18 @@ public class User {
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
+  @Column(name = "mfa_secret", length = 150)
+  private String mfaSecret;
+
+  @Column(name = "mfa_enabled", nullable = false)
+  private Boolean mfaEnabled;
+
   @PrePersist
   void onCreate() {
     createdAt = LocalDateTime.now();
+    if (mfaEnabled == null) {
+      mfaEnabled = Boolean.FALSE;
+    }
     if (email != null) {
       email = email.trim().toLowerCase();
     }

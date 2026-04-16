@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { ROLE_OPTIONS, ROLES } from '../utils/constants';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { createPendingSignup } from '../utils/adminStorage';
+import logoImage from '../assets/logo.jpeg';
 
 const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
 const SIGNUP_API_URL = 'http://localhost:8080/api/auth/signup';
@@ -26,7 +27,6 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
-  const microsoftAuthUrl = 'http://localhost:8080/oauth2/authorization/microsoft';
 
   const toastTimerRef = useRef(null);
 
@@ -153,28 +153,30 @@ export default function SignupPage() {
     }
   };
 
-  const handleSocialSignup = (provider) => {
+  const handleSocialSignup = () => {
     const normalizedName = name.trim();
     const normalizedId = userId.trim();
+    const resolvedRole = resolveRoleFromId(normalizedId);
 
-    if (!role || !normalizedName) {
-      setFormError('Role and name are required before social signup.');
+    if (!normalizedName || !normalizedId) {
+      setFormError('Name and ID are required before Google signup.');
       return;
     }
 
     setFormError('');
+    setRole(resolvedRole);
     localStorage.setItem(
       SIGNUP_INTENT_KEY,
       JSON.stringify({
-        provider,
-        role,
+        provider: 'google',
+        role: resolvedRole,
         name: normalizedName,
         userId: normalizedId,
         createdAt: Date.now(),
       }),
     );
 
-    window.location.href = provider === 'google' ? googleAuthUrl : microsoftAuthUrl;
+    window.location.href = googleAuthUrl;
   };
 
   return (
@@ -184,17 +186,17 @@ export default function SignupPage() {
           <div className={styles.leftBg} />
           <div className={styles.leftContent}>
             <div className={styles.leftLogo}>
-              <div className={styles.leftLogoIcon}>SC</div>
+              <img className={styles.leftLogoImage} src={logoImage} alt="UniMatrix logo" />
               <div>
-                <div className={styles.leftLogoText}>Smart Campus</div>
-                <span className={styles.leftLogoSub}>Operations Hub</span>
+                <div className={styles.leftLogoText}>UniMatrix</div>
+                <span className={styles.leftLogoSub}>Smart Operations Platform</span>
               </div>
             </div>
 
             <h1 className={styles.leftHeadline}>
               Create your
               <br />
-              <span>CampusHub</span>
+              <span>UniMatrix</span>
               <br />
               account.
             </h1>
@@ -314,7 +316,7 @@ export default function SignupPage() {
           </div>
 
           <div className={styles.socialRow}>
-            <button type="button" className={styles.socialBtn} onClick={() => handleSocialSignup('google')}>
+            <button type="button" className={styles.socialBtn} onClick={handleSocialSignup}>
               <svg className={styles.socialIcon} viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   fill="#4285F4"
@@ -334,15 +336,6 @@ export default function SignupPage() {
                 />
               </svg>
               <span>Sign up with Google</span>
-            </button>
-            <button type="button" className={styles.socialBtn} onClick={() => handleSocialSignup('microsoft')}>
-              <svg className={styles.socialIcon} viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="1" y="1" width="10.5" height="10.5" fill="#F25022" />
-                <rect x="12.5" y="1" width="10.5" height="10.5" fill="#7FBA00" />
-                <rect x="1" y="12.5" width="10.5" height="10.5" fill="#00A4EF" />
-                <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900" />
-              </svg>
-              <span>Sign up with Microsoft</span>
             </button>
           </div>
 
