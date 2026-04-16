@@ -30,9 +30,9 @@ public class TicketResponse {
 
     private TicketStatus status;
 
-    private String createdBy;
+    private Long createdBy;
 
-    private String assignedTechnician;
+    private Long assignedTechnician;
 
     private String resolutionNotes;
 

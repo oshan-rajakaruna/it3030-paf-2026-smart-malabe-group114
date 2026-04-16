@@ -16,7 +16,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByCategory(TicketCategory category);
 
-    List<Ticket> findByCreatedBy(String createdBy);
+    List<Ticket> findByCreatedBy(Long createdBy);
 
-    List<Ticket> findByAssignedTechnician(String assignedTechnician);
+    List<Ticket> findByAssignedTechnician(Long assignedTechnician);
 }

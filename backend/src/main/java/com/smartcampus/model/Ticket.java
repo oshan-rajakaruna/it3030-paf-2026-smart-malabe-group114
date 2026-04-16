@@ -49,9 +49,11 @@ public class Ticket {
     @Builder.Default
     private TicketStatus status = TicketStatus.OPEN;
 
-    private String createdBy;
+    @Column(name = "created_by")
+    private Long createdBy;
 
-    private String assignedTechnician;
+    @Column(name = "assigned_technician")
+    private Long assignedTechnician;
 
     private String resolutionNotes;
 
