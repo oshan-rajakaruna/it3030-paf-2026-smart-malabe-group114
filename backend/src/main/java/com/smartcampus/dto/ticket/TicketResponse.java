@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class TicketResponse {
 
-    private Long id;
+    private String id;
 
     private String title;
 
@@ -30,9 +30,9 @@ public class TicketResponse {
 
     private TicketStatus status;
 
-    private Long createdBy;
+    private String createdBy;
 
-    private Long assignedTechnician;
+    private String assignedTechnician;
 
     private String resolutionNotes;
 

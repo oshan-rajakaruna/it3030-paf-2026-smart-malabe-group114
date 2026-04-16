@@ -1,5 +1,6 @@
 package com.smartcampus.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.smartcampus.dto.ticket.AddTicketCommentRequest;
@@ -28,6 +29,7 @@ public class TicketService {
     }
 
     public TicketResponse createTicket(CreateTicketRequest request) {
+        LocalDateTime now = LocalDateTime.now();
         Ticket ticket = Ticket.builder()
             .title(request.getTitle())
             .description(request.getDescription())
@@ -36,6 +38,8 @@ public class TicketService {
             .priority(request.getPriority())
             .status(TicketStatus.OPEN)
             .createdBy(request.getCreatedBy())
+            .createdAt(now)
+            .updatedAt(now)
             .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
@@ -49,44 +53,47 @@ public class TicketService {
             .toList();
     }
 
-    public TicketResponse getTicketById(Long id) {
+    public TicketResponse getTicketById(String id) {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         return mapToResponse(ticket);
     }
 
-    public TicketResponse updateTicketStatus(Long id, UpdateTicketStatusRequest request) {
+    public TicketResponse updateTicketStatus(String id, UpdateTicketStatusRequest request) {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         ticket.setStatus(request.getStatus());
+        ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponse(updatedTicket);
     }
 
-    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+    public TicketResponse assignTechnician(String id, AssignTechnicianRequest request) {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         ticket.setAssignedTechnician(request.getAssignedTechnician());
+        ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponse(updatedTicket);
     }
 
-    public TicketResponse updateResolutionNotes(Long id, UpdateResolutionRequest request) {
+    public TicketResponse updateResolutionNotes(String id, UpdateResolutionRequest request) {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         ticket.setResolutionNotes(request.getResolutionNotes());
+        ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponse(updatedTicket);
     }
 
-    public TicketCommentResponse addComment(Long ticketId, AddTicketCommentRequest request) {
+    public TicketCommentResponse addComment(String ticketId, AddTicketCommentRequest request) {
         ticketRepository.findById(ticketId)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
@@ -94,6 +101,7 @@ public class TicketService {
             .ticketId(ticketId)
             .userId(request.getUserId())
             .commentText(request.getCommentText())
+            .createdAt(LocalDateTime.now())
             .build();
 
         TicketComment savedComment = ticketCommentRepository.save(ticketComment);

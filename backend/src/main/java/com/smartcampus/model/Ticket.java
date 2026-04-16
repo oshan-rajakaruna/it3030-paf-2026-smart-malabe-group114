@@ -5,23 +5,14 @@ import java.time.LocalDateTime;
 import com.smartcampus.model.enums.TicketCategory;
 import com.smartcampus.model.enums.TicketPriority;
 import com.smartcampus.model.enums.TicketStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "tickets")
+@Document(collection = "tickets")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,51 +20,28 @@ import lombok.NoArgsConstructor;
 public class Ticket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false)
     private String title;
 
     private String description;
 
     private String location;
 
-    @Enumerated(EnumType.STRING)
     private TicketCategory category;
 
-    @Enumerated(EnumType.STRING)
     private TicketPriority priority;
 
-    @Enumerated(EnumType.STRING)
     @Builder.Default
     private TicketStatus status = TicketStatus.OPEN;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    private String createdBy;
 
-    @Column(name = "assigned_technician")
-    private Long assignedTechnician;
+    private String assignedTechnician;
 
     private String resolutionNotes;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-
-        if (status == null) {
-            status = TicketStatus.OPEN;
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

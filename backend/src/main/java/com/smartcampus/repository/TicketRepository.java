@@ -6,9 +6,9 @@ import com.smartcampus.model.Ticket;
 import com.smartcampus.model.enums.TicketCategory;
 import com.smartcampus.model.enums.TicketPriority;
 import com.smartcampus.model.enums.TicketStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface TicketRepository extends JpaRepository<Ticket, Long> {
+public interface TicketRepository extends MongoRepository<Ticket, String> {
 
     List<Ticket> findByStatus(TicketStatus status);
 
@@ -16,7 +16,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByCategory(TicketCategory category);
 
-    List<Ticket> findByCreatedBy(Long createdBy);
+    List<Ticket> findByCreatedBy(String createdBy);
 
-    List<Ticket> findByAssignedTechnician(Long assignedTechnician);
+    List<Ticket> findByAssignedTechnician(String assignedTechnician);
 }

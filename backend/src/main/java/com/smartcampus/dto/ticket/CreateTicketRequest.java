@@ -23,5 +23,5 @@ public class CreateTicketRequest {
 
     private TicketPriority priority;
 
-    private Long createdBy;
+    private String createdBy;
 }

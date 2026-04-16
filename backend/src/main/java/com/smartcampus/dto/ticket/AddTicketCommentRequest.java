@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AddTicketCommentRequest {
 
-    private Long userId;
+    private String userId;
 
     private String commentText;
 }

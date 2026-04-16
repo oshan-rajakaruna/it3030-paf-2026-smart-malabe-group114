@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class TicketCommentResponse {
 
-    private Long id;
+    private String id;
 
-    private Long ticketId;
+    private String ticketId;
 
-    private Long userId;
+    private String userId;
 
     private String commentText;
 

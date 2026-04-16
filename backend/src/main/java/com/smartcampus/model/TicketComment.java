@@ -2,19 +2,14 @@ package com.smartcampus.model;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "ticket_comments")
+@Document(collection = "ticket_comments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,19 +17,13 @@ import lombok.NoArgsConstructor;
 public class TicketComment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    private Long ticketId;
+    private String ticketId;
 
-    private Long userId;
+    private String userId;
 
     private String commentText;
 
     private LocalDateTime createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
-    }
 }

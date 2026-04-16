@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AssignTechnicianRequest {
 
-    private Long assignedTechnician;
+    private String assignedTechnician;
 }

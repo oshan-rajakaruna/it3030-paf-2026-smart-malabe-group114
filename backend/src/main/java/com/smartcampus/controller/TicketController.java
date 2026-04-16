@@ -42,13 +42,13 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long id) {
+    public ResponseEntity<TicketResponse> getTicketById(@PathVariable String id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<TicketResponse> updateTicketStatus(
-        @PathVariable Long id,
+        @PathVariable String id,
         @RequestBody UpdateTicketStatusRequest request
     ) {
         return ResponseEntity.ok(ticketService.updateTicketStatus(id, request));
@@ -56,7 +56,7 @@ public class TicketController {
 
     @PutMapping("/{id}/assign")
     public ResponseEntity<TicketResponse> assignTechnician(
-        @PathVariable Long id,
+        @PathVariable String id,
         @RequestBody AssignTechnicianRequest request
     ) {
         return ResponseEntity.ok(ticketService.assignTechnician(id, request));
@@ -64,7 +64,7 @@ public class TicketController {
 
     @PutMapping("/{id}/resolution")
     public ResponseEntity<TicketResponse> updateResolutionNotes(
-        @PathVariable Long id,
+        @PathVariable String id,
         @RequestBody UpdateResolutionRequest request
     ) {
         return ResponseEntity.ok(ticketService.updateResolutionNotes(id, request));
@@ -72,7 +72,7 @@ public class TicketController {
 
     @PostMapping("/{id}/comments")
     public ResponseEntity<TicketCommentResponse> addComment(
-        @PathVariable Long id,
+        @PathVariable String id,
         @RequestBody AddTicketCommentRequest request
     ) {
         TicketCommentResponse response = ticketService.addComment(id, request);
