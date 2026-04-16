@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 import styles from './LoginPage.module.css';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { useAuth } from '../hooks/useAuth';
 import { resolveRoleAndPath } from '../utils/authRouting';
+import { createPendingSignup } from '../utils/adminStorage';
 import { ROLES } from '../utils/constants';
 
+const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
+const LOGIN_API_URL = 'http://localhost:8080/api/auth/login';
+
 export default function LoginPage() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { login, isAuthenticated, currentUser } = useAuth();
+  const { login, logout } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [toastMessage, setToastMessage] = useState('Done');
@@ -41,13 +45,45 @@ export default function LoginPage() {
     const oauthName = params.get('name');
 
     if (oauthProvider && oauthEmail) {
+      let signupIntent = null;
+      try {
+        const raw = localStorage.getItem(SIGNUP_INTENT_KEY);
+        signupIntent = raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        signupIntent = null;
+      }
+
       const normalizedEmail = oauthEmail.trim().toLowerCase();
       const normalizedName = oauthName?.trim();
+      const isFreshIntent =
+        typeof signupIntent?.createdAt === 'number' ? Date.now() - signupIntent.createdAt < 20 * 60 * 1000 : false;
+
+      if (signupIntent?.provider === oauthProvider && signupIntent?.role && signupIntent?.name && isFreshIntent) {
+        logout();
+        localStorage.removeItem(SIGNUP_INTENT_KEY);
+        const request = createPendingSignup({
+          mode: 'oauth',
+          provider: oauthProvider,
+          role: signupIntent.role,
+          name: signupIntent.name,
+          userId: signupIntent.userId || '',
+          email: normalizedEmail,
+          submittedAt: new Date().toISOString(),
+        });
+        window.history.replaceState({}, '', ROUTE_PATHS.LOGIN);
+        setTimeout(() => {
+          navigate(ROUTE_PATHS.SIGNUP_PENDING, { replace: true, state: { signupId: request.id } });
+        }, 0);
+        return;
+      }
+      localStorage.removeItem(SIGNUP_INTENT_KEY);
+
       localStorage.setItem('oauth_last_email', normalizedEmail);
       const { role, path } = resolveRoleAndPath(normalizedEmail);
       const didLogin = login(role, undefined, {
         name: normalizedName || normalizedEmail.split('@')[0],
         email: normalizedEmail,
+        provider: oauthProvider,
       });
       if (!didLogin) {
         setFormError('Unable to map your Google account to an app role.');
@@ -60,20 +96,7 @@ export default function LoginPage() {
         navigate(path, { replace: true });
       }, 0);
     }
-  }, [login, navigate]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    if (location.pathname !== ROUTE_PATHS.LOGIN) {
-      return;
-    }
-
-    const targetPath = currentUser?.role === ROLES.ADMIN ? ROUTE_PATHS.ADMIN : ROUTE_PATHS.DASHBOARD;
-    navigate(targetPath, { replace: true });
-  }, [isAuthenticated, currentUser, location.pathname, navigate]);
+  }, [login, logout, navigate]);
 
   const showToast = (message, duration = 3000) => {
     setToastMessage(message);
@@ -86,7 +109,7 @@ export default function LoginPage() {
     }, duration);
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!email || !password) {
@@ -94,20 +117,48 @@ export default function LoginPage() {
       return;
     }
 
-    if (!normalizedEmail.endsWith('@sliit.lk')) {
-      setFormError('Please use your SLIIT email address.');
-      return;
-    }
-
     setFormError('');
+    showToast('Authenticating...', 1500);
+    console.log('Login button clicked');
+    console.log('Sending login request to backend', LOGIN_API_URL, { email: normalizedEmail });
 
-    const { role: nextRole, path: targetPath } = resolveRoleAndPath(normalizedEmail);
+    try {
+      const { data } = await axios.post(
+        LOGIN_API_URL,
+        {
+          email: normalizedEmail,
+          password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      console.log('Login API success', data);
 
-    login(nextRole);
-    showToast('Authenticating... redirecting to dashboard', 1500);
-    setTimeout(() => {
+      const backendRole = (data?.role || 'USER').toUpperCase();
+      const didLogin = login(backendRole, data?.id, {
+        id: data?.id,
+        name: data?.name || normalizedEmail.split('@')[0],
+        email: data?.email || normalizedEmail,
+        role: backendRole,
+        provider: 'manual',
+      });
+
+      if (!didLogin) {
+        setFormError('Could not start session for this user.');
+        return;
+      }
+
+      const targetPath = backendRole === ROLES.ADMIN ? ROUTE_PATHS.ADMIN : ROUTE_PATHS.DASHBOARD;
       navigate(targetPath, { replace: true });
-    }, 600);
+    } catch (error) {
+      console.error('Login API error', error);
+      const backendMessage =
+        error?.response?.data?.message || error?.response?.data?.error || 'Login failed. Please try again.';
+      setFormError(backendMessage);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -602,7 +653,10 @@ export default function LoginPage() {
           </div>
 
           <p className={styles.legalText}>
-            No account yet? <button type="button">Create one -&gt;</button>
+            No account yet?{' '}
+            <button type="button" onClick={() => navigate(ROUTE_PATHS.SIGNUP)}>
+              Create one -&gt;
+            </button>
           </p>
         </section>
       </div>

@@ -11,14 +11,14 @@ import NotFoundPage from '../pages/NotFoundPage';
 import NotificationsPage from '../pages/NotificationsPage';
 import OAuthSuccess from '../pages/OAuthSuccess';
 import SettingsPage from '../pages/SettingsPage';
+import SignupPage from '../pages/SignupPage';
+import SignupPendingPage from '../pages/SignupPendingPage';
 import TicketsPage from '../pages/TicketsPage';
-import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../utils/constants';
 import { ROUTE_PATHS } from './routeConfig';
 
 function HomeRedirect() {
-  const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? ROUTE_PATHS.DASHBOARD : ROUTE_PATHS.LOGIN} replace />;
+  return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
 }
 
 export default function AppRouter() {
@@ -26,6 +26,8 @@ export default function AppRouter() {
     <Routes>
       <Route index element={<HomeRedirect />} />
       <Route path={ROUTE_PATHS.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTE_PATHS.SIGNUP} element={<SignupPage />} />
+      <Route path={ROUTE_PATHS.SIGNUP_PENDING} element={<SignupPendingPage />} />
       <Route path={ROUTE_PATHS.OAUTH_SUCCESS} element={<OAuthSuccess />} />
 
       <Route

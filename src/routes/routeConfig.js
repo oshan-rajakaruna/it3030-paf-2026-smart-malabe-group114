@@ -1,5 +1,7 @@
 export const ROUTE_PATHS = {
   LOGIN: '/login',
+  SIGNUP: '/signup',
+  SIGNUP_PENDING: '/signup/pending',
   OAUTH_SUCCESS: '/oauth2/success',
   DASHBOARD: '/dashboard',
   FACILITIES: '/facilities',
