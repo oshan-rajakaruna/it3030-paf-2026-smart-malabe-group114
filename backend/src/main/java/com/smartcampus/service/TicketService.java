@@ -2,6 +2,7 @@ package com.smartcampus.service;
 
 import java.util.List;
 
+import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
@@ -53,6 +54,16 @@ public class TicketService {
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         ticket.setStatus(request.getStatus());
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+        return mapToResponse(updatedTicket);
+    }
+
+    public TicketResponse assignTechnician(Long id, AssignTechnicianRequest request) {
+        Ticket ticket = ticketRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+
+        ticket.setAssignedTechnician(request.getAssignedTechnician());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponse(updatedTicket);

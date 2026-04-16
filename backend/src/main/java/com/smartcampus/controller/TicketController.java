@@ -2,6 +2,7 @@ package com.smartcampus.controller;
 
 import java.util.List;
 
+import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
@@ -48,5 +49,13 @@ public class TicketController {
         @RequestBody UpdateTicketStatusRequest request
     ) {
         return ResponseEntity.ok(ticketService.updateTicketStatus(id, request));
+    }
+
+    @PutMapping("/{id}/assign")
+    public ResponseEntity<TicketResponse> assignTechnician(
+        @PathVariable Long id,
+        @RequestBody AssignTechnicianRequest request
+    ) {
+        return ResponseEntity.ok(ticketService.assignTechnician(id, request));
     }
 }
