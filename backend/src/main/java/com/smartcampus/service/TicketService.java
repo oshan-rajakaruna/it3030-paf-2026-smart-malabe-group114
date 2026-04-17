@@ -122,6 +122,16 @@ public class TicketService {
         return mapToCommentResponse(savedComment);
     }
 
+    public List<TicketCommentResponse> getCommentsByTicketId(String ticketId) {
+        ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        return ticketCommentRepository.findByTicketId(ticketId)
+            .stream()
+            .map(this::mapToCommentResponse)
+            .toList();
+    }
+
     public TicketAttachment uploadAttachment(String ticketId, MultipartFile file) {
         ticketRepository.findById(ticketId)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));

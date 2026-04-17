@@ -82,6 +82,11 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<TicketCommentResponse>> getCommentsByTicketId(@PathVariable String id) {
+        return ResponseEntity.ok(ticketService.getCommentsByTicketId(id));
+    }
+
     @PostMapping("/{id}/attachments")
     public ResponseEntity<TicketAttachment> uploadAttachment(
         @PathVariable String id,
