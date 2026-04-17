@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Filter, LoaderCircle, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, Filter, LoaderCircle, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './FacilitiesPage.module.css';
@@ -124,6 +124,11 @@ function formatActiveState(isActive) {
   return isActive === false ? 'Inactive' : 'Active';
 }
 
+function formatTimeValue(value) {
+  const formattedValue = typeof value === 'string' ? value.slice(0, 5) : '';
+  return formattedValue || 'Not provided';
+}
+
 function formatAvailability(availableFrom, availableTo) {
   const start = typeof availableFrom === 'string' ? availableFrom.slice(0, 5) : '';
   const end = typeof availableTo === 'string' ? availableTo.slice(0, 5) : '';
@@ -158,6 +163,48 @@ function getFriendlyRequestError(error, fallbackMessage) {
   }
 
   return message;
+}
+
+function formatReportDateTime(value) {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(value);
+}
+
+function getAppliedFilterLabels({
+  typeFilter,
+  locationFilter,
+  capacityFilter,
+  statusFilter,
+  searchQuery,
+}) {
+  const labels = [];
+
+  if (typeFilter !== 'ALL') {
+    labels.push(`Type: ${formatResourceType(typeFilter)}`);
+  }
+
+  if (locationFilter !== 'All Locations') {
+    labels.push(`Location: ${locationFilter}`);
+  }
+
+  if (capacityFilter !== 'ALL') {
+    labels.push(`Capacity: ${capacityFilter}`);
+  }
+
+  if (statusFilter !== 'ALL') {
+    labels.push(`Status: ${formatResourceStatus(statusFilter)}`);
+  }
+
+  if (searchQuery) {
+    labels.push(`Search: ${searchQuery}`);
+  }
+
+  return labels;
 }
 
 function normalizeTimeValue(value) {
@@ -281,6 +328,16 @@ export default function FacilitiesPage() {
   }, [capacityFilter, deferredQuery, locationFilter, refreshKey, statusFilter, typeFilter]);
 
   const filteredFacilities = resources.filter((facility) => matchesCapacityRange(facility.capacity, capacityFilter));
+  const appliedFilterLabels = getAppliedFilterLabels({
+    typeFilter,
+    locationFilter,
+    capacityFilter,
+    statusFilter,
+    searchQuery: deferredQuery,
+  });
+  const appliedFiltersSummary = appliedFilterLabels.length
+    ? appliedFilterLabels.join(' | ')
+    : 'All resources';
 
   const openCreateModal = () => {
     setFormMode('create');
@@ -393,6 +450,96 @@ export default function FacilitiesPage() {
     }
   };
 
+  const handleDownloadReport = async () => {
+    if (!filteredFacilities.length) {
+      return;
+    }
+
+    try {
+      const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const generatedAt = new Date();
+      const document = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4',
+      });
+      const pageWidth = document.internal.pageSize.getWidth();
+      const reportTitle = 'Facilities Resource Report';
+      const filterSummaryLines = document.splitTextToSize(
+        `Applied filters: ${appliedFiltersSummary}`,
+        pageWidth - 80,
+      );
+
+      document.setFontSize(18);
+      document.setTextColor(15, 23, 42);
+      document.text(reportTitle, 40, 40);
+
+      document.setFontSize(10);
+      document.setTextColor(71, 85, 105);
+      document.text(`Generated: ${formatReportDateTime(generatedAt)}`, 40, 62);
+      document.text(`Visible resources: ${filteredFacilities.length}`, 40, 78);
+      document.text(filterSummaryLines, 40, 94);
+
+      autoTable(document, {
+        startY: 94 + (filterSummaryLines.length * 12) + 10,
+        head: [[
+          'Resource Code',
+          'Name',
+          'Type',
+          'Location',
+          'Floor',
+          'Capacity',
+          'Status',
+          'Active State',
+          'Available From',
+          'Available To',
+        ]],
+        body: filteredFacilities.map((facility) => ([
+          facility.resourceCode || 'Not provided',
+          facility.name || 'Unnamed resource',
+          formatResourceType(facility.type),
+          facility.location || 'Not provided',
+          facility.floor || 'Not provided',
+          facility.capacity ?? 'Not provided',
+          formatResourceStatus(facility.status),
+          formatActiveState(facility.isActive),
+          formatTimeValue(facility.availableFrom),
+          formatTimeValue(facility.availableTo),
+        ])),
+        theme: 'grid',
+        margin: { top: 40, right: 40, bottom: 40, left: 40 },
+        styles: {
+          fontSize: 8,
+          cellPadding: 4,
+          lineColor: [226, 232, 240],
+          lineWidth: 0.5,
+          textColor: [15, 23, 42],
+          overflow: 'linebreak',
+          valign: 'middle',
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252],
+        },
+      });
+
+      document.save(`facilities-resource-report-${generatedAt.toISOString().slice(0, 10)}.pdf`);
+      setFeedback({ type: 'success', message: 'PDF report downloaded successfully.' });
+    } catch (reportError) {
+      setFeedback({
+        type: 'error',
+        message: 'We could not generate the PDF report right now. Please try again.',
+      });
+    }
+  };
+
   const isReadOnly = formMode === 'view';
   const isInitialLoading = loading && !resources.length;
   const isRefreshing = loading && resources.length > 0;
@@ -493,9 +640,17 @@ export default function FacilitiesPage() {
             </span>
           ) : null}
         </div>
-        <Button variant="secondary" size="sm" icon={Filter}>
-          Save filter view
-        </Button>
+        <div className={styles.headerActions}>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Download}
+            onClick={handleDownloadReport}
+            disabled={!filteredFacilities.length}
+          >
+            Download PDF Report
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -513,83 +668,146 @@ export default function FacilitiesPage() {
           <p>Fetching the latest catalogue from the backend service.</p>
         </section>
       ) : filteredFacilities.length ? (
-        <section className={styles.catalogueGrid}>
-          {filteredFacilities.map((facility) => (
-            <Card
-              key={facility.id}
-              title={facility.name || 'Unnamed resource'}
-              subtitle={`${formatResourceType(facility.type)} - ${facility.resourceCode || 'No code'}`}
-              action={
-                <div className={styles.cardBadgeGroup}>
-                  <span className={styles.statusChip} data-status={facility.status}>
-                    {formatResourceStatus(facility.status)}
-                  </span>
-                  <span
-                    className={styles.activeStateChip}
-                    data-active={facility.isActive === false ? 'false' : 'true'}
-                  >
-                    {formatActiveState(facility.isActive)}
-                  </span>
-                </div>
-              }
-              className={styles.catalogueCard}
-            >
-              <div className={styles.cardIntro}>
-                <span className={styles.resourceCodeChip}>{facility.resourceCode || 'No code'}</span>
-                <span className={styles.typeChip}>{formatResourceType(facility.type)}</span>
-              </div>
-
-              <p className={styles.description}>{facility.description || 'No description provided yet.'}</p>
-
-              <div className={styles.metaGrid}>
-                <div className={styles.metaItem}>
-                  <span>Location</span>
-                  <strong>{facility.location || 'Not provided'}</strong>
-                </div>
-                <div className={styles.metaItem}>
-                  <span>Capacity</span>
-                  <strong>{facility.capacity ?? 'Not provided'}</strong>
-                </div>
-                <div className={styles.metaItem}>
-                  <span>Availability</span>
-                  <strong>{formatAvailability(facility.availableFrom, facility.availableTo)}</strong>
-                </div>
-              </div>
-
-              {facility.floor ? (
-                <div className={styles.featureList}>
-                  {facility.floor ? <span className={styles.featureChip}>Floor: {facility.floor}</span> : null}
-                </div>
-              ) : null}
-
-              <div className={styles.cardActions}>
-                <Button variant="secondary" size="sm" onClick={() => openViewModal(facility)}>
-                  View details
-                </Button>
-                {isAdmin ? (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditModal(facility)}
+        <>
+          <section className={styles.catalogueGrid}>
+            {filteredFacilities.map((facility) => (
+              <Card
+                key={facility.id}
+                title={facility.name || 'Unnamed resource'}
+                subtitle={`${formatResourceType(facility.type)} - ${facility.resourceCode || 'No code'}`}
+                action={
+                  <div className={styles.cardBadgeGroup}>
+                    <span className={styles.statusChip} data-status={facility.status}>
+                      {formatResourceStatus(facility.status)}
+                    </span>
+                    <span
+                      className={styles.activeStateChip}
+                      data-active={facility.isActive === false ? 'false' : 'true'}
                     >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={() => handleDelete(facility)}
-                      disabled={deletingId === facility.id}
-                    >
-                      {deletingId === facility.id ? 'Deleting...' : 'Delete'}
-                    </Button>
-                  </>
+                      {formatActiveState(facility.isActive)}
+                    </span>
+                  </div>
+                }
+                className={styles.catalogueCard}
+              >
+                <div className={styles.cardIntro}>
+                  <span className={styles.resourceCodeChip}>{facility.resourceCode || 'No code'}</span>
+                  <span className={styles.typeChip}>{formatResourceType(facility.type)}</span>
+                </div>
+
+                <p className={styles.description}>{facility.description || 'No description provided yet.'}</p>
+
+                <div className={styles.metaGrid}>
+                  <div className={styles.metaItem}>
+                    <span>Location</span>
+                    <strong>{facility.location || 'Not provided'}</strong>
+                  </div>
+                  <div className={styles.metaItem}>
+                    <span>Capacity</span>
+                    <strong>{facility.capacity ?? 'Not provided'}</strong>
+                  </div>
+                  <div className={styles.metaItem}>
+                    <span>Availability</span>
+                    <strong>{formatAvailability(facility.availableFrom, facility.availableTo)}</strong>
+                  </div>
+                </div>
+
+                {facility.floor ? (
+                  <div className={styles.featureList}>
+                    {facility.floor ? <span className={styles.featureChip}>Floor: {facility.floor}</span> : null}
+                  </div>
                 ) : null}
+
+                <div className={styles.cardActions}>
+                  <Button variant="secondary" size="sm" onClick={() => openViewModal(facility)}>
+                    View details
+                  </Button>
+                  {isAdmin ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(facility)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={Trash2}
+                        onClick={() => handleDelete(facility)}
+                        disabled={deletingId === facility.id}
+                      >
+                        {deletingId === facility.id ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+              </Card>
+            ))}
+          </section>
+
+          <section className={styles.reportSection}>
+            <div className={styles.reportHeader}>
+              <div className={styles.reportHeaderText}>
+                <strong>Resource report table</strong>
+                <span>
+                  Structured view of the currently visible facilities and assets for presentation and export.
+                </span>
               </div>
-            </Card>
-          ))}
-        </section>
+              <div className={styles.reportMeta}>
+                <span>{filteredFacilities.length} rows</span>
+                <span>{appliedFiltersSummary}</span>
+              </div>
+            </div>
+
+            <div className={styles.tableWrap}>
+              <table className={styles.resourceTable}>
+                <thead>
+                  <tr>
+                    <th>Resource Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Floor</th>
+                    <th>Capacity</th>
+                    <th>Status</th>
+                    <th>Active State</th>
+                    <th>Available From</th>
+                    <th>Available To</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFacilities.map((facility) => (
+                    <tr key={`report-${facility.id}`}>
+                      <td>{facility.resourceCode || 'Not provided'}</td>
+                      <td>{facility.name || 'Unnamed resource'}</td>
+                      <td>{formatResourceType(facility.type)}</td>
+                      <td>{facility.location || 'Not provided'}</td>
+                      <td>{facility.floor || 'Not provided'}</td>
+                      <td>{facility.capacity ?? 'Not provided'}</td>
+                      <td>
+                        <span className={styles.statusChip} data-status={facility.status}>
+                          {formatResourceStatus(facility.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={styles.activeStateChip}
+                          data-active={facility.isActive === false ? 'false' : 'true'}
+                        >
+                          {formatActiveState(facility.isActive)}
+                        </span>
+                      </td>
+                      <td>{formatTimeValue(facility.availableFrom)}</td>
+                      <td>{formatTimeValue(facility.availableTo)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
       ) : (
         <EmptyState
           icon={Filter}
