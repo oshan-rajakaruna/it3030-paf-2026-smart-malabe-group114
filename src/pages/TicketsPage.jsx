@@ -198,6 +198,7 @@ export default function TicketsPage() {
       }
 
       setModalActionMessage('Ticket workflow updated successfully.');
+      setSelectedTicket(null);
     } catch (workflowError) {
       console.error('Failed to update ticket workflow:', workflowError);
       setModalActionError(workflowError.message || 'Failed to update ticket workflow.');
