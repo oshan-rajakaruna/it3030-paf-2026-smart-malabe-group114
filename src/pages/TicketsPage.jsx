@@ -240,7 +240,9 @@ export default function TicketsPage() {
 
     try {
       await updateTicketStatus(selectedTicket.id, modalStatus);
-      await assignTechnician(selectedTicket.id, modalTechnician);
+      if (!isTechnician) {
+        await assignTechnician(selectedTicket.id, modalTechnician);
+      }
       await updateTicketResolution(selectedTicket.id, modalResolution);
 
       const updatedTickets = await loadTickets();
@@ -512,14 +514,14 @@ export default function TicketsPage() {
         actions={<Button icon={PlusCircle}>Create incident flow</Button>}
       />
 
-      {isAdmin ? queueSection : null}
+      {isAdmin || isTechnician ? queueSection : null}
 
       <section className={styles.topGrid}>
-        {isAdmin ? workflowPanelSection : createTicketSection}
-        {isAdmin ? createTicketSection : workflowPanelSection}
+        {isAdmin || isTechnician ? workflowPanelSection : createTicketSection}
+        {isAdmin || isTechnician ? createTicketSection : workflowPanelSection}
       </section>
 
-      {!isAdmin ? queueSection : null}
+      {!isAdmin && !isTechnician ? queueSection : null}
 
       <Modal
         isOpen={Boolean(selectedTicket)}
@@ -567,14 +569,18 @@ export default function TicketsPage() {
             </div>
             <div className={styles.modalBlock}>
               <span>Assigned technician</span>
-              <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
-                <option value="">Unassigned</option>
-                {technicianOptions.map((technician) => (
-                  <option key={technician.id} value={technician.id}>
-                    {technician.name}
-                  </option>
-                ))}
-              </select>
+              {isTechnician ? (
+                <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
+              ) : (
+                <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
+                  <option value="">Unassigned</option>
+                  {technicianOptions.map((technician) => (
+                    <option key={technician.id} value={technician.id}>
+                      {technician.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className={styles.modalBlock}>
               <span>Created by</span>
