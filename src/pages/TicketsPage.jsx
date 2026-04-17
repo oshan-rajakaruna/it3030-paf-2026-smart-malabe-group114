@@ -387,7 +387,7 @@ export default function TicketsPage() {
         isOpen={Boolean(selectedTicket)}
         onClose={() => setSelectedTicket(null)}
         title={selectedTicket?.title}
-        description="Detail modal placeholder for comments, assignment, and resolution notes."
+        description="Ticket details"
         footer={
           selectedTicket ? (
             <>
@@ -402,43 +402,47 @@ export default function TicketsPage() {
         {selectedTicket ? (
           <div className={styles.modalGrid}>
             <div className={styles.modalBlock}>
+              <span>Title</span>
+              <strong>{selectedTicket.title || 'Not provided'}</strong>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Description</span>
+              <p>{selectedTicket.description || 'Not provided'}</p>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Location</span>
+              <strong>{selectedTicket.location || 'Not provided'}</strong>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Priority</span>
+              <strong>{selectedTicket.priority || 'Not provided'}</strong>
+            </div>
+            <div className={styles.modalBlock}>
               <span>Status</span>
-              <StatusBadge status={selectedTicket.status} />
+              <StatusBadge status={selectedTicket.status || 'OPEN'} />
             </div>
             <div className={styles.modalBlock}>
               <span>Assigned technician</span>
-              <select className={styles.select} defaultValue={selectedTicket.technicianId}>
-                {technicianOptions.map((technician) => (
-                  <option key={technician.id} value={technician.id}>
-                    {technician.name}
-                  </option>
-                ))}
-              </select>
+              <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
             </div>
             <div className={styles.modalBlock}>
-              <span>Resolution note</span>
-              <p>{selectedTicket.resolution}</p>
+              <span>Created by</span>
+              <strong>{selectedTicket.reporterName || selectedTicket.reporterId || 'Not provided'}</strong>
             </div>
             <div className={styles.modalBlock}>
-              <span>Preferred contact</span>
-              <strong>{selectedTicket.preferredContact}</strong>
+              <span>Created at</span>
+              <strong>{selectedTicket.createdAt ? formatDateTime(selectedTicket.createdAt) : 'Not provided'}</strong>
+            </div>
+            <div className={styles.modalBlock}>
+              <span>Updated at</span>
+              <strong>{selectedTicket.updatedAt ? formatDateTime(selectedTicket.updatedAt) : 'Not provided'}</strong>
             </div>
             <div className={styles.commentsPanel}>
               <div className={styles.commentsHeader}>
-                <strong>Comments placeholder</strong>
+                <strong>Resolution</strong>
                 <UserRoundCog size={18} />
               </div>
-              {selectedTicket.comments.length ? (
-                selectedTicket.comments.map((comment) => (
-                  <article key={comment.id} className={styles.comment}>
-                    <strong>{comment.author}</strong>
-                    <span>{formatDateTime(comment.createdAt)}</span>
-                    <p>{comment.message}</p>
-                  </article>
-                ))
-              ) : (
-                <p className={styles.emptyComment}>No comments yet for this mock ticket.</p>
-              )}
+              <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
             </div>
           </div>
         ) : null}
