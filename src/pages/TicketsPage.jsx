@@ -17,7 +17,7 @@ import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
-import { assignTechnician, createTicket, getAllTickets, updateTicketResolution, updateTicketStatus } from '../services/ticketService';
+import { addComment, assignTechnician, createTicket, getAllTickets, getComments, updateTicketResolution, updateTicketStatus } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -81,6 +81,10 @@ export default function TicketsPage() {
   const [modalResolution, setModalResolution] = useState('');
   const [modalActionMessage, setModalActionMessage] = useState('');
   const [modalActionError, setModalActionError] = useState('');
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
@@ -116,7 +120,27 @@ export default function TicketsPage() {
       setModalResolution('');
       setModalActionMessage('');
       setModalActionError('');
+      setComments([]);
+      setNewComment('');
+      setCommentsLoading(false);
+      setCommentsError('');
       return;
+    }
+
+    async function loadComments() {
+      setCommentsLoading(true);
+      setCommentsError('');
+
+      try {
+        const response = await getComments(selectedTicket.id);
+        setComments(response);
+        setNewComment('');
+      } catch (fetchError) {
+        console.error('Failed to load comments:', fetchError);
+        setCommentsError(fetchError.message || 'Failed to load comments.');
+      } finally {
+        setCommentsLoading(false);
+      }
     }
 
     setModalStatus(selectedTicket.status || 'OPEN');
@@ -124,6 +148,7 @@ export default function TicketsPage() {
     setModalResolution(selectedTicket.resolution === 'No resolution note yet.' ? '' : selectedTicket.resolution || '');
     setModalActionMessage('');
     setModalActionError('');
+    loadComments();
   }, [selectedTicket]);
 
   const visibleTickets = tickets.filter((ticket) => {
@@ -206,6 +231,28 @@ export default function TicketsPage() {
     } catch (workflowError) {
       console.error('Failed to update ticket workflow:', workflowError);
       setModalActionError(workflowError.message || 'Failed to update ticket workflow.');
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!selectedTicket || !newComment.trim()) {
+      return;
+    }
+
+    setCommentsError('');
+
+    try {
+      await addComment(selectedTicket.id, {
+        userId: currentUser?.id || currentUser?.name || 'admin1',
+        commentText: newComment,
+      });
+
+      const response = await getComments(selectedTicket.id);
+      setComments(response);
+      setNewComment('');
+    } catch (commentError) {
+      console.error('Failed to add comment:', commentError);
+      setCommentsError(commentError.message || 'Failed to add comment.');
     }
   };
 
@@ -516,6 +563,39 @@ export default function TicketsPage() {
                 onChange={(event) => setModalResolution(event.target.value)}
                 hint="Add or update the current resolution note for this ticket."
               />
+            </div>
+            <div className={styles.commentsPanel}>
+              <div className={styles.commentsHeader}>
+                <strong>Comments and evidence</strong>
+                <UserRoundCog size={18} />
+              </div>
+              {commentsLoading ? <p>Loading comments...</p> : null}
+              {commentsError ? <p>{commentsError}</p> : null}
+              {!commentsLoading && !commentsError ? (
+                comments.length ? (
+                  comments.map((comment) => (
+                    <article key={comment.id} className={styles.comment}>
+                      <strong>{comment.userId || 'Unknown user'}</strong>
+                      <span>{comment.createdAt ? formatDateTime(comment.createdAt) : 'Not provided'}</span>
+                      <p>{comment.commentText || 'Not provided'}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className={styles.emptyComment}>No comments yet for this ticket.</p>
+                )
+              ) : null}
+              <TextAreaField
+                id="newComment"
+                label="Add comment"
+                name="newComment"
+                rows={3}
+                value={newComment}
+                onChange={(event) => setNewComment(event.target.value)}
+                hint="Add a short update or note for this ticket."
+              />
+              <Button variant="secondary" onClick={handleAddComment}>
+                Add Comment
+              </Button>
             </div>
             {modalActionMessage ? <p className={styles.submitMessage}>{modalActionMessage}</p> : null}
             {modalActionError ? <p>{modalActionError}</p> : null}

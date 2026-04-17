@@ -79,6 +79,11 @@ export async function addComment(id, data) {
   return handleResponse(response);
 }
 
+export async function getComments(id) {
+  const response = await fetch(`${BASE_URL}/${id}/comments`);
+  return handleResponse(response);
+}
+
 export async function uploadAttachment(id, file) {
   const formData = new FormData();
   formData.append('file', file);
