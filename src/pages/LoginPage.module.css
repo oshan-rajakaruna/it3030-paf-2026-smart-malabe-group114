@@ -470,6 +470,59 @@
   background: rgba(212, 168, 67, 0.04);
 }
 
+.formInput option {
+  color: #e9f0ff;
+  background: #12233f;
+}
+
+.formInput option:checked {
+  color: #ffffff;
+  background: #1d3a66;
+}
+
+.passwordField {
+  position: relative;
+  width: 100%;
+}
+
+.inputWithToggle {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(238, 240, 245, 0.68);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.passwordToggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(238, 240, 245, 0.95);
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid rgba(212, 168, 67, 0.65);
+  outline-offset: 1px;
+}
+
+.passwordToggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .formActions {
   display: flex;
   justify-content: flex-end;

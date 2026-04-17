@@ -10,7 +10,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.smartcampus.exception.BadRequestException;
+import com.smartcampus.exception.rolemanagement.BadRequestException;
 
 @Component
 public class QrCodeUtil {
@@ -27,3 +27,5 @@ public class QrCodeUtil {
     }
   }
 }
+
+

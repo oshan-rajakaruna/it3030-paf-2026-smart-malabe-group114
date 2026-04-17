@@ -25,6 +25,7 @@ export default function SignupPage() {
   const [toastMessage, setToastMessage] = useState('Done');
   const [toastVisible, setToastVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
 
@@ -296,14 +297,52 @@ export default function SignupPage() {
             <label className={styles.formLabel} htmlFor="signup-password">
               Password
             </label>
-            <input
-              id="signup-password"
-              className={styles.formInput}
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Minimum 6 characters"
-            />
+            <div className={styles.passwordField}>
+              <input
+                id="signup-password"
+                className={`${styles.formInput} ${styles.inputWithToggle}`}
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Minimum 6 characters"
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <path
+                      d="M10.6 10.6a2 2 0 0 0 2.8 2.8"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d="M9.9 5.3A11.7 11.7 0 0 1 12 5c5.7 0 9.5 5.6 9.5 7s-1.1 3.1-2.9 4.7M6.2 6.2C3.9 7.8 2.5 10.2 2.5 12c0 1.4 3.8 7 9.5 7 1 0 2-.2 2.9-.5"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M2.5 12s3.8-7 9.5-7 9.5 7 9.5 7-3.8 7-9.5 7-9.5-7-9.5-7z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      fill="none"
+                    />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button type="button" className={styles.primaryBtn} onClick={handleCreateAccount} disabled={isSubmitting}>
