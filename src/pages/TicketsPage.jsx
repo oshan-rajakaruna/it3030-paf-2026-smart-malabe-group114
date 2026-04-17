@@ -17,7 +17,17 @@ import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
-import { addComment, assignTechnician, createTicket, getAllTickets, getComments, updateTicketResolution, updateTicketStatus } from '../services/ticketService';
+import {
+  addComment,
+  assignTechnician,
+  createTicket,
+  getAllTickets,
+  getAttachments,
+  getComments,
+  updateTicketResolution,
+  updateTicketStatus,
+  uploadAttachment,
+} from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -85,6 +95,8 @@ export default function TicketsPage() {
   const [newComment, setNewComment] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState('');
+  const [attachments, setAttachments] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
@@ -124,6 +136,8 @@ export default function TicketsPage() {
       setNewComment('');
       setCommentsLoading(false);
       setCommentsError('');
+      setAttachments([]);
+      setSelectedFile(null);
       return;
     }
 
@@ -143,12 +157,22 @@ export default function TicketsPage() {
       }
     }
 
+    async function loadAttachments() {
+      try {
+        const response = await getAttachments(selectedTicket.id);
+        setAttachments(response);
+      } catch (fetchError) {
+        console.error('Failed to load attachments:', fetchError);
+      }
+    }
+
     setModalStatus(selectedTicket.status || 'OPEN');
     setModalTechnician(selectedTicket.technicianId || selectedTicket.assigned || '');
     setModalResolution(selectedTicket.resolution === 'No resolution note yet.' ? '' : selectedTicket.resolution || '');
     setModalActionMessage('');
     setModalActionError('');
     loadComments();
+    loadAttachments();
   }, [selectedTicket]);
 
   const visibleTickets = tickets.filter((ticket) => {
@@ -253,6 +277,21 @@ export default function TicketsPage() {
     } catch (commentError) {
       console.error('Failed to add comment:', commentError);
       setCommentsError(commentError.message || 'Failed to add comment.');
+    }
+  };
+
+  const handleUploadAttachment = async () => {
+    if (!selectedTicket || !selectedFile) {
+      return;
+    }
+
+    try {
+      await uploadAttachment(selectedTicket.id, selectedFile);
+      const response = await getAttachments(selectedTicket.id);
+      setAttachments(response);
+      setSelectedFile(null);
+    } catch (attachmentError) {
+      console.error('Failed to upload attachment:', attachmentError);
     }
   };
 
@@ -596,6 +635,29 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={handleAddComment}>
                 Add Comment
               </Button>
+              <FormField id="attachmentUpload" label="Upload attachment">
+                <input
+                  id="attachmentUpload"
+                  type="file"
+                  className={fieldStyles.control}
+                  onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                />
+              </FormField>
+              <Button variant="secondary" onClick={handleUploadAttachment}>
+                Upload
+              </Button>
+              {attachments.length ? (
+                attachments.map((attachment) => (
+                  <article key={attachment.id} className={styles.comment}>
+                    <strong>{attachment.fileName || 'Unnamed file'}</strong>
+                    <a href={`http://localhost:8080/${attachment.filePath}`} target="_blank" rel="noreferrer">
+                      View attachment
+                    </a>
+                  </article>
+                ))
+              ) : (
+                <p className={styles.emptyComment}>No attachments yet for this ticket.</p>
+              )}
             </div>
             {modalActionMessage ? <p className={styles.submitMessage}>{modalActionMessage}</p> : null}
             {modalActionError ? <p>{modalActionError}</p> : null}
