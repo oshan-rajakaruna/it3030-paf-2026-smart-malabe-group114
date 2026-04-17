@@ -17,7 +17,7 @@ import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
-import { createTicket, getAllTickets } from '../services/ticketService';
+import { assignTechnician, createTicket, getAllTickets, updateTicketStatus } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -76,6 +76,10 @@ export default function TicketsPage() {
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [modalStatus, setModalStatus] = useState('');
+  const [modalTechnician, setModalTechnician] = useState('');
+  const [modalActionMessage, setModalActionMessage] = useState('');
+  const [modalActionError, setModalActionError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
@@ -91,8 +95,10 @@ export default function TicketsPage() {
       console.log(response);
       const mappedTickets = response.map(mapTicketToUi);
       setTickets(mappedTickets);
+      return mappedTickets;
     } catch (fetchError) {
       setError(fetchError.message || 'Failed to load tickets.');
+      return [];
     } finally {
       setLoading(false);
     }
@@ -101,6 +107,21 @@ export default function TicketsPage() {
   useEffect(() => {
     loadTickets();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTicket) {
+      setModalStatus('');
+      setModalTechnician('');
+      setModalActionMessage('');
+      setModalActionError('');
+      return;
+    }
+
+    setModalStatus(selectedTicket.status || 'OPEN');
+    setModalTechnician(selectedTicket.technicianId || selectedTicket.assigned || '');
+    setModalActionMessage('');
+    setModalActionError('');
+  }, [selectedTicket]);
 
   const visibleTickets = tickets.filter((ticket) => {
     const isOwnedByCurrentUser =
@@ -154,6 +175,32 @@ export default function TicketsPage() {
     } catch (submitError) {
       console.error('Failed to create ticket:', submitError);
       setError(submitError.message || 'Failed to create ticket.');
+    }
+  };
+
+  const handleModalWorkflowUpdate = async () => {
+    if (!selectedTicket) {
+      return;
+    }
+
+    setModalActionMessage('');
+    setModalActionError('');
+
+    try {
+      await updateTicketStatus(selectedTicket.id, modalStatus);
+      await assignTechnician(selectedTicket.id, modalTechnician);
+
+      const updatedTickets = await loadTickets();
+      const updatedSelectedTicket = updatedTickets.find((ticket) => ticket.id === selectedTicket.id);
+
+      if (updatedSelectedTicket) {
+        setSelectedTicket(updatedSelectedTicket);
+      }
+
+      setModalActionMessage('Ticket workflow updated successfully.');
+    } catch (workflowError) {
+      console.error('Failed to update ticket workflow:', workflowError);
+      setModalActionError(workflowError.message || 'Failed to update ticket workflow.');
     }
   };
 
@@ -394,7 +441,7 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={() => setSelectedTicket(null)}>
                 Close
               </Button>
-              <Button>Update workflow placeholder</Button>
+              <Button onClick={handleModalWorkflowUpdate}>Update workflow</Button>
             </>
           ) : null
         }
@@ -419,11 +466,24 @@ export default function TicketsPage() {
             </div>
             <div className={styles.modalBlock}>
               <span>Status</span>
-              <StatusBadge status={selectedTicket.status || 'OPEN'} />
+              <select className={styles.select} value={modalStatus} onChange={(event) => setModalStatus(event.target.value)}>
+                {TICKET_STATUS_OPTIONS.filter((status) => status !== 'ALL').map((status) => (
+                  <option key={status} value={status}>
+                    {status.replace('_', ' ')}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.modalBlock}>
               <span>Assigned technician</span>
-              <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
+              <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
+                <option value="">Unassigned</option>
+                {technicianOptions.map((technician) => (
+                  <option key={technician.id} value={technician.id}>
+                    {technician.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.modalBlock}>
               <span>Created by</span>
@@ -444,6 +504,8 @@ export default function TicketsPage() {
               </div>
               <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
             </div>
+            {modalActionMessage ? <p className={styles.submitMessage}>{modalActionMessage}</p> : null}
+            {modalActionError ? <p>{modalActionError}</p> : null}
           </div>
         ) : null}
       </Modal>
