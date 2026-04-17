@@ -160,6 +160,13 @@ public class TicketService {
         }
     }
 
+    public List<TicketAttachment> getAttachmentsByTicketId(String ticketId) {
+        ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        return ticketAttachmentRepository.findByTicketId(ticketId);
+    }
+
     private TicketResponse mapToResponse(Ticket ticket) {
         return TicketResponse.builder()
             .id(ticket.getId())

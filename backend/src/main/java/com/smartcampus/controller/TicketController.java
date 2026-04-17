@@ -90,4 +90,9 @@ public class TicketController {
         TicketAttachment response = ticketService.uploadAttachment(id, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/{id}/attachments")
+    public ResponseEntity<List<TicketAttachment>> getAttachmentsByTicketId(@PathVariable String id) {
+        return ResponseEntity.ok(ticketService.getAttachmentsByTicketId(id));
+    }
 }
