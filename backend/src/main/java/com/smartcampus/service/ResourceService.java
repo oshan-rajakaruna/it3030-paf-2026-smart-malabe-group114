@@ -128,11 +128,12 @@ public class ResourceService {
     ) {
         boolean matchesType = type == null || resource.getType() == type;
         boolean matchesLocation = location == null || location.isBlank()
-            || (resource.getLocation() != null && resource.getLocation().equalsIgnoreCase(location));
+            || safeValue(resource.getLocation()).toLowerCase().contains(location.toLowerCase());
         boolean matchesStatus = status == null || resource.getStatus() == status;
         boolean matchesCapacity = minCapacity == null
             || (resource.getCapacity() != null && resource.getCapacity() >= minCapacity);
-        boolean matchesSearch = search == null || search.isBlank() || buildSearchableText(resource).contains(search.toLowerCase());
+        boolean matchesSearch = search == null || search.isBlank()
+            || buildSearchableText(resource).contains(search.toLowerCase());
 
         return matchesType && matchesLocation && matchesStatus && matchesCapacity && matchesSearch;
     }
@@ -141,9 +142,7 @@ public class ResourceService {
         return String.join(
             " ",
             safeValue(resource.getResourceCode()),
-            safeValue(resource.getName()),
-            safeValue(resource.getLocation()),
-            safeValue(resource.getDescription())
+            safeValue(resource.getName())
         ).toLowerCase();
     }
 
