@@ -329,6 +329,48 @@
   border-bottom: none;
 }
 
+.deleteModalContent {
+  display: grid;
+  gap: 1rem;
+}
+
+.deleteResourceSummary {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.deleteResourceSummary span {
+  color: var(--text-muted);
+}
+
+.deleteCountdownBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.deleteCountdownBadge[data-ready='true'] {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.deleteModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .modalForm {
   display: grid;
   gap: 1rem;

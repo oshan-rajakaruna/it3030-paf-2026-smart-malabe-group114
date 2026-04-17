@@ -275,6 +275,8 @@ export default function FacilitiesPage() {
   const [feedback, setFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteCountdown, setDeleteCountdown] = useState(3);
   const deferredQuery = useDeferredValue(searchQuery.trim());
 
   useEffect(() => {
@@ -288,6 +290,18 @@ export default function FacilitiesPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [feedback]);
+
+  useEffect(() => {
+    if (!deleteTarget || deleteCountdown <= 0) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setDeleteCountdown((current) => Math.max(current - 1, 0));
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [deleteCountdown, deleteTarget]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -366,6 +380,12 @@ export default function FacilitiesPage() {
     setIsFormModalOpen(true);
   };
 
+  const openDeleteModal = (resource) => {
+    setDeleteTarget(resource);
+    setDeleteCountdown(3);
+    setFeedback(null);
+  };
+
   const closeFormModal = () => {
     if (isSubmitting) {
       return;
@@ -373,6 +393,11 @@ export default function FacilitiesPage() {
 
     setIsFormModalOpen(false);
     setFormError('');
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteTarget(null);
+    setDeleteCountdown(3);
   };
 
   const handleInputChange = (event) => {
@@ -420,21 +445,20 @@ export default function FacilitiesPage() {
     }
   };
 
-  const handleDelete = async (resource) => {
-    const shouldDelete = window.confirm(
-      `Delete resource "${resource.name || resource.resourceCode}"?\n\nThis action cannot be undone.`,
-    );
-
-    if (!shouldDelete) {
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget || deleteCountdown > 0) {
       return;
     }
 
-    setDeletingId(resource.id);
+    const resourceToDelete = deleteTarget;
+
+    setDeletingId(resourceToDelete.id);
     setFormError('');
     setFeedback(null);
 
     try {
-      await deleteResource(resource.id);
+      await deleteResource(resourceToDelete.id);
+      closeDeleteModal();
       setFeedback({ type: 'success', message: 'Resource deleted successfully.' });
       setRefreshKey((current) => current + 1);
     } catch (deleteError) {
@@ -543,6 +567,8 @@ export default function FacilitiesPage() {
   const isReadOnly = formMode === 'view';
   const isInitialLoading = loading && !resources.length;
   const isRefreshing = loading && resources.length > 0;
+  const isDeleteModalOpen = Boolean(deleteTarget);
+  const isDeletePending = deleteTarget ? deletingId === deleteTarget.id : false;
   const modalTitle =
     formMode === 'create'
       ? 'Create resource'
@@ -735,8 +761,8 @@ export default function FacilitiesPage() {
                         variant="danger"
                         size="sm"
                         icon={Trash2}
-                        onClick={() => handleDelete(facility)}
-                        disabled={deletingId === facility.id}
+                        onClick={() => openDeleteModal(facility)}
+                        disabled={Boolean(deletingId)}
                       >
                         {deletingId === facility.id ? 'Deleting...' : 'Delete'}
                       </Button>
@@ -994,6 +1020,56 @@ export default function FacilitiesPage() {
             )}
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Confirm deletion"
+        description="Are you sure you want to delete this resource?"
+        footer={(
+          <div className={styles.deleteModalActions}>
+            <Button type="button" variant="secondary" onClick={closeDeleteModal}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDeleteConfirm}
+              disabled={deleteCountdown > 0 || isDeletePending}
+            >
+              {isDeletePending ? (
+                <>
+                  <LoaderCircle size={16} className={styles.spinner} />
+                  <span>Deleting...</span>
+                </>
+              ) : deleteCountdown > 0 ? (
+                `Confirm Delete (${deleteCountdown})`
+              ) : (
+                'Confirm Delete'
+              )}
+            </Button>
+          </div>
+        )}
+      >
+        {deleteTarget ? (
+          <div className={styles.deleteModalContent}>
+            <div className={styles.deleteResourceSummary}>
+              <strong>{deleteTarget.name || 'Unnamed resource'}</strong>
+              <span>{deleteTarget.resourceCode || 'No resource code'}</span>
+            </div>
+            <div
+              className={styles.deleteCountdownBadge}
+              data-ready={deleteCountdown === 0}
+              role="status"
+              aria-live="polite"
+            >
+              {deleteCountdown > 0
+                ? `Deletion unlocks in ${deleteCountdown} second${deleteCountdown === 1 ? '' : 's'}`
+                : 'Countdown complete. You can now confirm deletion.'}
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </div>
   );
