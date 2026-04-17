@@ -1,4 +1,4 @@
-import { Filter, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Filter, LoaderCircle, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './FacilitiesPage.module.css';
@@ -12,7 +12,6 @@ import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import SearchBar from '../components/ui/SearchBar';
 import SelectField from '../components/ui/SelectField';
-import StatusBadge from '../components/ui/StatusBadge';
 import TextAreaField from '../components/ui/TextAreaField';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -44,12 +43,6 @@ const ACTIVE_OPTIONS = [
   { value: 'false', label: 'Inactive' },
 ];
 
-const STATUS_BADGE_MAP = {
-  AVAILABLE: 'ACTIVE',
-  UNAVAILABLE: 'OUT_OF_SERVICE',
-  MAINTENANCE: 'LIMITED',
-};
-
 const TYPE_LABELS = {
   ROOM: 'Room',
   LAB: 'Lab',
@@ -64,7 +57,7 @@ const initialForm = {
   floor: '',
   capacity: '',
   status: 'AVAILABLE',
-  isActive: 'true',
+  isActive: true,
   description: '',
   imageUrl: '',
   availableFrom: '',
@@ -118,6 +111,19 @@ function formatResourceType(type) {
   return TYPE_LABELS[type] ?? type ?? 'Unknown';
 }
 
+function formatResourceStatus(status) {
+  return status
+    ? status
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (character) => character.toUpperCase())
+    : 'Unknown';
+}
+
+function formatActiveState(isActive) {
+  return isActive === false ? 'Inactive' : 'Active';
+}
+
 function formatAvailability(availableFrom, availableTo) {
   const start = typeof availableFrom === 'string' ? availableFrom.slice(0, 5) : '';
   const end = typeof availableTo === 'string' ? availableTo.slice(0, 5) : '';
@@ -131,6 +137,27 @@ function formatAvailability(availableFrom, availableTo) {
 
 function formatInputTime(value) {
   return typeof value === 'string' ? value.slice(0, 5) : '';
+}
+
+function getFriendlyRequestError(error, fallbackMessage) {
+  const message = error instanceof Error ? error.message.trim() : '';
+
+  if (!message) {
+    return fallbackMessage;
+  }
+
+  const normalizedMessage = message.toLowerCase();
+
+  if (
+    normalizedMessage === 'failed to fetch'
+    || normalizedMessage.includes('networkerror')
+    || normalizedMessage.includes('load failed')
+    || normalizedMessage.startsWith('<!doctype html')
+  ) {
+    return fallbackMessage;
+  }
+
+  return message;
 }
 
 function normalizeTimeValue(value) {
@@ -154,7 +181,7 @@ function createFormState(resource) {
     floor: resource.floor ?? '',
     capacity: resource.capacity?.toString() ?? '',
     status: resource.status ?? 'AVAILABLE',
-    isActive: resource.isActive === false ? 'false' : 'true',
+    isActive: resource.isActive !== false,
     description: resource.description ?? '',
     imageUrl: resource.imageUrl ?? '',
     availableFrom: formatInputTime(resource.availableFrom),
@@ -171,7 +198,7 @@ function buildResourcePayload(form) {
     floor: form.floor.trim(),
     capacity: Number(form.capacity),
     status: form.status,
-    isActive: form.isActive === 'true',
+    isActive: form.isActive,
     description: form.description.trim(),
     imageUrl: form.imageUrl.trim(),
     availableFrom: normalizeTimeValue(form.availableFrom),
@@ -198,10 +225,22 @@ export default function FacilitiesPage() {
   const [editingResourceId, setEditingResourceId] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [formError, setFormError] = useState('');
-  const [actionMessage, setActionMessage] = useState('');
+  const [feedback, setFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState('');
   const deferredQuery = useDeferredValue(searchQuery.trim());
+
+  useEffect(() => {
+    if (!feedback) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedback(null);
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [feedback]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -225,7 +264,7 @@ export default function FacilitiesPage() {
       } catch (fetchError) {
         if (!isCancelled) {
           setResources([]);
-          setError(fetchError.message || 'Unable to load resources from the backend.');
+          setError('We could not load the facilities catalogue right now. Please check the backend connection and try again.');
         }
       } finally {
         if (!isCancelled) {
@@ -248,7 +287,7 @@ export default function FacilitiesPage() {
     setEditingResourceId(null);
     setForm(initialForm);
     setFormError('');
-    setActionMessage('');
+    setFeedback(null);
     setIsFormModalOpen(true);
   };
 
@@ -257,7 +296,7 @@ export default function FacilitiesPage() {
     setEditingResourceId(resource.id);
     setForm(createFormState(resource));
     setFormError('');
-    setActionMessage('');
+    setFeedback(null);
     setIsFormModalOpen(true);
   };
 
@@ -266,7 +305,7 @@ export default function FacilitiesPage() {
     setEditingResourceId(resource.id);
     setForm(createFormState(resource));
     setFormError('');
-    setActionMessage('');
+    setFeedback(null);
     setIsFormModalOpen(true);
   };
 
@@ -281,7 +320,10 @@ export default function FacilitiesPage() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => ({
+      ...current,
+      [name]: name === 'isActive' ? value === 'true' : value,
+    }));
   };
 
   const handleSubmit = async (event) => {
@@ -293,17 +335,17 @@ export default function FacilitiesPage() {
 
     setIsSubmitting(true);
     setFormError('');
-    setActionMessage('');
+    setFeedback(null);
 
     try {
       const payload = buildResourcePayload(form);
 
       if (formMode === 'create') {
         await createResource(payload);
-        setActionMessage('Resource created successfully.');
+        setFeedback({ type: 'success', message: 'Resource created successfully.' });
       } else {
         await updateResource(editingResourceId, payload);
-        setActionMessage('Resource updated successfully.');
+        setFeedback({ type: 'success', message: 'Resource updated successfully.' });
       }
 
       setIsFormModalOpen(false);
@@ -311,14 +353,20 @@ export default function FacilitiesPage() {
       setEditingResourceId(null);
       setRefreshKey((current) => current + 1);
     } catch (submitError) {
-      setFormError(submitError.message || 'Unable to save the resource right now.');
+      const fallbackMessage =
+        formMode === 'create'
+          ? 'We could not create the resource right now. Please review the details and try again.'
+          : 'We could not update the resource right now. Please review the details and try again.';
+      setFormError(getFriendlyRequestError(submitError, fallbackMessage));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (resource) => {
-    const shouldDelete = window.confirm(`Delete resource "${resource.name || resource.resourceCode}"?`);
+    const shouldDelete = window.confirm(
+      `Delete resource "${resource.name || resource.resourceCode}"?\n\nThis action cannot be undone.`,
+    );
 
     if (!shouldDelete) {
       return;
@@ -326,20 +374,28 @@ export default function FacilitiesPage() {
 
     setDeletingId(resource.id);
     setFormError('');
-    setActionMessage('');
+    setFeedback(null);
 
     try {
       await deleteResource(resource.id);
-      setActionMessage('Resource deleted successfully.');
+      setFeedback({ type: 'success', message: 'Resource deleted successfully.' });
       setRefreshKey((current) => current + 1);
     } catch (deleteError) {
-      setFormError(deleteError.message || 'Unable to delete the resource right now.');
+      setFeedback({
+        type: 'error',
+        message: getFriendlyRequestError(
+          deleteError,
+          'We could not delete that resource right now. Please try again.',
+        ),
+      });
     } finally {
       setDeletingId('');
     }
   };
 
   const isReadOnly = formMode === 'view';
+  const isInitialLoading = loading && !resources.length;
+  const isRefreshing = loading && resources.length > 0;
   const modalTitle =
     formMode === 'create'
       ? 'Create resource'
@@ -410,16 +466,32 @@ export default function FacilitiesPage() {
         </div>
       </FilterPanel>
 
+      {feedback ? (
+        <div
+          className={styles.feedbackBanner}
+          data-type={feedback.type}
+          role="status"
+          aria-live="polite"
+        >
+          {feedback.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          <span>{feedback.message}</span>
+        </div>
+      ) : null}
+
       <div className={styles.resultsHeader}>
         <div>
           <strong>{loading ? 'Loading resources...' : `${filteredFacilities.length} resources visible`}</strong>
-          <span>
+          <span className={styles.resultsMeta}>
             {error
               ? 'The resource catalogue could not be loaded from the backend.'
               : 'Cards and filters are now backed by the resource API while keeping the page structure familiar.'}
           </span>
-          {actionMessage ? <span>{actionMessage}</span> : null}
-          {formError ? <span>{formError}</span> : null}
+          {isRefreshing ? (
+            <span className={styles.inlineLoading}>
+              <LoaderCircle size={16} className={styles.spinner} />
+              Refreshing resources from the backend...
+            </span>
+          ) : null}
         </div>
         <Button variant="secondary" size="sm" icon={Filter}>
           Save filter view
@@ -428,16 +500,18 @@ export default function FacilitiesPage() {
 
       {error ? (
         <EmptyState
-          icon={Filter}
+          icon={AlertCircle}
           title="Unable to load resources"
           description={error}
         />
-      ) : loading && !filteredFacilities.length ? (
-        <EmptyState
-          icon={Filter}
-          title="Loading resources"
-          description="Fetching the latest facilities and assets from the backend catalogue."
-        />
+      ) : isInitialLoading ? (
+        <section className={styles.loadingState}>
+          <div className={styles.loadingSpinnerWrap}>
+            <LoaderCircle size={24} className={styles.spinner} />
+          </div>
+          <strong>Loading facilities and assets</strong>
+          <p>Fetching the latest catalogue from the backend service.</p>
+        </section>
       ) : filteredFacilities.length ? (
         <section className={styles.catalogueGrid}>
           {filteredFacilities.map((facility) => (
@@ -445,32 +519,46 @@ export default function FacilitiesPage() {
               key={facility.id}
               title={facility.name || 'Unnamed resource'}
               subtitle={`${formatResourceType(facility.type)} - ${facility.resourceCode || 'No code'}`}
-              action={<StatusBadge status={STATUS_BADGE_MAP[facility.status] ?? 'LIMITED'} />}
+              action={
+                <div className={styles.cardBadgeGroup}>
+                  <span className={styles.statusChip} data-status={facility.status}>
+                    {formatResourceStatus(facility.status)}
+                  </span>
+                  <span
+                    className={styles.activeStateChip}
+                    data-active={facility.isActive === false ? 'false' : 'true'}
+                  >
+                    {formatActiveState(facility.isActive)}
+                  </span>
+                </div>
+              }
               className={styles.catalogueCard}
             >
+              <div className={styles.cardIntro}>
+                <span className={styles.resourceCodeChip}>{facility.resourceCode || 'No code'}</span>
+                <span className={styles.typeChip}>{formatResourceType(facility.type)}</span>
+              </div>
+
               <p className={styles.description}>{facility.description || 'No description provided yet.'}</p>
 
               <div className={styles.metaGrid}>
-                <div>
+                <div className={styles.metaItem}>
                   <span>Location</span>
                   <strong>{facility.location || 'Not provided'}</strong>
                 </div>
-                <div>
+                <div className={styles.metaItem}>
                   <span>Capacity</span>
                   <strong>{facility.capacity ?? 'Not provided'}</strong>
                 </div>
-                <div>
+                <div className={styles.metaItem}>
                   <span>Availability</span>
                   <strong>{formatAvailability(facility.availableFrom, facility.availableTo)}</strong>
                 </div>
               </div>
 
-              {facility.floor || typeof facility.isActive === 'boolean' ? (
+              {facility.floor ? (
                 <div className={styles.featureList}>
                   {facility.floor ? <span className={styles.featureChip}>Floor: {facility.floor}</span> : null}
-                  {typeof facility.isActive === 'boolean' ? (
-                    <span className={styles.featureChip}>{facility.isActive ? 'Active' : 'Inactive'}</span>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -480,7 +568,11 @@ export default function FacilitiesPage() {
                 </Button>
                 {isAdmin ? (
                   <>
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(facility)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditModal(facility)}
+                    >
                       Edit
                     </Button>
                     <Button
@@ -501,8 +593,8 @@ export default function FacilitiesPage() {
       ) : (
         <EmptyState
           icon={Filter}
-          title="No facilities match this filter set"
-          description="Try a wider search or reset one of the filters. This empty state is ready to stay consistent even after server-side filtering is introduced."
+          title="No resources found"
+          description="Try adjusting the filters or search term to explore more facilities and assets."
         />
       )}
 
@@ -512,8 +604,8 @@ export default function FacilitiesPage() {
         title={modalTitle}
         description={modalDescription}
       >
-        <form id="resource-form" onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <form id="resource-form" onSubmit={handleSubmit} className={styles.modalForm}>
+          <div className={styles.modalGrid}>
             <FormField id="resourceCode" label="Resource code" required>
               <input
                 id="resourceCode"
@@ -604,7 +696,7 @@ export default function FacilitiesPage() {
               id="isActive"
               label="Active state"
               name="isActive"
-              value={form.isActive}
+              value={String(form.isActive)}
               onChange={handleInputChange}
               options={ACTIVE_OPTIONS}
               disabled={isReadOnly}
@@ -659,7 +751,12 @@ export default function FacilitiesPage() {
             disabled={isReadOnly}
           />
 
-          {formError ? <p className={styles.description}>{formError}</p> : null}
+          {formError ? (
+            <div className={styles.formMessage} data-type="error" role="alert">
+              <AlertCircle size={18} />
+              <span>{formError}</span>
+            </div>
+          ) : null}
 
           <div className={styles.cardActions}>
             <Button type="button" variant="secondary" onClick={closeFormModal} disabled={isSubmitting}>
@@ -667,7 +764,14 @@ export default function FacilitiesPage() {
             </Button>
             {isReadOnly ? null : (
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (formMode === 'create' ? 'Creating...' : 'Updating...') : (formMode === 'create' ? 'Create resource' : 'Update resource')}
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle size={16} className={styles.spinner} />
+                    <span>{formMode === 'create' ? 'Creating...' : 'Updating...'}</span>
+                  </>
+                ) : (
+                  formMode === 'create' ? 'Create resource' : 'Update resource'
+                )}
               </Button>
             )}
           </div>
