@@ -17,7 +17,7 @@ import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
-import { getAllTickets } from '../services/ticketService';
+import { createTicket, getAllTickets } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -27,6 +27,20 @@ const initialForm = {
   priority: 'Medium',
   preferredContact: '',
   description: '',
+};
+
+const CATEGORY_MAP = {
+  electrical: 'ELECTRICAL',
+  network: 'NETWORK',
+  equipment: 'EQUIPMENT',
+  facility: 'FACILITY',
+  other: 'OTHER',
+};
+
+const PRIORITY_MAP = {
+  low: 'LOW',
+  medium: 'MEDIUM',
+  high: 'HIGH',
 };
 
 function mapTicketToUi(ticket) {
@@ -55,6 +69,8 @@ function mapTicketToUi(ticket) {
 
 export default function TicketsPage() {
   const { currentUser } = useAuth();
+  const isAdmin = currentUser.role === ROLES.ADMIN;
+  const isTechnician = currentUser.role === ROLES.TECHNICIAN;
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,23 +82,23 @@ export default function TicketsPage() {
   const deferredQuery = useDeferredValue(searchQuery.toLowerCase());
   const technicianOptions = mockUsers.filter((user) => user.role === ROLES.TECHNICIAN);
 
-  useEffect(() => {
-    async function loadTickets() {
-      setLoading(true);
-      setError('');
+  async function loadTickets() {
+    setLoading(true);
+    setError('');
 
-      try {
-        const response = await getAllTickets();
-        console.log(response);
-        const mappedTickets = response.map(mapTicketToUi);
-        setTickets(mappedTickets);
-      } catch (fetchError) {
-        setError(fetchError.message || 'Failed to load tickets.');
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const response = await getAllTickets();
+      console.log(response);
+      const mappedTickets = response.map(mapTicketToUi);
+      setTickets(mappedTickets);
+    } catch (fetchError) {
+      setError(fetchError.message || 'Failed to load tickets.');
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadTickets();
   }, []);
 
@@ -111,32 +127,34 @@ export default function TicketsPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const nextTicket = {
-      id: `tic-demo-${Date.now()}`,
-      title: `${form.category || 'General'} incident reported`,
-      resourceName: form.resourceName,
-      location: mockFacilities.find((facility) => facility.name === form.resourceName)?.location ?? 'Campus',
-      category: form.category,
-      priority: form.priority,
-      status: 'OPEN',
-      reporterId: currentUser.id,
-      reporterName: currentUser.name,
-      technicianId: technicianOptions[0]?.id ?? '',
-      technicianName: technicianOptions[0]?.name ?? 'Unassigned',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      preferredContact: form.preferredContact,
+    setError('');
+    setSubmitMessage('');
+
+    const normalizedCategory = CATEGORY_MAP[form.category.trim().toLowerCase()] ?? 'OTHER';
+    const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
+    const location = (mockFacilities.find((facility) => facility.name === form.resourceName)?.location ?? form.resourceName) || 'Campus';
+    const payload = {
+      title: form.category.trim() || 'General incident reported',
       description: form.description,
-      resolution: 'Awaiting triage and technician assignment.',
-      comments: [],
+      location,
+      category: normalizedCategory,
+      priority: normalizedPriority,
+      createdBy: currentUser?.id || currentUser?.name || 'user1',
     };
 
-    setTickets((current) => [nextTicket, ...current]);
-    setForm(initialForm);
-    setSubmitMessage('Mock ticket created. It now appears in the incident queue as OPEN.');
+    try {
+      const response = await createTicket(payload);
+      console.log('Ticket created successfully:', response);
+      await loadTickets();
+      setForm(initialForm);
+      setSubmitMessage('Ticket created successfully.');
+    } catch (submitError) {
+      console.error('Failed to create ticket:', submitError);
+      setError(submitError.message || 'Failed to create ticket.');
+    }
   };
 
   const ticketColumns = [
@@ -181,89 +199,117 @@ export default function TicketsPage() {
     },
   ];
 
-  return (
-    <div className={styles.page}>
-      <PageHeader
-        eyebrow="Maintenance & Incident Tickets"
-        title="Report, assign, and track maintenance issues"
-        description="The ticket page is already split into creation, filtering, status badges, comments, and assignment placeholders so it is easy to connect later to a real incident workflow."
-        actions={<Button icon={PlusCircle}>Create incident flow</Button>}
-      />
+  const createTicketSection = (
+    <Card
+      title="Create incident ticket"
+      subtitle={
+        isAdmin
+          ? 'Admins can still raise tickets here, but the main focus of this page is queue management.'
+          : 'Keep the form realistic so mapping to the API stays straightforward.'
+      }
+    >
+      <form className={styles.formGrid} onSubmit={handleSubmit}>
+        <SelectField
+          id="resourceName"
+          label="Resource or location"
+          name="resourceName"
+          value={form.resourceName}
+          onChange={handleInputChange}
+          options={mockFacilities.map((facility) => facility.name)}
+          placeholder="Select a resource"
+        />
+        <FormField id="category" label="Category">
+          <input
+            id="category"
+            name="category"
+            className={fieldStyles.control}
+            value={form.category}
+            onChange={handleInputChange}
+            placeholder="e.g. HVAC, AV Equipment, Access Control"
+          />
+        </FormField>
+        <SelectField
+          id="priority"
+          label="Priority"
+          name="priority"
+          value={form.priority}
+          onChange={handleInputChange}
+          options={PRIORITY_OPTIONS}
+        />
+        <FormField id="preferredContact" label="Preferred contact">
+          <input
+            id="preferredContact"
+            name="preferredContact"
+            className={fieldStyles.control}
+            value={form.preferredContact}
+            onChange={handleInputChange}
+            placeholder="Phone or email for updates"
+          />
+        </FormField>
+        <TextAreaField
+          id="description"
+          label="Incident description"
+          name="description"
+          value={form.description}
+          onChange={handleInputChange}
+          hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
+        />
+        <Button type="submit" icon={Wrench}>
+          Submit ticket
+        </Button>
+        {submitMessage ? <p className={styles.submitMessage}>{submitMessage}</p> : null}
+      </form>
+    </Card>
+  );
 
-      <section className={styles.topGrid}>
-        <Card title="Create incident ticket" subtitle="Keep the form realistic so mapping to the API stays straightforward.">
-          <form className={styles.formGrid} onSubmit={handleSubmit}>
-            <SelectField
-              id="resourceName"
-              label="Resource or location"
-              name="resourceName"
-              value={form.resourceName}
-              onChange={handleInputChange}
-              options={mockFacilities.map((facility) => facility.name)}
-              placeholder="Select a resource"
-            />
-            <FormField id="category" label="Category">
-              <input
-                id="category"
-                name="category"
-                className={fieldStyles.control}
-                value={form.category}
-                onChange={handleInputChange}
-                placeholder="e.g. HVAC, AV Equipment, Access Control"
-              />
-            </FormField>
-            <SelectField
-              id="priority"
-              label="Priority"
-              name="priority"
-              value={form.priority}
-              onChange={handleInputChange}
-              options={PRIORITY_OPTIONS}
-            />
-            <FormField id="preferredContact" label="Preferred contact">
-              <input
-                id="preferredContact"
-                name="preferredContact"
-                className={fieldStyles.control}
-                value={form.preferredContact}
-                onChange={handleInputChange}
-                placeholder="Phone or email for updates"
-              />
-            </FormField>
-            <TextAreaField
-              id="description"
-              label="Incident description"
-              name="description"
-              value={form.description}
-              onChange={handleInputChange}
-              hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
-            />
-            <Button type="submit" icon={Wrench}>
-              Submit ticket
-            </Button>
-            {submitMessage ? <p className={styles.submitMessage}>{submitMessage}</p> : null}
-          </form>
-        </Card>
+  const workflowPanelSection = (
+    <Card
+      title={isTechnician ? 'Assigned work focus' : 'Technician assignment placeholder'}
+      subtitle={
+        isAdmin
+          ? 'Management actions, status flow, and technician assignment stay visible beside the queue.'
+          : isTechnician
+            ? 'This panel keeps current technician workflow priorities visible while backend actions grow over time.'
+            : 'The UI already reserves a clean space for assignment and SLA workflows.'
+      }
+    >
+      <div className={styles.sidePanelList}>
+        <div className={styles.sidePanelItem}>
+          <strong>{isTechnician ? 'Assigned tickets' : 'Assignment'}</strong>
+          <span>
+            {isTechnician
+              ? 'Focus on tickets already assigned to you and use the table below as the main working queue.'
+              : 'Admins can later assign technicians by workload, skill, or location.'}
+          </span>
+        </div>
+        <div className={styles.sidePanelItem}>
+          <strong>Status progression</strong>
+          <span>OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED when necessary.</span>
+        </div>
+        <div className={styles.sidePanelItem}>
+          <strong>{isAdmin ? 'Queue oversight' : 'Comments and evidence'}</strong>
+          <span>
+            {isAdmin
+              ? 'The ticket table remains the main management surface for prioritization, triage, and workload visibility.'
+              : 'Ticket conversations and image attachments can plug into the modal panel below.'}
+          </span>
+        </div>
+      </div>
+    </Card>
+  );
 
-        <Card title="Technician assignment placeholder" subtitle="The UI already reserves a clean space for assignment and SLA workflows.">
-          <div className={styles.sidePanelList}>
-            <div className={styles.sidePanelItem}>
-              <strong>Assignment</strong>
-              <span>Admins can later assign technicians by workload, skill, or location.</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>Status progression</strong>
-              <span>OPEN → IN_PROGRESS → RESOLVED → CLOSED, with REJECTED when necessary.</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>Comments and evidence</strong>
-              <span>Ticket conversations and image attachments can plug into the modal panel below.</span>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <FilterPanel title="Incident queue" description="Role-aware filtering keeps the page useful for users, technicians, and admins.">
+  const queueSection = (
+    <>
+      <FilterPanel
+        title={isAdmin ? 'Management queue' : isTechnician ? 'Assigned ticket queue' : 'Incident queue'}
+        description={
+          isAdmin
+            ? 'Admins can scan, filter, and manage the full incident backlog from this primary queue.'
+            : isTechnician
+              ? 'Filter your actionable tickets to focus on progress and next steps.'
+              : 'Role-aware filtering keeps the page useful for users, technicians, and admins.'
+        }
+      >
         <div className={styles.filterGrid}>
           <SearchBar
             value={searchQuery}
@@ -280,7 +326,16 @@ export default function TicketsPage() {
         </div>
       </FilterPanel>
 
-      <Card title="Ticket list" subtitle="Comments, assignment, and future evidence previews can all branch from this shared table row.">
+      <Card
+        title={isAdmin ? 'Ticket management table' : isTechnician ? 'Assigned tickets' : 'Ticket list'}
+        subtitle={
+          isAdmin
+            ? 'This table is the primary workspace for reviewing ticket status, technician ownership, and operational flow.'
+            : isTechnician
+              ? 'Your assigned incidents stay at the center of the page so progress is easier to track.'
+              : 'Comments, assignment, and future evidence previews can all branch from this shared table row.'
+        }
+      >
         {loading ? <p>Loading tickets...</p> : null}
         {error ? <p>{error}</p> : null}
         {!loading && !error ? (
@@ -295,6 +350,38 @@ export default function TicketsPage() {
           />
         ) : null}
       </Card>
+    </>
+  );
+
+  return (
+    <div className={styles.page}>
+      <PageHeader
+        eyebrow="Maintenance & Incident Tickets"
+        title={
+          isAdmin
+            ? 'Manage and triage campus incidents'
+            : isTechnician
+              ? 'Track and progress assigned maintenance work'
+              : 'Report, assign, and track maintenance issues'
+        }
+        description={
+          isAdmin
+            ? 'The admin view prioritizes the full ticket queue first, while still keeping incident creation available as a secondary action.'
+            : isTechnician
+              ? 'The technician view keeps assigned work and workflow progress in focus without changing the shared page structure.'
+              : 'The user view keeps incident reporting first, with your visible tickets listed below in the same shared workflow.'
+        }
+        actions={<Button icon={PlusCircle}>Create incident flow</Button>}
+      />
+
+      {isAdmin ? queueSection : null}
+
+      <section className={styles.topGrid}>
+        {isAdmin ? workflowPanelSection : createTicketSection}
+        {isAdmin ? createTicketSection : workflowPanelSection}
+      </section>
+
+      {!isAdmin ? queueSection : null}
 
       <Modal
         isOpen={Boolean(selectedTicket)}
