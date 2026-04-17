@@ -1,5 +1,7 @@
 package com.smartcampus.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.smartcampus.model.enums.ResourceStatus;
 import com.smartcampus.model.enums.ResourceType;
 import java.time.LocalDateTime;
@@ -17,18 +19,32 @@ import lombok.Setter;
 @Builder
 public class ResourceResponseDto {
 
-    private Long id;
+    private String id;
+
+    @JsonProperty("resourceCode")
     private String resourceCode;
+
     private String name;
     private ResourceType type;
     private String location;
     private String floor;
     private Integer capacity;
     private ResourceStatus status;
+
+    @JsonProperty("isActive")
     private Boolean isActive;
+
     private String description;
+
+    @JsonProperty("imageUrl")
     private String imageUrl;
+
+    @JsonProperty("availableFrom")
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime availableFrom;
+
+    @JsonProperty("availableTo")
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime availableTo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

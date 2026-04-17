@@ -2,9 +2,9 @@ package com.smartcampus.repository;
 
 import com.smartcampus.model.Resource;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface ResourceRepository extends JpaRepository<Resource, Long> {
+public interface ResourceRepository extends MongoRepository<Resource, String> {
 
     Optional<Resource> findByResourceCode(String resourceCode);
 
