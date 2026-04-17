@@ -1,5 +1,5 @@
 import { MessageSquareText, PlusCircle, UserRoundCog, Wrench } from 'lucide-react';
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './TicketsPage.module.css';
 import fieldStyles from '../components/ui/Field.module.css';
@@ -15,9 +15,9 @@ import SelectField from '../components/ui/SelectField';
 import StatusBadge from '../components/ui/StatusBadge';
 import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
-import { mockTickets } from '../data/tickets';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
+import { getAllTickets } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -29,9 +29,35 @@ const initialForm = {
   description: '',
 };
 
+function mapTicketToUi(ticket) {
+  return {
+    id: ticket.id ?? ticket._id,
+    title: ticket.title ?? 'Untitled ticket',
+    description: ticket.description ?? 'No description provided.',
+    location: ticket.location ?? 'Campus',
+    priority: ticket.priority ?? 'Medium',
+    status: ticket.status ?? 'OPEN',
+    assigned: ticket.assignedTechnician ?? 'Unassigned',
+    updated: ticket.updatedAt ?? '',
+    resourceName: ticket.location ?? 'Campus',
+    category: ticket.category ?? 'General',
+    reporterId: ticket.createdBy ?? '',
+    reporterName: ticket.createdBy ?? 'Unknown user',
+    technicianId: ticket.assignedTechnician ?? '',
+    technicianName: ticket.assignedTechnician ?? 'Unassigned',
+    createdAt: ticket.createdAt ?? '',
+    updatedAt: ticket.updatedAt ?? '',
+    preferredContact: 'Not provided',
+    resolution: ticket.resolutionNotes ?? 'No resolution note yet.',
+    comments: [],
+  };
+}
+
 export default function TicketsPage() {
   const { currentUser } = useAuth();
-  const [tickets, setTickets] = useState(mockTickets);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,11 +66,37 @@ export default function TicketsPage() {
   const deferredQuery = useDeferredValue(searchQuery.toLowerCase());
   const technicianOptions = mockUsers.filter((user) => user.role === ROLES.TECHNICIAN);
 
+  useEffect(() => {
+    async function loadTickets() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await getAllTickets();
+        console.log(response);
+        const mappedTickets = response.map(mapTicketToUi);
+        setTickets(mappedTickets);
+      } catch (fetchError) {
+        setError(fetchError.message || 'Failed to load tickets.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTickets();
+  }, []);
+
   const visibleTickets = tickets.filter((ticket) => {
+    const isOwnedByCurrentUser =
+      ticket.reporterId === currentUser.id || ticket.reporterId === currentUser.name || ticket.reporterName === currentUser.name;
+
+    const isAssignedToCurrentTechnician =
+      ticket.technicianId === currentUser.id || ticket.technicianId === currentUser.name || ticket.technicianName === currentUser.name;
+
     const matchesRole =
       currentUser.role === ROLES.ADMIN ||
-      (currentUser.role === ROLES.TECHNICIAN && ticket.technicianId === currentUser.id) ||
-      ticket.reporterId === currentUser.id;
+      (currentUser.role === ROLES.TECHNICIAN && isAssignedToCurrentTechnician) ||
+      (currentUser.role === ROLES.USER && isOwnedByCurrentUser);
 
     const matchesStatus = statusFilter === 'ALL' || ticket.status === statusFilter;
     const matchesQuery =
@@ -229,15 +281,19 @@ export default function TicketsPage() {
       </FilterPanel>
 
       <Card title="Ticket list" subtitle="Comments, assignment, and future evidence previews can all branch from this shared table row.">
-        <DataTable
-          columns={ticketColumns}
-          rows={visibleTickets}
-          emptyState={{
-            icon: MessageSquareText,
-            title: 'No tickets to show',
-            description: 'Try adjusting the filter or submit a new incident from the form above.',
-          }}
-        />
+        {loading ? <p>Loading tickets...</p> : null}
+        {error ? <p>{error}</p> : null}
+        {!loading && !error ? (
+          <DataTable
+            columns={ticketColumns}
+            rows={visibleTickets}
+            emptyState={{
+              icon: MessageSquareText,
+              title: 'No tickets to show',
+              description: 'Try adjusting the filter or submit a new incident from the form above.',
+            }}
+          />
+        ) : null}
       </Card>
 
       <Modal
