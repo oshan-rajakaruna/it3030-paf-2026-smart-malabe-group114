@@ -1,21 +1,31 @@
-import { Filter, Plus, SlidersHorizontal } from 'lucide-react';
+import { Filter, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './FacilitiesPage.module.css';
+import fieldStyles from '../components/ui/Field.module.css';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import FilterPanel from '../components/ui/FilterPanel';
+import FormField from '../components/ui/FormField';
+import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import SearchBar from '../components/ui/SearchBar';
+import SelectField from '../components/ui/SelectField';
 import StatusBadge from '../components/ui/StatusBadge';
+import TextAreaField from '../components/ui/TextAreaField';
 import { useAuth } from '../hooks/useAuth';
 import {
   CAPACITY_OPTIONS,
   LOCATIONS,
   ROLES,
 } from '../utils/constants';
-import { getResources } from '../services/resourceService';
+import {
+  createResource,
+  deleteResource,
+  getResources,
+  updateResource,
+} from '../services/resourceService';
 
 const RESOURCE_TYPE_OPTIONS = [
   { value: 'ROOM', label: 'Room' },
@@ -29,6 +39,11 @@ const RESOURCE_STATUS_OPTIONS = [
   { value: 'MAINTENANCE', label: 'Maintenance' },
 ];
 
+const ACTIVE_OPTIONS = [
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
+];
+
 const STATUS_BADGE_MAP = {
   AVAILABLE: 'ACTIVE',
   UNAVAILABLE: 'OUT_OF_SERVICE',
@@ -39,6 +54,21 @@ const TYPE_LABELS = {
   ROOM: 'Room',
   LAB: 'Lab',
   EQUIPMENT: 'Equipment',
+};
+
+const initialForm = {
+  resourceCode: '',
+  name: '',
+  type: 'ROOM',
+  location: '',
+  floor: '',
+  capacity: '',
+  status: 'AVAILABLE',
+  isActive: 'true',
+  description: '',
+  imageUrl: '',
+  availableFrom: '',
+  availableTo: '',
 };
 
 function getMinimumCapacityValue(capacityFilter) {
@@ -99,9 +129,61 @@ function formatAvailability(availableFrom, availableTo) {
   return start || end || 'Not provided';
 }
 
+function formatInputTime(value) {
+  return typeof value === 'string' ? value.slice(0, 5) : '';
+}
+
+function normalizeTimeValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  return value.length === 5 ? `${value}:00` : value;
+}
+
+function createFormState(resource) {
+  if (!resource) {
+    return initialForm;
+  }
+
+  return {
+    resourceCode: resource.resourceCode ?? '',
+    name: resource.name ?? '',
+    type: resource.type ?? 'ROOM',
+    location: resource.location ?? '',
+    floor: resource.floor ?? '',
+    capacity: resource.capacity?.toString() ?? '',
+    status: resource.status ?? 'AVAILABLE',
+    isActive: resource.isActive === false ? 'false' : 'true',
+    description: resource.description ?? '',
+    imageUrl: resource.imageUrl ?? '',
+    availableFrom: formatInputTime(resource.availableFrom),
+    availableTo: formatInputTime(resource.availableTo),
+  };
+}
+
+function buildResourcePayload(form) {
+  return {
+    resourceCode: form.resourceCode.trim(),
+    name: form.name.trim(),
+    type: form.type,
+    location: form.location.trim(),
+    floor: form.floor.trim(),
+    capacity: Number(form.capacity),
+    status: form.status,
+    isActive: form.isActive === 'true',
+    description: form.description.trim(),
+    imageUrl: form.imageUrl.trim(),
+    availableFrom: normalizeTimeValue(form.availableFrom),
+    availableTo: normalizeTimeValue(form.availableTo),
+  };
+}
+
 export default function FacilitiesPage() {
   const { currentUser } = useAuth();
-  const isAdmin = currentUser.role === ROLES.ADMIN;
+  // Temporary local preview flag so resource admin actions stay visible during frontend testing.
+  const isAdminPreviewEnabled = true;
+  const isAdmin = isAdminPreviewEnabled || currentUser.role === ROLES.ADMIN;
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -110,6 +192,15 @@ export default function FacilitiesPage() {
   const [locationFilter, setLocationFilter] = useState('All Locations');
   const [capacityFilter, setCapacityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState('create');
+  const [editingResourceId, setEditingResourceId] = useState(null);
+  const [form, setForm] = useState(initialForm);
+  const [formError, setFormError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
   const deferredQuery = useDeferredValue(searchQuery.trim());
 
   useEffect(() => {
@@ -148,9 +239,119 @@ export default function FacilitiesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [capacityFilter, deferredQuery, locationFilter, statusFilter, typeFilter]);
+  }, [capacityFilter, deferredQuery, locationFilter, refreshKey, statusFilter, typeFilter]);
 
   const filteredFacilities = resources.filter((facility) => matchesCapacityRange(facility.capacity, capacityFilter));
+
+  const openCreateModal = () => {
+    setFormMode('create');
+    setEditingResourceId(null);
+    setForm(initialForm);
+    setFormError('');
+    setActionMessage('');
+    setIsFormModalOpen(true);
+  };
+
+  const openEditModal = (resource) => {
+    setFormMode('edit');
+    setEditingResourceId(resource.id);
+    setForm(createFormState(resource));
+    setFormError('');
+    setActionMessage('');
+    setIsFormModalOpen(true);
+  };
+
+  const openViewModal = (resource) => {
+    setFormMode('view');
+    setEditingResourceId(resource.id);
+    setForm(createFormState(resource));
+    setFormError('');
+    setActionMessage('');
+    setIsFormModalOpen(true);
+  };
+
+  const closeFormModal = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsFormModalOpen(false);
+    setFormError('');
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (formMode === 'view') {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError('');
+    setActionMessage('');
+
+    try {
+      const payload = buildResourcePayload(form);
+
+      if (formMode === 'create') {
+        await createResource(payload);
+        setActionMessage('Resource created successfully.');
+      } else {
+        await updateResource(editingResourceId, payload);
+        setActionMessage('Resource updated successfully.');
+      }
+
+      setIsFormModalOpen(false);
+      setForm(initialForm);
+      setEditingResourceId(null);
+      setRefreshKey((current) => current + 1);
+    } catch (submitError) {
+      setFormError(submitError.message || 'Unable to save the resource right now.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (resource) => {
+    const shouldDelete = window.confirm(`Delete resource "${resource.name || resource.resourceCode}"?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingId(resource.id);
+    setFormError('');
+    setActionMessage('');
+
+    try {
+      await deleteResource(resource.id);
+      setActionMessage('Resource deleted successfully.');
+      setRefreshKey((current) => current + 1);
+    } catch (deleteError) {
+      setFormError(deleteError.message || 'Unable to delete the resource right now.');
+    } finally {
+      setDeletingId('');
+    }
+  };
+
+  const isReadOnly = formMode === 'view';
+  const modalTitle =
+    formMode === 'create'
+      ? 'Create resource'
+      : formMode === 'edit'
+        ? 'Update resource'
+        : 'Resource details';
+  const modalDescription =
+    formMode === 'create'
+      ? 'Add a new facility or asset to the catalogue.'
+      : formMode === 'edit'
+        ? 'Update the selected resource details.'
+        : 'Review the selected resource details.';
 
   return (
     <div className={styles.page}>
@@ -158,7 +359,7 @@ export default function FacilitiesPage() {
         eyebrow="Facilities & Assets"
         title="Campus resource catalogue"
         description="Searchable, filterable facilities and assets ready for future API-backed availability windows, CRUD actions, and admin workflows."
-        actions={isAdmin ? <Button icon={Plus}>Add facility placeholder</Button> : null}
+        actions={isAdmin ? <Button icon={Plus} onClick={openCreateModal}>Add resource</Button> : null}
       />
 
       <FilterPanel
@@ -217,6 +418,8 @@ export default function FacilitiesPage() {
               ? 'The resource catalogue could not be loaded from the backend.'
               : 'Cards and filters are now backed by the resource API while keeping the page structure familiar.'}
           </span>
+          {actionMessage ? <span>{actionMessage}</span> : null}
+          {formError ? <span>{formError}</span> : null}
         </div>
         <Button variant="secondary" size="sm" icon={Filter}>
           Save filter view
@@ -241,7 +444,7 @@ export default function FacilitiesPage() {
             <Card
               key={facility.id}
               title={facility.name || 'Unnamed resource'}
-              subtitle={`${formatResourceType(facility.type)} · ${facility.resourceCode || 'No code'}`}
+              subtitle={`${formatResourceType(facility.type)} - ${facility.resourceCode || 'No code'}`}
               action={<StatusBadge status={STATUS_BADGE_MAP[facility.status] ?? 'LIMITED'} />}
               className={styles.catalogueCard}
             >
@@ -272,13 +475,24 @@ export default function FacilitiesPage() {
               ) : null}
 
               <div className={styles.cardActions}>
-                <Button variant="secondary" size="sm">
+                <Button variant="secondary" size="sm" onClick={() => openViewModal(facility)}>
                   View details
                 </Button>
                 {isAdmin ? (
-                  <Button variant="ghost" size="sm">
-                    Edit placeholder
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(facility)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={Trash2}
+                      onClick={() => handleDelete(facility)}
+                      disabled={deletingId === facility.id}
+                    >
+                      {deletingId === facility.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </>
                 ) : null}
               </div>
             </Card>
@@ -291,6 +505,174 @@ export default function FacilitiesPage() {
           description="Try a wider search or reset one of the filters. This empty state is ready to stay consistent even after server-side filtering is introduced."
         />
       )}
+
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={closeFormModal}
+        title={modalTitle}
+        description={modalDescription}
+      >
+        <form id="resource-form" onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <FormField id="resourceCode" label="Resource code" required>
+              <input
+                id="resourceCode"
+                name="resourceCode"
+                className={fieldStyles.control}
+                value={form.resourceCode}
+                onChange={handleInputChange}
+                placeholder="e.g. LAB-101"
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <FormField id="name" label="Name" required>
+              <input
+                id="name"
+                name="name"
+                className={fieldStyles.control}
+                value={form.name}
+                onChange={handleInputChange}
+                placeholder="Enter resource name"
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <SelectField
+              id="type"
+              label="Type"
+              name="type"
+              value={form.type}
+              onChange={handleInputChange}
+              options={RESOURCE_TYPE_OPTIONS}
+              disabled={isReadOnly}
+            />
+
+            <FormField id="location" label="Location" required>
+              <input
+                id="location"
+                name="location"
+                className={fieldStyles.control}
+                value={form.location}
+                onChange={handleInputChange}
+                placeholder="e.g. Block A"
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <FormField id="floor" label="Floor">
+              <input
+                id="floor"
+                name="floor"
+                className={fieldStyles.control}
+                value={form.floor}
+                onChange={handleInputChange}
+                placeholder="Optional floor"
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <FormField id="capacity" label="Capacity" required>
+              <input
+                id="capacity"
+                name="capacity"
+                type="number"
+                min="0"
+                className={fieldStyles.control}
+                value={form.capacity}
+                onChange={handleInputChange}
+                placeholder="e.g. 40"
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <SelectField
+              id="status"
+              label="Status"
+              name="status"
+              value={form.status}
+              onChange={handleInputChange}
+              options={RESOURCE_STATUS_OPTIONS}
+              disabled={isReadOnly}
+            />
+
+            <SelectField
+              id="isActive"
+              label="Active state"
+              name="isActive"
+              value={form.isActive}
+              onChange={handleInputChange}
+              options={ACTIVE_OPTIONS}
+              disabled={isReadOnly}
+            />
+
+            <FormField id="imageUrl" label="Image URL">
+              <input
+                id="imageUrl"
+                name="imageUrl"
+                className={fieldStyles.control}
+                value={form.imageUrl}
+                onChange={handleInputChange}
+                placeholder="Optional image URL"
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <FormField id="availableFrom" label="Available from" required>
+              <input
+                id="availableFrom"
+                name="availableFrom"
+                type="time"
+                className={fieldStyles.control}
+                value={form.availableFrom}
+                onChange={handleInputChange}
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+
+            <FormField id="availableTo" label="Available to" required>
+              <input
+                id="availableTo"
+                name="availableTo"
+                type="time"
+                className={fieldStyles.control}
+                value={form.availableTo}
+                onChange={handleInputChange}
+                required
+                disabled={isReadOnly}
+              />
+            </FormField>
+          </div>
+
+          <TextAreaField
+            id="description"
+            label="Description"
+            name="description"
+            value={form.description}
+            onChange={handleInputChange}
+            hint="Optional summary for the resource catalogue card."
+            disabled={isReadOnly}
+          />
+
+          {formError ? <p className={styles.description}>{formError}</p> : null}
+
+          <div className={styles.cardActions}>
+            <Button type="button" variant="secondary" onClick={closeFormModal} disabled={isSubmitting}>
+              {isReadOnly ? 'Close' : 'Cancel'}
+            </Button>
+            {isReadOnly ? null : (
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (formMode === 'create' ? 'Creating...' : 'Updating...') : (formMode === 'create' ? 'Create resource' : 'Update resource')}
+              </Button>
+            )}
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
