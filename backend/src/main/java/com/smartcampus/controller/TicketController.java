@@ -9,9 +9,11 @@ import com.smartcampus.dto.ticket.TicketCommentResponse;
 import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
+import com.smartcampus.model.TicketAttachment;
 import com.smartcampus.service.TicketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -76,6 +79,15 @@ public class TicketController {
         @RequestBody AddTicketCommentRequest request
     ) {
         TicketCommentResponse response = ticketService.addComment(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/{id}/attachments")
+    public ResponseEntity<TicketAttachment> uploadAttachment(
+        @PathVariable String id,
+        @RequestParam("file") MultipartFile file
+    ) {
+        TicketAttachment response = ticketService.uploadAttachment(id, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
