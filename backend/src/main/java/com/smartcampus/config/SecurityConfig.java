@@ -22,6 +22,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/test").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/resources", "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/resources").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/resources/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());
@@ -38,7 +42,7 @@ public class SecurityConfig {
             "http://localhost:4173",
             "http://127.0.0.1:4173"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
