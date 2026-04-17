@@ -1,7 +1,12 @@
 package com.smartcampus.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import com.smartcampus.dto.ticket.AddTicketCommentRequest;
 import com.smartcampus.dto.ticket.AssignTechnicianRequest;
@@ -11,20 +16,29 @@ import com.smartcampus.dto.ticket.TicketResponse;
 import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.model.Ticket;
+import com.smartcampus.model.TicketAttachment;
 import com.smartcampus.model.TicketComment;
 import com.smartcampus.model.enums.TicketStatus;
+import com.smartcampus.repository.TicketAttachmentRepository;
 import com.smartcampus.repository.TicketCommentRepository;
 import com.smartcampus.repository.TicketRepository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TicketService {
 
     private final TicketRepository ticketRepository;
+    private final TicketAttachmentRepository ticketAttachmentRepository;
     private final TicketCommentRepository ticketCommentRepository;
 
-    public TicketService(TicketRepository ticketRepository, TicketCommentRepository ticketCommentRepository) {
+    public TicketService(
+        TicketRepository ticketRepository,
+        TicketAttachmentRepository ticketAttachmentRepository,
+        TicketCommentRepository ticketCommentRepository
+    ) {
         this.ticketRepository = ticketRepository;
+        this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.ticketCommentRepository = ticketCommentRepository;
     }
 
@@ -106,6 +120,44 @@ public class TicketService {
 
         TicketComment savedComment = ticketCommentRepository.save(ticketComment);
         return mapToCommentResponse(savedComment);
+    }
+
+    public TicketAttachment uploadAttachment(String ticketId, MultipartFile file) {
+        ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        if (file.isEmpty()) {
+            throw new RuntimeException("File is empty");
+        }
+
+        Path uploadDirectory = Paths.get("uploads");
+
+        try {
+            Files.createDirectories(uploadDirectory);
+
+            String originalFileName = file.getOriginalFilename();
+            if (originalFileName == null || originalFileName.isBlank()) {
+                originalFileName = "file";
+            } else {
+                originalFileName = Paths.get(originalFileName).getFileName().toString();
+            }
+
+            String uniqueFileName = UUID.randomUUID() + "_" + originalFileName;
+            Path filePath = uploadDirectory.resolve(uniqueFileName);
+
+            Files.copy(file.getInputStream(), filePath);
+
+            TicketAttachment ticketAttachment = TicketAttachment.builder()
+                .ticketId(ticketId)
+                .fileName(uniqueFileName)
+                .filePath(filePath.toString())
+                .uploadedAt(LocalDateTime.now())
+                .build();
+
+            return ticketAttachmentRepository.save(ticketAttachment);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload file", e);
+        }
     }
 
     private TicketResponse mapToResponse(Ticket ticket) {
