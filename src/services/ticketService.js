@@ -55,6 +55,18 @@ export async function assignTechnician(id, technician) {
   return handleResponse(response);
 }
 
+export async function updateTicketResolution(id, resolutionNotes) {
+  const response = await fetch(`${BASE_URL}/${id}/resolution`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ resolutionNotes }),
+  });
+
+  return handleResponse(response);
+}
+
 export async function addComment(id, data) {
   const response = await fetch(`${BASE_URL}/${id}/comments`, {
     method: 'POST',

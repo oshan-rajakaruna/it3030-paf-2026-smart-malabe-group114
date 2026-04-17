@@ -17,7 +17,7 @@ import TextAreaField from '../components/ui/TextAreaField';
 import { mockFacilities } from '../data/facilities';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
-import { assignTechnician, createTicket, getAllTickets, updateTicketStatus } from '../services/ticketService';
+import { assignTechnician, createTicket, getAllTickets, updateTicketResolution, updateTicketStatus } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
 
@@ -78,6 +78,7 @@ export default function TicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modalStatus, setModalStatus] = useState('');
   const [modalTechnician, setModalTechnician] = useState('');
+  const [modalResolution, setModalResolution] = useState('');
   const [modalActionMessage, setModalActionMessage] = useState('');
   const [modalActionError, setModalActionError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +113,7 @@ export default function TicketsPage() {
     if (!selectedTicket) {
       setModalStatus('');
       setModalTechnician('');
+      setModalResolution('');
       setModalActionMessage('');
       setModalActionError('');
       return;
@@ -119,6 +121,7 @@ export default function TicketsPage() {
 
     setModalStatus(selectedTicket.status || 'OPEN');
     setModalTechnician(selectedTicket.technicianId || selectedTicket.assigned || '');
+    setModalResolution(selectedTicket.resolution === 'No resolution note yet.' ? '' : selectedTicket.resolution || '');
     setModalActionMessage('');
     setModalActionError('');
   }, [selectedTicket]);
@@ -189,6 +192,7 @@ export default function TicketsPage() {
     try {
       await updateTicketStatus(selectedTicket.id, modalStatus);
       await assignTechnician(selectedTicket.id, modalTechnician);
+      await updateTicketResolution(selectedTicket.id, modalResolution);
 
       const updatedTickets = await loadTickets();
       const updatedSelectedTicket = updatedTickets.find((ticket) => ticket.id === selectedTicket.id);
@@ -503,7 +507,15 @@ export default function TicketsPage() {
                 <strong>Resolution</strong>
                 <UserRoundCog size={18} />
               </div>
-              <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
+              <TextAreaField
+                id="modalResolution"
+                label="Resolution note"
+                name="modalResolution"
+                rows={4}
+                value={modalResolution}
+                onChange={(event) => setModalResolution(event.target.value)}
+                hint="Add or update the current resolution note for this ticket."
+              />
             </div>
             {modalActionMessage ? <p className={styles.submitMessage}>{modalActionMessage}</p> : null}
             {modalActionError ? <p>{modalActionError}</p> : null}
