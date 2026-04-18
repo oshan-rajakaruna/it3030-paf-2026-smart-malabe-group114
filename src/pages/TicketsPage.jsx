@@ -236,6 +236,7 @@ export default function TicketsPage() {
       category: normalizedCategory,
       priority: normalizedPriority,
       createdBy: currentUser?.id || currentUser?.name || 'user1',
+      preferredContact: form.preferredContact.trim(),
     };
 
     try {
