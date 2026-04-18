@@ -352,7 +352,7 @@ export default function SignupPage() {
           {formError ? <p className={styles.formError}>{formError}</p> : null}
 
           <div className={styles.dividerRow}>
-            <span>or continue with</span>
+            <span>OR CONTINUE WITH</span>
           </div>
 
           <div className={styles.socialRow}>
@@ -380,9 +380,9 @@ export default function SignupPage() {
           </div>
 
           <p className={styles.legalText}>
-            Already registered?{' '}
+            Already have an account?{' '}
             <button type="button" onClick={() => navigate(ROUTE_PATHS.LOGIN)}>
-              Back to login -&gt;
+              Sign in -&gt;
             </button>
           </p>
         </section>
