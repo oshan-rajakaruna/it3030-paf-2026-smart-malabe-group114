@@ -13,6 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   padding: clamp(16px, 4vw, 36px);
   background:
     radial-gradient(circle at 15% 20%, rgba(16, 32, 64, 0.55) 0%, transparent 45%),
@@ -20,11 +21,13 @@
     #050b16;
   font-family: 'Outfit', sans-serif;
   color: var(--cream);
+  overflow-y: auto;
 }
 
 .shell {
   width: min(1200px, 100%);
-  height: min(720px, 92vh);
+  min-height: min(720px, 92vh);
+  height: auto;
   background: rgba(6, 12, 24, 0.85);
   border-radius: 28px;
   display: grid;
@@ -34,6 +37,7 @@
   box-shadow:
     0 30px 60px rgba(4, 10, 22, 0.45),
     0 12px 30px rgba(4, 10, 22, 0.35);
+  min-width: 0;
 }
 
 .left {
@@ -44,7 +48,8 @@
   flex-direction: column;
   justify-content: flex-start;
   isolation: isolate;
-  height: 100%;
+  height: auto;
+  min-width: 0;
 }
 
 .leftBg {
@@ -174,6 +179,7 @@
 .leftContent {
   position: relative;
   z-index: 4;
+  min-width: 0;
 }
 
 .leftLogo {
@@ -357,13 +363,14 @@
 
 .right {
   background: #0b1224;
-  padding: clamp(32px, 5vh, 56px) clamp(28px, 4vw, 44px);
+  padding: clamp(24px, 4vh, 44px) clamp(24px, 4vw, 44px);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   position: relative;
-  overflow: hidden;
-  height: 100%;
+  overflow: visible;
+  height: auto;
+  min-width: 0;
 }
 
 .rightGlow {
@@ -634,11 +641,18 @@
   color: var(--cream);
   font-weight: 500;
   font-size: 0.92rem;
+  min-width: 0;
+  text-align: center;
 }
 
 .socialBtn svg {
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
+}
+
+.socialBtn span {
+  min-width: 0;
 }
 
 .socialBtn:hover {
@@ -703,13 +717,24 @@
 }
 
 @media (max-width: 1024px) {
+  .page {
+    align-items: flex-start;
+  }
+
   .shell {
     grid-template-columns: 1fr;
     height: auto;
+    overflow: visible;
   }
 
   .right {
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+    height: auto;
+    overflow: visible;
+  }
+
+  .left {
+    height: auto;
   }
 
   .statCards {
@@ -718,6 +743,37 @@
 }
 
 @media (max-width: 720px) {
+  .page {
+    padding: 12px;
+  }
+
+  .shell {
+    border-radius: 22px;
+  }
+
+  .left,
+  .right {
+    padding: 22px 18px;
+  }
+
+  .leftHeadline {
+    font-size: clamp(2.2rem, 10vw, 3.1rem);
+  }
+
+  .leftDesc {
+    max-width: none;
+  }
+
+  .modulePills {
+    margin-top: 24px;
+    margin-bottom: 18px;
+  }
+
+  .pill {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .hubCards {
     grid-template-columns: 1fr;
   }
@@ -729,10 +785,44 @@
   .socialRow {
     flex-wrap: wrap;
   }
+
+  .socialBtn {
+    min-height: 46px;
+    height: auto;
+    padding: 12px 14px;
+  }
+
+  .legalText {
+    margin-top: 0;
+  }
+
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    transform: translateY(60px);
+    width: auto;
+    max-width: none;
+    white-space: normal;
+  }
+
+  .toastShow {
+    transform: translateY(0);
+  }
 }
 
 @media (max-height: 760px) {
+  .page {
+    align-items: flex-start;
+  }
+
   .shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .left,
+  .right {
     height: auto;
   }
 }
