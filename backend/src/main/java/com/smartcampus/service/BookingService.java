@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -84,6 +85,36 @@ public class BookingService {
     public List<Booking> getAllBookings() {
         markNoShows();
         return repo.findAll();
+    }
+
+    public List<Booking> getFilteredBookings(
+        String query,
+        String status,
+        String type,
+        String capacity,
+        String startDate,
+        String endDate
+    ) {
+        markNoShows();
+
+        String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
+        String normalizedStatus = status == null ? "ALL" : status.trim();
+        String normalizedType = type == null ? "ALL" : type.trim();
+        String normalizedCapacity = capacity == null ? "ALL" : capacity.trim();
+        LocalDate parsedStartDate = parseDateOrNull(startDate);
+        LocalDate parsedEndDate = parseDateOrNull(endDate);
+
+        return repo.findAll().stream()
+            .filter(booking -> matchesAdminFilters(
+                booking,
+                normalizedQuery,
+                normalizedStatus,
+                normalizedType,
+                normalizedCapacity,
+                parsedStartDate,
+                parsedEndDate
+            ))
+            .toList();
     }
 
     public BookingScannerDetails getScannerDetails(String id) {
@@ -252,6 +283,68 @@ public class BookingService {
         return "REJECTED".equalsIgnoreCase(status)
             || "CANCELLED".equalsIgnoreCase(status)
             || "NO_SHOW".equalsIgnoreCase(status);
+    }
+
+    private boolean matchesAdminFilters(
+        Booking booking,
+        String query,
+        String status,
+        String type,
+        String capacity,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        Resource resource = booking.getResourceId() != null
+            ? resourceRepository.findById(booking.getResourceId()).orElse(null)
+            : null;
+        User user = booking.getUserId() != null
+            ? userRepository.findById(booking.getUserId()).orElse(null)
+            : null;
+
+        boolean matchesQuery = query.isBlank() || String.join(
+            " ",
+            safeLower(user != null ? user.getName() : booking.getUserId()),
+            safeLower(booking.getUserId()),
+            safeLower(resource != null ? resource.getName() : booking.getResourceId()),
+            safeLower(booking.getDescription()),
+            safeLower(booking.getStatus()),
+            booking.getBookingDate() != null ? booking.getBookingDate().toString().toLowerCase() : ""
+        ).contains(query);
+
+        boolean matchesStatus = "ALL".equalsIgnoreCase(status) || status.equalsIgnoreCase(booking.getStatus());
+        boolean matchesType = "ALL".equalsIgnoreCase(type) || type.equalsIgnoreCase(resource != null ? resource.getType() : null);
+        boolean matchesCapacity = "ALL".equalsIgnoreCase(capacity)
+            || capacity.equals(getCapacityLabel(resource != null ? resource.getCapacity() : null));
+        boolean matchesStartDate = startDate == null || (booking.getBookingDate() != null && !booking.getBookingDate().isBefore(startDate));
+        boolean matchesEndDate = endDate == null || (booking.getBookingDate() != null && !booking.getBookingDate().isAfter(endDate));
+
+        return matchesQuery && matchesStatus && matchesType && matchesCapacity && matchesStartDate && matchesEndDate;
+    }
+
+    private String getCapacityLabel(Integer capacity) {
+        if (capacity == null) {
+            return "0";
+        }
+        if (capacity <= 20) return "1-20";
+        if (capacity <= 50) return "21-50";
+        if (capacity <= 120) return "51-120";
+        return "120+";
+    }
+
+    private LocalDate parseDateOrNull(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(rawValue.trim());
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String safeLower(String value) {
+        return value == null ? "" : value.toLowerCase();
     }
 
     private boolean overlaps(LocalTime startA, LocalTime endA, LocalTime startB, LocalTime endB) {

@@ -237,6 +237,31 @@ function getCapacityLabel(capacity) {
   return '120+';
 }
 
+function buildBookingFilterQuery(filters, query) {
+  const params = new URLSearchParams();
+
+  if (query?.trim()) {
+    params.set('query', query.trim());
+  }
+  if (filters.status && filters.status !== 'ALL') {
+    params.set('status', filters.status);
+  }
+  if (filters.type && filters.type !== 'ALL') {
+    params.set('type', filters.type);
+  }
+  if (filters.capacity && filters.capacity !== 'ALL') {
+    params.set('capacity', filters.capacity);
+  }
+  if (filters.startDate) {
+    params.set('startDate', filters.startDate);
+  }
+  if (filters.endDate) {
+    params.set('endDate', filters.endDate);
+  }
+
+  return params.toString();
+}
+
 function getCalendarDays(anchorDate, mode) {
   if (mode === 'Weekly') {
     const weekStart = addDays(anchorDate, -anchorDate.getDay());
@@ -587,7 +612,6 @@ export default function BookingsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
-
   const fetchCheckedInAdminRows = async () => {
     if (!isAdmin) {
       setCheckedInAdminRows([]);
@@ -845,9 +869,20 @@ export default function BookingsPage() {
     const facility =
       backendResources.find((item) => item.id === booking.facilityId) ??
       mockFacilities.find((item) => item.id === booking.facilityId);
-    const matchesQuery =
-      !deferredQuery ||
-      [booking.facilityName, booking.purpose, booking.status, booking.date].join(' ').toLowerCase().includes(deferredQuery);
+    const searchHaystack = [
+      booking.facilityName,
+      booking.purpose,
+      booking.status,
+      booking.date,
+      booking.requesterName,
+      booking.requesterId,
+      facility?.type,
+      facility?.location,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    const matchesQuery = !deferredQuery || searchHaystack.includes(deferredQuery);
     const matchesStatus = filters.status === 'ALL' || booking.status === filters.status;
     const matchesType = filters.type === 'ALL' || facility?.type === filters.type;
     const matchesCapacity = filters.capacity === 'ALL' || getCapacityLabel(facility?.capacity ?? 0) === filters.capacity;
@@ -873,6 +908,7 @@ export default function BookingsPage() {
     const status = String(resource.status ?? '').toUpperCase();
     return !status || status === 'AVAILABLE';
   });
+  const resourceTypeOptions = [...new Set((backendResources.length ? backendResources : mockFacilities).map((facility) => facility.type).filter(Boolean))];
   const leastBusyResource = [...availableSuggestionResources]
     .map((resource) => ({
       resource,
@@ -2858,7 +2894,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             </select>
             <select className={styles.select} value={filters.type} onChange={(event) => handleFilterChange('type', event.target.value)}>
               <option value="ALL">All resources</option>
-              {[...new Set(mockFacilities.map((facility) => facility.type))].map((type) => (
+              {resourceTypeOptions.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
@@ -3217,7 +3253,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
         </select>
         <select className={styles.select} value={filters.type} onChange={(event) => handleFilterChange('type', event.target.value)}>
           <option value="ALL">All resources</option>
-          {[...new Set(mockFacilities.map((facility) => facility.type))].map((type) => (
+          {resourceTypeOptions.map((type) => (
             <option key={type} value={type}>{type}</option>
           ))}
         </select>

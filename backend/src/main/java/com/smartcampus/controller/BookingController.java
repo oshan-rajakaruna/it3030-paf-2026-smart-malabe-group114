@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -39,6 +40,18 @@ public class BookingController {
     @GetMapping
     public List<Booking> getAll() {
         return service.getAllBookings();
+    }
+
+    @GetMapping("/filter")
+    public List<Booking> getFiltered(
+        @RequestParam(required = false) String query,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String type,
+        @RequestParam(required = false) String capacity,
+        @RequestParam(required = false) String startDate,
+        @RequestParam(required = false) String endDate
+    ) {
+        return service.getFilteredBookings(query, status, type, capacity, startDate, endDate);
     }
 
     @GetMapping("/{id}/scanner-details")
