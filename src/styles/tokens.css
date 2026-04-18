@@ -43,7 +43,7 @@
   --space-12: 3rem;
   --transition-base: 180ms ease;
   --page-max-width: 1440px;
-  --sidebar-width: 280px;
+  --sidebar-width: 296px;
 }
 
 :root[data-theme='dark'] {
