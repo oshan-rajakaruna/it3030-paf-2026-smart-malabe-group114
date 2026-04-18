@@ -12,28 +12,28 @@
 }
 
 .badge[data-tone='primary'] {
-  color: var(--primary);
-  background: var(--primary-soft);
+  color: var(--primary-strong);
+  background: rgba(79, 70, 229, 0.18);
 }
 
 .badge[data-tone='secondary'] {
-  color: var(--secondary);
-  background: var(--secondary-soft);
+  color: #0f6f86;
+  background: rgba(8, 145, 178, 0.18);
 }
 
 .badge[data-tone='success'] {
-  color: var(--success);
-  background: var(--success-soft);
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.18);
 }
 
 .badge[data-tone='warning'] {
-  color: var(--warning);
-  background: var(--warning-soft);
+  color: #b45309;
+  background: rgba(217, 119, 6, 0.18);
 }
 
 .badge[data-tone='danger'] {
-  color: var(--danger);
-  background: var(--danger-soft);
+  color: #991b1b;
+  background: rgba(220, 38, 38, 0.22);
 }
 
 .badge[data-tone='neutral'] {

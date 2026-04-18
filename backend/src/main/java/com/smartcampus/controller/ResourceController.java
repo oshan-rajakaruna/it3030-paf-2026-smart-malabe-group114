@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.smartcampus.dto.AvailableNowSlot;
+
 
 @RestController
 @RequestMapping("/api/resources")
@@ -54,6 +56,12 @@ public class ResourceController {
     public ResponseEntity<ResourceResponseDto> getResourceById(@PathVariable String id) {
         return ResponseEntity.ok(resourceService.getResourceById(id));
     }
+ 
+
+  @GetMapping("/available-now")
+public ResponseEntity<List<AvailableNowSlot>> getAvailableNowSlots() {
+    return ResponseEntity.ok(resourceService.getAvailableNowSlots());
+}
 
     @PutMapping("/{id}")
     public ResponseEntity<ResourceResponseDto> updateResource(

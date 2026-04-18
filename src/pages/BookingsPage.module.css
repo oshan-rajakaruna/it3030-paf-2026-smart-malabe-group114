@@ -3,43 +3,877 @@
   gap: 1.5rem;
 }
 
-.topGrid {
+.page .pageNav,
+.page .pageNavActions,
+.page .calendarToolbar,
+.page .modeToggle,
+.page .calendarNav,
+.page .notificationRow,
+.page .bookingFacts,
+.page .bookingActions,
+.page .scannerControls,
+.page .footerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.page .pageNav {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(124, 140, 255, 0.2), transparent 35%),
+    linear-gradient(135deg, rgba(9, 18, 37, 0.88), rgba(33, 16, 68, 0.84));
+  box-shadow: var(--shadow-soft);
+}
+
+.page .pageNavBrand {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.2rem;
+}
+
+.page .pageNavEyebrow,
+.page .statLabel {
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page .pageNavBrand strong,
+.page .statValue {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.page .pageNavActions {
+  flex-wrap: wrap;
+}
+
+.page .pageNavLink,
+.page .modeButton,
+.page .iconAction,
+.page .scannerToggle {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.page .pageNavLink {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
+
+.page .modeButton {
+  min-height: 3.15rem;
+  padding: 0 1.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.page .pageNavLink:hover,
+.page .modeButton:hover,
+.page .iconAction:hover,
+.page .scannerToggle:hover,
+.page .upcomingItem:hover,
+.page .monthCell:hover,
+.page .weeklyBookingBlock:hover,
+.page .monthBookingBlock:hover,
+.page .slotButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(124, 140, 255, 0.34);
+}
+
+.page .pageNavActive,
+.page .modeButtonActive,
+.page .scannerToggleActive {
+  background: linear-gradient(135deg, rgba(124, 140, 255, 0.18), rgba(34, 211, 238, 0.16));
+  border-color: rgba(124, 140, 255, 0.3);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.page .statsGrid,
+.page .overviewGrid,
+.page .createGrid,
+.page .filterGrid,
+.page .formSplit {
+  display: grid;
   gap: 1rem;
 }
 
-.formGrid,
-.previewList,
-.modalGrid {
+.page .statsGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.page .statCard,
+.page .panelCard,
+.page .filterCard,
+.page .bookingCard,
+.page .monthCell,
+.page .weekSlot,
+.page .resourceCard,
+.page .conflictPanel,
+.page .noSlots,
+.page .detailSummary,
+.page .timelineStep,
+.page .scannerResult,
+.page .reminderStrip,
+.page .upcomingItem {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    rgba(7, 17, 31, 0.44);
+}
+
+.page .statCard {
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  padding: 1.35rem;
+}
+
+.page .statGlow {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  right: -28px;
+  bottom: -40px;
+  border-radius: 999px;
+  filter: blur(6px);
+  opacity: 0.6;
+}
+
+.page .statGlowprimary { background: rgba(124, 140, 255, 0.24); }
+.page .statGlowsuccess { background: rgba(34, 197, 94, 0.2); }
+.page .statGlowwarning { background: rgba(245, 158, 11, 0.2); }
+.page .statGlowdanger { background: rgba(248, 113, 113, 0.2); }
+
+.page .overviewGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .overviewWideCard {
+  grid-column: 1 / -1;
+}
+
+.page .bookingList,
+.page .notificationPreview,
+.page .formGrid,
+.page .availabilityPanel,
+.page .resourceHighlights,
+.page .detailModal,
+.page .timeline,
+.page .tabContent,
+.page .myBookingsList,
+.page .myBookingTop,
+.page .myBookingHeader,
+.page .detailFields {
   display: grid;
   gap: 1rem;
 }
 
-.filterGrid {
+.page .upcomingItem {
+  width: 100%;
+  padding: 1rem;
+  color: inherit;
+  text-align: left;
+}
+
+.page .upcomingCards {
   display: grid;
-  grid-template-columns: 1.4fr 0.6fr;
+  gap: 1rem;
+}
+
+.page .dateChangeSuccessStack {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.page .dateChangeSuccessBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 36%),
+    linear-gradient(135deg, rgba(12, 29, 25, 0.96), rgba(18, 63, 38, 0.88));
+  border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.page .dateChangeSuccessContent {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.page .dateChangeSuccessEyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86efac;
+}
+
+.page .dateChangeSuccessContent strong {
+  font-size: 1rem;
+}
+
+.page .dateChangeSuccessContent p {
+  margin: 0;
+  color: rgba(220, 252, 231, 0.9);
+}
+
+.page .suggestionsModalList {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .suggestionModalCard {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+
+.page .suggestionModalblue {
+  background: linear-gradient(135deg, rgba(13, 101, 255, 0.16), rgba(110, 58, 255, 0.14));
+}
+
+.page .suggestionModalteal {
+  background: linear-gradient(135deg, rgba(12, 181, 176, 0.16), rgba(44, 107, 255, 0.12));
+}
+
+.page .suggestionModalamber {
+  background: linear-gradient(135deg, rgba(204, 126, 24, 0.16), rgba(140, 47, 166, 0.12));
+}
+
+.page .suggestionModalviolet {
+  background: linear-gradient(135deg, rgba(24, 46, 104, 0.18), rgba(214, 68, 155, 0.14));
+}
+
+.page .suggestionModalTop {
+  display: flex;
+  align-items: flex-start;
   gap: 0.9rem;
 }
 
-.select {
+.page .suggestionModalIcon {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+}
+
+.page .suggestionModalCopy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.page .suggestionModalEyebrow {
+  color: var(--secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page .suggestionModalCopy strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.page .suggestionModalCopy p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .suggestionModalActionRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.page .suggestionModalMeta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fef08a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.page .suggestionsHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(9, 18, 37, 0.92), rgba(32, 16, 58, 0.9));
+  box-shadow: var(--shadow-soft);
+}
+
+.page .suggestionsHeroCopy,
+.page .suggestionsHeroStats,
+.page .suggestionsCatalog,
+.page .suggestionsInsightColumn {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .suggestionsHeroCopy h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.page .suggestionsHeroCopy p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+.page .suggestionsHeroStats {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.page .suggestionsHeroStat,
+.page .suggestionsInsightCard {
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.page .suggestionsHeroStat span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.page .suggestionsHeroStat strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.page .suggestionsSpotlightCard {
+  overflow: hidden;
+  border-radius: 28px;
+}
+
+.page .suggestionsSpotlightShell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.16));
+}
+
+.page .suggestionsSpotlightBadge {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+  flex-shrink: 0;
+}
+
+.page .suggestionsSpotlightCopy {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.page .suggestionsSpotlightCopy h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.page .suggestionsSpotlightCopy p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .suggestionsSpotlightAction {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.page .suggestionsSectionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.page .suggestionsCatalog {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .suggestionsSectionCard {
+  min-height: 100%;
+}
+
+.page .suggestionsInsightCard {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.page .suggestionsInsightCard h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+}
+
+.page .suggestionsInsightCard p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .upcomingBookingCard {
   width: 100%;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 24px;
+  background: rgba(51, 65, 85, 0.62);
+  color: inherit;
+  text-align: left;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.page .upcomingBookingCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 140, 255, 0.3);
+  background: rgba(51, 65, 85, 0.72);
+}
+
+.page .upcomingBookingTop,
+.page .upcomingMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page .upcomingApprovalRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.page .dateChangeApprovedPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.page .upcomingBookingMain {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.page .upcomingBookingMain strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.page .upcomingLocation,
+.page .upcomingMetaRow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.page .notificationRow {
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.page .adminGrid,
+.page .adminInsightStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .adminTabBar,
+.page .adminTableActionsHead,
+.page .pieLegend,
+.page .pieLegendItem,
+.page .barLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.page .adminGrid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+}
+
+.page .adminTabBar {
+  flex-wrap: wrap;
+  padding: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  background: rgba(7, 17, 31, 0.42);
+}
+
+.page .adminTabButton {
   min-height: 3rem;
-  padding: 0 0.95rem;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-strong);
+  padding: 0 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  transition:
+    transform var(--transition-base),
+    color var(--transition-base),
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.page .adminTabButton:hover {
+  transform: translateY(-1px);
   color: var(--text);
 }
 
-.submitMessage {
-  color: var(--success);
-  font-size: 0.9rem;
-  font-weight: 600;
+.page .adminTabButtonActive {
+  background: linear-gradient(135deg, rgba(124, 140, 255, 0.2), rgba(34, 211, 238, 0.18));
+  border-color: rgba(124, 140, 255, 0.28);
+  color: var(--text);
 }
 
-.previewItem,
-.modalBlock {
+.page .adminAnalyticsGrid,
+.page .chartStack,
+.page .pieChartLayout,
+.page .adminScannerLayout,
+.page .adminScannerColumn,
+.page .adminScannerActions,
+.page .adminScannerInfoList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.page .adminAnalyticsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.page .adminScannerLayout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.page .adminPrimaryCell {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.page .adminPrimaryCell span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.page .adminUrgentFlag {
+  width: fit-content;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: #fca5a5 !important;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.page .adminRowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.page .adminReviewButton {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.page .adminReviewButton:hover {
+  color: #67e8f9;
+}
+
+.page .adminActionState {
+  color: var(--text-muted);
+}
+
+.page .adminStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.page .adminStatusApproved {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: #86efac;
+}
+
+.page .adminStatusPending {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #fcd34d;
+}
+
+.page .adminStatusRejected {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fca5a5;
+}
+
+.page .adminScannerInput {
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.42);
+  color: var(--text);
+}
+
+.page .adminVerifyButton {
+  min-height: 3.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.52);
+  color: var(--text);
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.page .adminVerifyButton:hover {
+  border-color: rgba(124, 140, 255, 0.28);
+}
+
+.page .adminScannerTestCard {
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.page .adminScannerInfoRow,
+.page .adminCheckinStat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page .adminScannerInfoRow span,
+.page .adminScannerMuted,
+.page .adminCheckinStat span {
+  color: var(--text-muted);
+}
+
+.page .adminCheckinStatsCompact {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.page .adminCheckinStat {
+  padding: 0.2rem 0;
+}
+
+.page .adminCheckinValid {
+  color: var(--success);
+}
+
+.page .adminCheckinInvalid {
+  color: var(--danger);
+}
+
+.page .adminTableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  background: rgba(7, 17, 31, 0.26);
+}
+
+.page .adminTable {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.page .adminTable th,
+.page .adminTable td {
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  vertical-align: middle;
+}
+
+.page .adminTable th {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.page .adminTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.page .adminTable tbody tr:hover {
+  background: rgba(124, 140, 255, 0.05);
+}
+
+.page .adminTable td {
+  font-size: 0.94rem;
+}
+
+.page .adminTableRowPending {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent 42%);
+}
+
+.page .adminTableRowProcessing {
+  opacity: 0.8;
+}
+
+.page .adminTableSkeleton {
+  height: 2.9rem;
+  border-radius: 14px;
+}
+
+.page .checkedInTimerCard {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.95rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
+}
+
+.page .checkedInTimerEyebrow {
+  color: #86efac;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page .checkedInTimerCard strong {
+  font-size: 1rem;
+}
+
+.page .checkedInTimerCard p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.page .checkedInLatePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.75rem;
+  min-height: 2rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.page .checkedInLateYes {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+}
+
+.page .checkedInLateNo {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.page .adminEmptyState {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.page .adminInsightCard {
   display: grid;
   gap: 0.35rem;
   padding: 1rem;
@@ -48,26 +882,1703 @@
   background: var(--surface-muted);
 }
 
-.previewItem strong,
-.primaryCell strong {
-  display: block;
-  font-size: 0.96rem;
+.page .adminInsightCard strong {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
 }
 
-.previewItem span,
-.primaryCell span,
-.modalBlock span {
+.page .adminInsightCard span,
+.page .adminRolePill {
   color: var(--text-muted);
-  font-size: 0.86rem;
 }
 
-.modalBlock p {
+.page .barRow {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.page .barLabelRow {
+  justify-content: space-between;
+}
+
+.page .barTrack {
+  height: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.page .barFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.95), rgba(124, 140, 255, 0.95));
+}
+
+.page .lineChartWrap {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.page .lineChart {
+  width: 100%;
+  height: 180px;
+}
+
+.page .lineChartLabels {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.page .pieChartLayout {
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+}
+
+.page .pieChart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 18px rgba(7, 17, 31, 0.72);
+}
+
+.page .pieLegend {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.page .pieLegendItem {
+  align-items: flex-start;
+}
+
+.page .pieLegendItem div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.page .pieLegendItem span {
+  color: var(--text-muted);
+}
+
+.page .pieLegendDot {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.25rem;
+  border-radius: 999px;
+}
+
+.page .rejectForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .rejectForm p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .reviewModalBody,
+.page .reviewModeSwitch {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .reviewModeSwitch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .reviewModeButton {
+  min-height: 3.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(226, 232, 240, 0.12);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.page .reviewModeApproveActive {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.92));
+  border-color: rgba(34, 197, 94, 0.42);
+  color: white;
+}
+
+.page .reviewModeRejectActive {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.96), rgba(239, 68, 68, 0.94));
+  border-color: rgba(248, 113, 113, 0.4);
+  color: white;
+}
+
+.page .reviewReasonInput {
+  width: 100%;
+  min-height: 132px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  color: var(--text);
+  resize: vertical;
+}
+
+.page .reviewNotice {
+  padding: 1rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  font-size: 0.98rem;
+}
+
+.page .reviewNoticeApprove {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.24);
+  color: #16a34a;
+}
+
+.page .reviewNoticeReject {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.24);
+  color: #dc2626;
+}
+
+.page .notificationRow p,
+.page .readState,
+.page .resourceCard p,
+.page .timelineStep p,
+.page .monthCellEmpty,
+.page .timeLabel,
+.page .weekDayHeader span,
+.page .monthCellHeader span,
+.page .qrMeta p {
+  color: var(--text-muted);
+}
+
+.page .markRead {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font-weight: 700;
+}
+
+.page .filterGrid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.page .select,
+.page .textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(7, 17, 31, 0.42);
   color: var(--text);
 }
 
-@media (max-width: 980px) {
-  .topGrid,
-  .filterGrid {
+.page .select {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+}
+
+.page .textarea {
+  padding: 0.9rem 1rem;
+  resize: vertical;
+}
+
+.page .iconAction {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page .monthlyCalendar,
+.page .weeklyPlanner {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .monthHeaderRow,
+.page .weeklyHeader,
+.page .weekRow {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.page .monthHeaderRow,
+.page .weeklyHeader {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.page .monthHeaderCell,
+.page .weekDayHeader {
+  display: grid;
+  justify-items: start;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  background: rgba(31, 41, 55, 0.82);
+}
+
+.page .monthHeaderCell {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.page .monthlyGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.page .monthCell {
+  min-height: 156px;
+  padding: 0.8rem;
+  transition: transform var(--transition-base), border-color var(--transition-base);
+}
+
+.page .monthCellMuted {
+  opacity: 0.55;
+}
+
+.page .monthCellHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.page .monthCellBody {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.page .monthCellEmpty {
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  font-size: 0.84rem;
+}
+
+.page .bookingBlock {
+  color: white;
+  border-radius: 14px;
+  padding: 0.7rem 0.75rem;
+  cursor: grab;
+}
+
+.page .bookingBlock strong,
+.page .monthBookingBlock strong,
+.page .weeklyBookingBlock strong {
+  display: block;
+  font-size: 0.84rem;
+}
+
+.page .bookingBlock span,
+.page .monthBookingBlock span,
+.page .weeklyBookingBlock span,
+.page .upcomingItem span,
+.page .resourceCard span,
+.page .detailSummary span,
+.page .detailSummary small {
+  color: rgba(236, 244, 255, 0.74);
+  font-size: 0.8rem;
+}
+
+.page .blockApproved { background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(22, 101, 52, 0.92)); }
+.page .blockPending { background: linear-gradient(180deg, rgba(245, 158, 11, 0.92), rgba(180, 83, 9, 0.92)); }
+.page .blockRejected { background: linear-gradient(180deg, rgba(248, 113, 113, 0.92), rgba(185, 28, 28, 0.92)); }
+
+.page .monthBookingBlock {
+  min-height: 56px;
+}
+
+.page .weeklyHeader {
+  grid-template-columns: 100px repeat(7, minmax(0, 1fr));
+}
+
+.page .timeHeaderCell {
+  display: grid;
+  place-items: center start;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: #030712;
+  color: white;
+  font-weight: 700;
+}
+
+.page .weeklyBody {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.page .weekRow {
+  grid-template-columns: 100px repeat(7, minmax(0, 1fr));
+}
+
+.page .timeLabel {
+  display: grid;
+  place-items: center start;
+  min-height: 72px;
+  padding: 0 0.75rem;
+  border-radius: 14px;
+  background: #020617;
+}
+
+.page .weekSlot {
+  min-height: 72px;
+  padding: 0.45rem;
+}
+
+.page .weeklyBookingBlock {
+  min-height: 100%;
+}
+
+.page .createGrid {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.page .myBookingsList {
+  gap: 1rem;
+}
+
+.page .myBookingsHeader,
+.page .createBookingHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page .myBookingsHeader h2,
+.page .createBookingHeader h2 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.04em;
+}
+
+.page .myBookingsHeader p,
+.page .createBookingHeader p {
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+}
+
+.page .myBookingCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.page .myBookingTop {
+  flex: 1;
+}
+
+.page .myBookingHeader {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.page .myBookingHeader h3 {
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.page .bookingDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+}
+
+.page .bookingInfoItem,
+.page .bookingTimelineInline,
+.page .detailFields label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page .bookingInfoItem,
+.page .bookingTimelineInline {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.page .bookingCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.page .timelineStateDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+
+.page .timelineApproved {
+  background: var(--success);
+}
+
+.page .timelinePending {
+  background: var(--warning);
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.08);
+}
+
+.page .timelineRejected {
+  background: var(--danger);
+}
+
+.page .deleteButton {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--danger);
+}
+
+.page .deleteButton:hover {
+  background: var(--danger-soft);
+}
+
+.page .emptyBookingsCard {
+  padding: 2rem;
+}
+
+.page .emptyBookingsInner {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  text-align: center;
+}
+
+.page .createBookingView,
+.page .createBookingForm,
+.page .createBookingSideColumn,
+.page .tipCardBody,
+.page .supportCardBody,
+.page .tipList {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .createBookingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 1.25rem;
+}
+
+.page .createBookingFormCard,
+.page .tipCard,
+.page .supportCard {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 34%),
+    rgba(8, 10, 18, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.page .createBookingFormCard {
+  padding: 1.85rem;
+}
+
+.page .createBookingForm {
+  gap: 1.35rem;
+}
+
+.page .createBookingSplit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.page .editBookingModal {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page .editBookingHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.page .editBookingHero h3 {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.page .editBookingHero p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 34rem;
+}
+
+.page .editBookingEyebrow,
+.page .editBookingSidebarLabel {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.92);
+}
+
+.page .editBookingHighlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.page .editBookingHighlights span {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.page .editBookingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+  gap: 1rem;
+}
+
+.page .editBookingPanel,
+.page .editBookingSidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .editBookingSidebarCard {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem;
+}
+
+.page .editBookingTips {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 0.65rem;
+  color: var(--text-muted);
+}
+
+.page .editBookingPreview {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.page .editBookingPreview strong {
+  font-size: 1rem;
+}
+
+.page .dateChangeRequestCard {
+  overflow: hidden;
+}
+
+.page .dateChangeRequestList {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.page .dateChangeRequestItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.1), transparent 34%),
+    linear-gradient(135deg, rgba(14, 25, 45, 0.94), rgba(31, 22, 61, 0.9));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.page .dateChangeRequestContent {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.page .dateChangeRequestContent p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .dateChangeRequestEyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.95);
+}
+
+.page .dateChangeRequestActions {
+  display: flex;
+  align-items: center;
+}
+
+.page .dateChangeWindowList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.page .dateChangeWindowPill,
+.page .dateChangeWindowPillMuted {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.page .dateChangeWindowButton {
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.page .dateChangeWindowButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.page .dateChangeWindowButtonActive {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.32);
+  color: #bfdbfe;
+}
+
+.page .dateChangeWindowPill {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.page .dateChangeWindowPillMuted {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
+.page .dateChangeRequestModal {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .dateChangeRequestHero {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 38%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.page .dateChangeRequestHero h3,
+.page .dateChangeAvailability strong {
+  margin: 0 0 0.35rem;
+}
+
+.page .dateChangeRequestHero p,
+.page .dateChangeAvailability {
+  margin: 0;
+}
+
+.page .dateChangeAvailability {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.page .startTimeSlotGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.page .startTimeSlotButton {
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 140, 255, 0.18);
+  background: rgba(46, 31, 74, 0.42);
+  color: #e2e8f0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.page .startTimeSlotButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.34);
+}
+
+.page .startTimeSlotButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.26), rgba(56, 189, 248, 0.22));
+  border-color: rgba(96, 165, 250, 0.36);
+  color: #f8fafc;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.page .createInput,
+.page .createSelect,
+.page .createTextarea {
+  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 14px;
+  background: rgba(15, 17, 23, 0.92);
+  color: var(--text);
+}
+
+.page .createSelect option {
+  background: #111827;
+  color: #f8fafc;
+}
+
+.page .createInput,
+.page .createSelect {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+}
+
+.page .createTextarea {
+  min-height: 128px;
+  padding: 0.95rem 1rem;
+  resize: vertical;
+}
+
+.page .fieldHint {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.page .createInput:focus,
+.page .createSelect:focus,
+.page .createTextarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.page .bookingNotice {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.page .bookingNoticeSuccess {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
+
+.page .bookingNoticeDanger {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+
+.page .tipCard,
+.page .supportCard {
+  padding: 1.5rem;
+}
+
+.page .tipCard h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.page .tipCardBody {
+  gap: 0.55rem;
+}
+
+.page .tipList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  gap: 0.7rem;
+}
+
+.page .tipList li {
+  position: relative;
+  padding-left: 1.1rem;
+}
+
+.page .tipList li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.page .supportCardBody {
+  min-height: 100%;
+  align-content: center;
+  text-align: center;
+}
+
+.page .supportCardBody p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.page .formField {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.page .formField > span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.page .formSplit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .conflictPanel,
+.page .noSlots,
+.page .slotButton,
+.page .scannerResult,
+.page .reminderStrip,
+.page .bookingFacts > div,
+.page .qrModal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page .slotButton {
+  justify-content: flex-start;
+  padding: 1rem;
+  color: var(--text);
+  text-align: left;
+}
+
+.page .conflictSuccess,
+.page .validResult { color: var(--success); }
+.page .conflictDanger,
+.page .invalidResult { color: var(--danger); }
+
+.page .submitMessage {
+  padding: 0.9rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.page .bookingBlockLocked {
+  cursor: not-allowed;
+  opacity: 0.74;
+}
+
+.page .dateChangeHint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+}
+
+.page .submitMessageSuccess {
+  background: rgba(8, 145, 178, 0.12);
+  border-color: rgba(8, 145, 178, 0.18);
+  color: var(--secondary);
+}
+
+.page .submitMessageError {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.24);
+  color: #fca5a5;
+}
+
+.page .bookingCard h3 { font-size: 1.1rem; }
+.page .bookingFacts { flex-wrap: wrap; justify-content: flex-start; }
+.page .bookingActions { justify-content: flex-start; flex-wrap: wrap; }
+
+.page .detailSummary,
+.page .timelineStep,
+.page .scannerResult,
+.page .reminderStrip,
+.page .resourceCard { padding: 1rem; }
+
+.page .detailFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .detailFields > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.page .detailFields label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.page .detailFields p {
+  line-height: 1.5;
+}
+
+.page .timeline {
+  position: relative;
+}
+
+.page .timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  top: 0.8rem;
+  bottom: 0.8rem;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.24);
+}
+
+.page .timelineStep {
+  position: relative;
+  margin-left: 1.6rem;
+}
+
+.page .timelineDot {
+  position: absolute;
+  left: -1.45rem;
+  top: 1.1rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+  box-shadow: 0 0 0 6px rgba(7, 17, 31, 1);
+}
+
+.page .timelineStepActive .timelineDot { background: var(--secondary); }
+.page .timelineStepCancelled .timelineDot { background: var(--danger); }
+
+.page .qrModal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.page .qrCard {
+  padding: 1rem;
+  border-radius: 24px;
+  background: white;
+}
+
+.page .qrGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 16px);
+  gap: 4px;
+}
+
+.page .qrPixel,
+.page .qrPixelFilled {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #dbeafe;
+}
+
+.page .qrPixelFilled { background: #111827; }
+.page .qrMeta { display: grid; gap: 0.5rem; }
+
+.page .qrImage {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
+.page .qrLoading {
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  color: #111827;
+  font-weight: 700;
+}
+
+.page .cameraFrame {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(7, 17, 31, 0.9), rgba(17, 29, 49, 0.8));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.page .scanFrame {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(34, 211, 238, 0.35);
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.page .scanLine {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+  animation: scan 2.2s linear infinite;
+}
+
+@keyframes scan {
+  from { top: 12%; }
+  to { top: 88%; }
+}
+
+.page .scannerLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.page .scannerColumn,
+.page .scannerPanelCenter,
+.page .scannerActionStack,
+.page .resultInfoStack,
+.page .resultInfoGrid,
+.page .cameraFeedInner {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .scannerPanel {
+  padding: 1.25rem;
+}
+
+.page .scannerPanelCenter,
+.page .scannerWaiting {
+  justify-items: center;
+  text-align: center;
+}
+
+.page .scannerHeroIcon {
+  width: 3.4rem;
+  height: 3.4rem;
+  color: var(--primary);
+  opacity: 0.55;
+}
+
+.page .cameraFeed {
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(2, 6, 23, 0.82);
+  border: 1px dashed rgba(124, 140, 255, 0.24);
+}
+
+.page .cameraFeedInner {
+  justify-items: center;
+  color: white;
+  text-align: center;
+}
+
+.page .cameraFeedInner p {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.page .cameraFeedInner span,
+.page .cameraHint,
+.page .lastScanned,
+.page .resultInfoStack p,
+.page .resultInfoGrid p {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.page .uploadLabel {
+  display: block;
+}
+
+.page .hiddenInput {
+  display: none;
+}
+
+.page .uploadButton {
+  width: 100%;
+  min-height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+  font-weight: 700;
+}
+
+.page .scannerTestPanel {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(7, 17, 31, 0.44));
+}
+
+.page .scannerWaiting {
+  padding: 3rem 1.5rem;
+}
+
+.page .validBadgeWrap {
+  display: grid;
+  justify-items: center;
+}
+
+.page .validBadgeCircle {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c55e, #10b981);
+  color: white;
+}
+
+.page .resultInfoGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page .resultInfoStack strong,
+.page .resultInfoGrid strong {
+  font-size: 0.98rem;
+}
+
+.page .statusPillRow {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.page .validStatusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--success);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.page .checkInSummary {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.page .invalidPanel {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.08), rgba(7, 17, 31, 0.44));
+}
+
+.page .invalidPanel h4 {
+  color: var(--danger);
+}
+
+.page .invalidList {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 1rem;
+  color: var(--text-muted);
+}
+
+.page .statRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page .statValid {
+  color: var(--success);
+}
+
+.page .statInvalid {
+  color: var(--danger);
+}
+
+.page .skeletonHero,
+.page .skeletonGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.page .skeletonHero {
+  padding: 2rem;
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgba(9, 18, 37, 0.92), rgba(33, 16, 68, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.page .skeletonGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.page .skeletonTitle { width: min(420px, 100%); height: 52px; }
+.page .skeletonLine { width: min(620px, 100%); height: 18px; }
+.page .skeletonButtonRow { width: 240px; height: 42px; }
+.page .skeletonCard { min-height: 180px; border-radius: 24px; }
+
+:global(:root:not([data-theme='dark'])) .pageNav {
+  background:
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.12), transparent 35%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 244, 251, 0.96));
+}
+
+:global(:root:not([data-theme='dark'])) .pageNavLink,
+:global(:root:not([data-theme='dark'])) .modeButton,
+:global(:root:not([data-theme='dark'])) .iconAction,
+:global(:root:not([data-theme='dark'])) .scannerToggle {
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .statCard,
+:global(:root:not([data-theme='dark'])) .panelCard,
+:global(:root:not([data-theme='dark'])) .filterCard,
+:global(:root:not([data-theme='dark'])) .bookingCard,
+:global(:root:not([data-theme='dark'])) .monthCell,
+:global(:root:not([data-theme='dark'])) .weekSlot,
+:global(:root:not([data-theme='dark'])) .resourceCard,
+:global(:root:not([data-theme='dark'])) .conflictPanel,
+:global(:root:not([data-theme='dark'])) .noSlots,
+:global(:root:not([data-theme='dark'])) .detailSummary,
+:global(:root:not([data-theme='dark'])) .timelineStep,
+:global(:root:not([data-theme='dark'])) .scannerResult,
+:global(:root:not([data-theme='dark'])) .reminderStrip,
+:global(:root:not([data-theme='dark'])) .upcomingItem,
+:global(:root:not([data-theme='dark'])) .createBookingFormCard,
+:global(:root:not([data-theme='dark'])) .tipCard,
+:global(:root:not([data-theme='dark'])) .supportCard,
+:global(:root:not([data-theme='dark'])) .scannerPanel,
+:global(:root:not([data-theme='dark'])) .scannerInfoCard,
+:global(:root:not([data-theme='dark'])) .statsCard {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.78)),
+    var(--surface);
+  border-color: var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .upcomingBookingCard {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .upcomingBookingCard:hover {
+  background: rgba(255, 255, 255, 0.97);
+}
+
+:global(:root:not([data-theme='dark'])) .monthHeaderCell,
+:global(:root:not([data-theme='dark'])) .weekDayHeader,
+:global(:root:not([data-theme='dark'])) .timeHeaderCell,
+:global(:root:not([data-theme='dark'])) .timeLabel {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .timeHeaderCell,
+:global(:root:not([data-theme='dark'])) .timeLabel {
+  border: 1px solid var(--border);
+}
+
+:global(:root:not([data-theme='dark'])) .select,
+:global(:root:not([data-theme='dark'])) .textarea,
+:global(:root:not([data-theme='dark'])) .createInput,
+:global(:root:not([data-theme='dark'])) .createSelect,
+:global(:root:not([data-theme='dark'])) .createTextarea {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+:global(:root:not([data-theme='dark'])) .createSelect option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+:global(:root:not([data-theme='dark'])) .editBookingHero {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(238, 242, 255, 0.95));
+  border-color: rgba(99, 102, 241, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .editBookingHighlights span {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeRequestItem,
+:global(:root:not([data-theme='dark'])) .dateChangeRequestHero {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(238, 242, 255, 0.95));
+  border-color: rgba(99, 102, 241, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeSuccessBanner {
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 36%),
+    linear-gradient(135deg, rgba(240, 253, 244, 0.98), rgba(220, 252, 231, 0.95));
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalCard {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalIcon {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
+  color: #0f172a;
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalMeta {
+  background: rgba(255, 255, 255, 0.58);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #a16207;
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsHero {
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.1), transparent 34%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 36%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 242, 255, 0.94));
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsHeroStat,
+:global(:root:not([data-theme='dark'])) .suggestionsInsightCard {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsSpotlightShell {
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(224, 231, 255, 0.9));
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsSpotlightBadge {
+  background: rgba(255, 255, 255, 0.76);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #1e293b;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeWindowButton {
+  background: rgba(34, 197, 94, 0.1);
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .startTimeSlotButton {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #1e293b;
+}
+
+:global(:root:not([data-theme='dark'])) .startTimeSlotButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(8, 145, 178, 0.1));
+  border-color: rgba(79, 70, 229, 0.18);
+  color: #1e293b;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.1);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeWindowButtonActive {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeSuccessContent p {
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeAvailability {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:global(:root:not([data-theme='dark'])) .submitMessage {
+  color: var(--primary-strong);
+}
+
+:global(:root:not([data-theme='dark'])) .submitMessageSuccess {
+  background: rgba(8, 145, 178, 0.1);
+  border-color: rgba(8, 145, 178, 0.18);
+  color: #0f766e;
+}
+
+:global(:root:not([data-theme='dark'])) .submitMessageError {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.16);
+  color: #b91c1c;
+}
+
+:global(:root:not([data-theme='dark'])) .bookingNoticeSuccess {
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .bookingNoticeDanger {
+  color: #b91c1c;
+}
+
+:global(:root:not([data-theme='dark'])) .emptyScannerFrame,
+:global(:root:not([data-theme='dark'])) .cameraFrame {
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(241, 245, 249, 0.96), rgba(226, 232, 240, 0.92));
+}
+
+:global(:root:not([data-theme='dark'])) .emptyScannerFrame p,
+:global(:root:not([data-theme='dark'])) .cameraFrame p,
+:global(:root:not([data-theme='dark'])) .cameraFrame span {
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabBar {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButton {
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButton:hover {
+  color: var(--text);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTabButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(8, 145, 178, 0.1));
+  border-color: rgba(79, 70, 229, 0.16);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTableWrap {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable th {
+  background: rgba(248, 250, 252, 0.94);
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable td {
+  color: var(--text);
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTable tbody tr:hover {
+  background: rgba(79, 70, 229, 0.04);
+}
+
+:global(:root:not([data-theme='dark'])) .adminTableRowPending {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.09), rgba(255, 255, 255, 0.9) 42%);
+}
+
+:global(:root:not([data-theme='dark'])) .checkedInTimerCard {
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.92), rgba(236, 253, 245, 0.96));
+  border-color: rgba(34, 197, 94, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .checkedInTimerEyebrow {
+  color: #15803d;
+}
+
+:global(:root:not([data-theme='dark'])) .adminPrimaryCell span,
+:global(:root:not([data-theme='dark'])) .adminActionState,
+:global(:root:not([data-theme='dark'])) .adminEmptyState,
+:global(:root:not([data-theme='dark'])) .lineChartLabels,
+:global(:root:not([data-theme='dark'])) .pieLegendItem span,
+:global(:root:not([data-theme='dark'])) .adminInsightCard span,
+:global(:root:not([data-theme='dark'])) .adminRolePill {
+  color: var(--text-muted);
+}
+
+:global(:root:not([data-theme='dark'])) .barTrack {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+:global(:root:not([data-theme='dark'])) .pieChart {
+  box-shadow: inset 0 0 0 18px rgba(255, 255, 255, 0.96);
+}
+
+:global(:root:not([data-theme='dark'])) .reviewModeButton {
+  background: rgba(248, 250, 252, 0.92);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .reviewReasonInput,
+:global(:root:not([data-theme='dark'])) .adminScannerInput {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminVerifyButton {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+:global(:root:not([data-theme='dark'])) .adminScannerTestCard {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 235, 0.96), rgba(255, 255, 255, 0.92)),
+    var(--surface);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+@media (max-width: 1180px) {
+  .page .statsGrid,
+  .page .overviewGrid,
+  .page .createGrid,
+  .page .adminGrid,
+  .page .adminAnalyticsGrid,
+  .page .adminScannerLayout,
+  .page .createBookingLayout,
+  .page .filterGrid,
+  .page .detailFields,
+  .page .bookingDetailGrid,
+  .page .scannerLayout,
+  .page .resultInfoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page .monthlyGrid,
+  .page .monthHeaderRow,
+  .page .weeklyHeader,
+  .page .weekRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page .timeHeaderCell,
+  .page .timeLabel {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .page .statsGrid,
+  .page .overviewGrid,
+  .page .createGrid,
+  .page .adminGrid,
+  .page .adminAnalyticsGrid,
+  .page .adminScannerLayout,
+  .page .createBookingLayout,
+  .page .createBookingSplit,
+  .page .editBookingLayout,
+  .page .filterGrid,
+  .page .formSplit,
+  .page .bookingDetailGrid,
+  .page .detailFields,
+  .page .scannerLayout,
+  .page .resultInfoGrid,
+  .page .monthlyGrid,
+  .page .monthHeaderRow,
+  .page .weeklyHeader,
+  .page .weekRow,
+  .page .qrModal {
     grid-template-columns: 1fr;
+  }
+
+  .page .upcomingBookingTop,
+  .page .upcomingMetaRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page .myBookingCard {
+    flex-direction: column;
+  }
+
+  .page .myBookingsHeader,
+  .page .createBookingHeader {
+    display: grid;
+  }
+
+  .page .dateChangeRequestItem {
+    display: grid;
+  }
+
+  .page .dateChangeSuccessBanner {
+    display: grid;
+  }
+
+  .page .suggestionsHero,
+  .page .suggestionsSectionGrid,
+  .page .suggestionsCatalog {
+    grid-template-columns: 1fr;
+  }
+
+  .page .suggestionsSpotlightShell {
+    display: grid;
+  }
+
+  .page .editBookingHero {
+    padding: 1rem;
+  }
+
+  .page .editBookingHighlights {
+    justify-content: flex-start;
+  }
+
+  .page .adminRowActions {
+    justify-content: flex-start;
+  }
+
+  .page .adminTabBar,
+  .page .pieChartLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .page .adminTabBar {
+    display: grid;
+  }
+
+  .page .pageNavLink,
+  .page .adminTabButton,
+  .page .modeButton {
+    width: 100%;
   }
 }
