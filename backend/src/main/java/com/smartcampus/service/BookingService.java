@@ -7,11 +7,11 @@ import com.smartcampus.dto.CheckedInBookingRow;
 import com.smartcampus.model.Booking;
 import com.smartcampus.model.Checkin;
 import com.smartcampus.model.Resource;
-import com.smartcampus.model.User;
+import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.CheckinRepository;
 import com.smartcampus.repository.ResourceRepository;
-import com.smartcampus.repository.UserRepository;
+import com.smartcampus.repository.rolemanagement.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -312,7 +312,7 @@ public class BookingService {
         ).contains(query);
 
         boolean matchesStatus = "ALL".equalsIgnoreCase(status) || status.equalsIgnoreCase(booking.getStatus());
-        boolean matchesType = "ALL".equalsIgnoreCase(type) || type.equalsIgnoreCase(resource != null ? resource.getType() : null);
+        boolean matchesType = "ALL".equalsIgnoreCase(type) || type.equalsIgnoreCase(resource != null ? String.valueOf(resource.getType()) : null);
         boolean matchesCapacity = "ALL".equalsIgnoreCase(capacity)
             || capacity.equals(getCapacityLabel(resource != null ? resource.getCapacity() : null));
         boolean matchesStartDate = startDate == null || (booking.getBookingDate() != null && !booking.getBookingDate().isBefore(startDate));
@@ -413,12 +413,18 @@ public class BookingService {
             .filter(booking -> "APPROVED".equalsIgnoreCase(booking.getStatus()))
             .filter(booking -> !Boolean.TRUE.equals(booking.getCheckedIn()))
             .filter(booking -> booking.getBookingDate() != null && booking.getStartTime() != null)
-            .filter(booking -> !now.isBefore(LocalDateTime.of(booking.getBookingDate(), booking.getStartTime()).plusMinutes(15)))
+            .filter(booking -> now.isAfter(getNoShowDeadline(booking)))
             .forEach(booking -> {
                 booking.setStatus("NO_SHOW");
                 booking.setUpdatedAt(now);
                 repo.save(booking);
             });
+    }
+
+    private LocalDateTime getNoShowDeadline(Booking booking) {
+        return LocalDateTime
+            .of(booking.getBookingDate(), booking.getStartTime())
+            .plusMinutes(15);
     }
 
     public CheckinResponse checkinBooking(String bookingId) {
@@ -457,9 +463,14 @@ public class BookingService {
             return response;
         }
 
-        LocalDateTime latestCheckinTime = bookingStart.plusMinutes(15);
+        LocalDateTime latestCheckinTime = getNoShowDeadline(booking);
 
         if (now.isAfter(latestCheckinTime)) {
+            booking.setStatus("NO_SHOW");
+            booking.setCheckedIn(false);
+            booking.setUpdatedAt(now);
+            repo.save(booking);
+
             response.setMessage("Check-in window closed \u274C You had until " + latestCheckinTime.format(CHECKIN_TIME_FORMATTER) + ".");
             response.setStartTime(booking.getStartTime() != null ? booking.getStartTime().format(SLOT_TIME_FORMATTER) : null);
             response.setEndTime(booking.getEndTime() != null ? booking.getEndTime().format(SLOT_TIME_FORMATTER) : null);

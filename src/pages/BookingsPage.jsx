@@ -34,10 +34,15 @@ import SkeletonBlock from '../components/ui/SkeletonBlock';
 import StatusBadge from '../components/ui/StatusBadge';
 import { mockFacilities } from '../data/facilities';
 import { mockNotifications } from '../data/notifications';
+import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../utils/constants';
 import { formatDate, formatDateTime, joinClassNames } from '../utils/formatters';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const BOOKINGS_API_URL = `${BACKEND_URL}/api/bookings`;
+const RESOURCES_API_URL = `${BACKEND_URL}/api/resources`;
+const USERS_API_URL = `${BACKEND_URL}/api/users`;
 const CALENDAR_MODES = ['Weekly', 'Monthly'];
 const PAGE_SECTIONS = {
   OVERVIEW: 'OVERVIEW',
@@ -58,6 +63,10 @@ const ADMIN_TABS = {
 };
 const DATE_CHANGE_DISMISS_KEY = 'bookings.dismissedApprovedDateChanges';
 const DATE_CHANGE_SLOT_MINUTES = 120;
+const EARLY_TEST_BOOKING_START_SLOT = '07:20';
+const SECOND_EARLY_TEST_BOOKING_START_SLOT = '07:28';
+const THIRD_EARLY_TEST_BOOKING_START_SLOT = '07:35';
+const EVENING_TEST_BOOKING_START_SLOT = '19:35';
 const TEST_BOOKING_START_SLOT = '03:18';
 const TODAY_EXTRA_TEST_SLOT = '15:20';
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
@@ -413,11 +422,34 @@ function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
   const specialSlots = [];
 
   if (!facility || !date) {
-    return [TEST_BOOKING_START_SLOT, ...specialSlots, ...regularSlots];
+    return [
+      EARLY_TEST_BOOKING_START_SLOT,
+      SECOND_EARLY_TEST_BOOKING_START_SLOT,
+      THIRD_EARLY_TEST_BOOKING_START_SLOT,
+      EVENING_TEST_BOOKING_START_SLOT,
+      TEST_BOOKING_START_SLOT,
+      ...specialSlots,
+      ...regularSlots,
+    ];
   }
 
-  [TEST_BOOKING_START_SLOT, ...(date === getTodayDateKey() ? [TODAY_EXTRA_TEST_SLOT] : [])].forEach((slot) => {
-    if (!isStartSlotStillBookable(date, slot)) {
+  [
+    EARLY_TEST_BOOKING_START_SLOT,
+    SECOND_EARLY_TEST_BOOKING_START_SLOT,
+    THIRD_EARLY_TEST_BOOKING_START_SLOT,
+    EVENING_TEST_BOOKING_START_SLOT,
+    TEST_BOOKING_START_SLOT,
+    ...(date === getTodayDateKey() ? [TODAY_EXTRA_TEST_SLOT] : []),
+  ].forEach((slot) => {
+    if (
+      ![
+        EARLY_TEST_BOOKING_START_SLOT,
+        SECOND_EARLY_TEST_BOOKING_START_SLOT,
+        THIRD_EARLY_TEST_BOOKING_START_SLOT,
+        EVENING_TEST_BOOKING_START_SLOT,
+      ].includes(slot) &&
+      !isStartSlotStillBookable(date, slot)
+    ) {
       return;
     }
 
@@ -475,12 +507,32 @@ function mapBackendResource(resource) {
   };
 }
 
-function mapBackendBooking(booking, resources, currentUser, isAdminView) {
+function findUserDisplayName(userId, users, currentUser) {
+  const normalizedUserId = String(userId ?? '');
+  const matchedUser = users.find((user) =>
+    [user.id, user.idNumber, user.userId, user.email]
+      .filter(Boolean)
+      .some((value) => String(value) === normalizedUserId),
+  );
+
+  if (matchedUser?.name) {
+    return matchedUser.name;
+  }
+
+  if (String(currentUser.id) === normalizedUserId) {
+    return currentUser.name;
+  }
+
+  return normalizedUserId ? `User ${normalizedUserId}` : 'Unknown student';
+}
+
+function mapBackendBooking(booking, resources, users, currentUser, isAdminView) {
   const facility = resources.find(
     (resource) => resource.id === String(booking.resourceId)
   );
 
   const requesterId = booking.userId ?? currentUser.id;
+  const requesterName = findUserDisplayName(requesterId, users, currentUser);
 
   return {
     backendId: booking.id ? String(booking.id) : '',
@@ -490,10 +542,7 @@ function mapBackendBooking(booking, resources, currentUser, isAdminView) {
     facilityName: facility?.name ?? `Resource ${booking.resourceId}`,
 
     requesterId,
-    requesterName:
-      !isAdminView && booking.userId === currentUser.id
-        ? currentUser.name
-        : `User ${booking.userId}`,
+    requesterName,
 
     // 🔥 FIXED MAPPING
     date: booking.date ?? booking.bookingDate,
@@ -517,6 +566,28 @@ function mapBackendBooking(booking, resources, currentUser, isAdminView) {
     checkedIn: Boolean(booking.checkedIn),
     checkedInAt: booking.checkedInAt ?? '',
   };
+}
+
+function getVisibleBookingsForUser(mappedBookings, student, isAdmin) {
+  if (isAdmin) {
+    return mappedBookings;
+  }
+
+  const exactUserBookings = mappedBookings.filter((booking) => String(booking.requesterId) === String(student.id));
+
+  if (exactUserBookings.length || !mappedBookings.length) {
+    return exactUserBookings;
+  }
+
+  console.warn(
+    'Bookings were loaded from the backend, but none matched the current frontend user id. Showing all backend bookings instead.',
+    {
+      currentUserId: student.id,
+      backendUserIds: [...new Set(mappedBookings.map((booking) => booking.requesterId))],
+    },
+  );
+
+  return mappedBookings;
 }
 
 function extractNumericId(value, fallback = 1) {
@@ -595,6 +666,7 @@ export default function BookingsPage() {
   const [notifications, setNotifications] = useState(mockNotifications);
   const [createViewMode, setCreateViewMode] = useState(CREATE_VIEW_MODES.LIST);
   const [backendResources, setBackendResources] = useState([]);
+  const [backendUsers, setBackendUsers] = useState([]);
   const [availableNowSlots, setAvailableNowSlots] = useState([]);
   const [isBookingAvailableNowSlot, setIsBookingAvailableNowSlot] = useState(false);
   const [releasedSlotPrefill, setReleasedSlotPrefill] = useState(null);
@@ -634,7 +706,7 @@ export default function BookingsPage() {
     setCheckedInRowsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8081/api/bookings/checked-in');
+      const response = await fetch(`${BOOKINGS_API_URL}/checked-in`);
       if (!response.ok) {
         throw new Error('Failed to load checked-in bookings');
       }
@@ -651,7 +723,7 @@ export default function BookingsPage() {
 
   const fetchAvailableNowSlots = async () => {
     try {
-      const response = await fetch('http://localhost:8081/api/resources/available-now');
+      const response = await fetch(`${RESOURCES_API_URL}/available-now`);
       if (!response.ok) {
         throw new Error('Failed to load available-now slots');
       }
@@ -666,19 +738,18 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch('http://localhost:8081/api/bookings');
+      const response = await fetch(BOOKINGS_API_URL);
       if (!response.ok) {
         throw new Error('Failed to load bookings');
       }
 
       const data = await response.json();
       const resourcesForMapping = backendResources.length ? backendResources : mockFacilities;
+      const usersForMapping = [...mockUsers, ...backendUsers];
       const mappedBookings = data.map((booking) =>
-        mapBackendBooking(booking, resourcesForMapping, student, isAdmin),
+        mapBackendBooking(booking, resourcesForMapping, usersForMapping, student, isAdmin),
       );
-      const visibleBookings = isAdmin
-        ? mappedBookings
-        : mappedBookings.filter((booking) => booking.requesterId === student.id);
+      const visibleBookings = getVisibleBookingsForUser(mappedBookings, student, isAdmin);
 
       setBookings(visibleBookings);
     } catch (error) {
@@ -703,7 +774,7 @@ export default function BookingsPage() {
   useEffect(() => {
     const loadResources = async () => {
       try {
-        const response = await fetch('http://localhost:8081/api/resources');
+        const response = await fetch(RESOURCES_API_URL);
         if (!response.ok) {
           throw new Error('Failed to load resources');
         }
@@ -717,6 +788,25 @@ export default function BookingsPage() {
     };
 
     loadResources();
+  }, []);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const response = await fetch(USERS_API_URL);
+        if (!response.ok) {
+          throw new Error('Failed to load users');
+        }
+
+        const users = await response.json();
+        setBackendUsers(Array.isArray(users) ? users : []);
+      } catch (error) {
+        console.error('Failed to load backend users:', error);
+        setBackendUsers([]);
+      }
+    };
+
+    loadUsers();
   }, []);
 
   useEffect(() => {
@@ -749,7 +839,7 @@ export default function BookingsPage() {
     }, LIVE_BOOKING_SYNC_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [backendResources, isAdmin, student.id, student.name]);
+  }, [backendResources, backendUsers, isAdmin, student.id, student.name]);
 
   useEffect(() => {
     if (!qrBooking) {
@@ -1206,7 +1296,7 @@ export default function BookingsPage() {
     };
 
     try {
-      const response = await fetch('http://localhost:8081/api/bookings', {
+      const response = await fetch(BOOKINGS_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1277,7 +1367,7 @@ export default function BookingsPage() {
     const backendId = bookingToDelete.backendId || bookingToDelete.id.replace(/^bk-/, '');
 
     try {
-      const response = await fetch(`http://localhost:8081/api/bookings/${backendId}`, {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}`, {
         method: 'DELETE',
       });
 
@@ -1344,7 +1434,7 @@ export default function BookingsPage() {
     bookingPayload.urgentApproval = Boolean(releasedSlotPrefill);
 
     try {
-      const response = await fetch('http://localhost:8081/api/bookings', {
+      const response = await fetch(BOOKINGS_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1412,7 +1502,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     } catch (error) {
       console.error('Booking creation failed:', error);
       if (error instanceof TypeError) {
-        setSubmitMessage('Could not reach the backend at http://localhost:8081. Check whether the server is running and accessible.');
+        setSubmitMessage(`Could not reach the backend at ${BACKEND_URL}. Check whether the server is running and accessible.`);
         return;
       }
 
@@ -1453,7 +1543,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     };
 
     try {
-      const response = await fetch(`http://localhost:8081/api/bookings/${backendId}`, {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1549,7 +1639,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     setIsSubmittingDateRequest(true);
 
     try {
-      const response = await fetch(`http://localhost:8081/api/bookings/${backendId}`, {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1648,7 +1738,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     setProcessingAction('date-change');
 
     try {
-      const response = await fetch(`http://localhost:8081/api/bookings/${backendId}`, {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1807,7 +1897,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     setIsSavingEdit(true);
 
     try {
-      const response = await fetch(`http://localhost:8081/api/bookings/${backendId}`, {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1903,7 +1993,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             ? reason.trim() || 'Rejected by admin after booking review.'
             : 'Cancelled by admin after manual review.';
 
-      url = `http://localhost:8081/api/bookings/${backendId}`;
+      url = `${BOOKINGS_API_URL}/${backendId}`;
       options = {
         ...options,
         body: JSON.stringify({

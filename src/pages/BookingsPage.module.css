@@ -2469,6 +2469,404 @@
   border-color: rgba(245, 158, 11, 0.24);
 }
 
+/* Portal modal content: these dialogs render outside .page via createPortal. */
+.detailModal,
+.timeline,
+.detailFields,
+.reviewModalBody,
+.reviewModeSwitch,
+.editBookingModal,
+.editBookingPanel,
+.editBookingSidebar,
+.editBookingSidebarCard,
+.editBookingTips,
+.editBookingPreview,
+.dateChangeRequestModal,
+.dateChangeWindowList,
+.dateChangeAvailability,
+.formField,
+.createBookingForm,
+.startTimeSlotGroup,
+.qrMeta {
+  display: grid;
+  gap: 1rem;
+}
+
+.detailFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detailFields > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.detailFields label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.detailFields p {
+  line-height: 1.5;
+}
+
+.detailSummary,
+.timelineStep {
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    rgba(7, 17, 31, 0.44);
+}
+
+.timeline {
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  top: 0.8rem;
+  bottom: 0.8rem;
+  width: 1px;
+  background: rgba(148, 163, 184, 0.24);
+}
+
+.timelineStep {
+  position: relative;
+  margin-left: 1.6rem;
+}
+
+.timelineDot {
+  position: absolute;
+  left: -1.45rem;
+  top: 1.1rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+  box-shadow: 0 0 0 6px rgba(7, 17, 31, 1);
+}
+
+.timelineStepActive .timelineDot { background: var(--secondary); }
+.timelineStepCancelled .timelineDot { background: var(--danger); }
+
+.reviewModeSwitch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reviewModeButton {
+  min-height: 3.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(226, 232, 240, 0.12);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.reviewModeApproveActive {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.92));
+  border-color: rgba(34, 197, 94, 0.42);
+  color: white;
+}
+
+.reviewModeRejectActive {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.96), rgba(239, 68, 68, 0.94));
+  border-color: rgba(248, 113, 113, 0.4);
+  color: white;
+}
+
+.reviewReasonInput {
+  width: 100%;
+  min-height: 132px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  color: var(--text);
+  resize: vertical;
+}
+
+.reviewNotice {
+  padding: 1rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  font-size: 0.98rem;
+}
+
+.reviewNoticeApprove {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.24);
+  color: #16a34a;
+}
+
+.reviewNoticeReject {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.24);
+  color: #dc2626;
+}
+
+.editBookingModal {
+  gap: 1.25rem;
+}
+
+.editBookingHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.editBookingHero h3 {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.editBookingHero p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 34rem;
+}
+
+.editBookingEyebrow,
+.editBookingSidebarLabel {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.92);
+}
+
+.editBookingHighlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.editBookingHighlights span {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.editBookingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+  gap: 1rem;
+}
+
+.editBookingSidebarCard {
+  gap: 0.9rem;
+  padding: 1.15rem;
+}
+
+.editBookingTips {
+  margin: 0;
+  padding-left: 1.05rem;
+  gap: 0.65rem;
+  color: var(--text-muted);
+}
+
+.editBookingPreview {
+  gap: 0.55rem;
+}
+
+.editBookingPreview strong {
+  font-size: 1rem;
+}
+
+.formField {
+  gap: 0.5rem;
+}
+
+.formField > span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.createBookingSplit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.createInput,
+.createSelect,
+.createTextarea {
+  width: 100%;
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 14px;
+  background: rgba(15, 17, 23, 0.92);
+  color: var(--text);
+}
+
+.createSelect option {
+  background: #111827;
+  color: #f8fafc;
+}
+
+.createInput,
+.createSelect {
+  min-height: 3rem;
+  padding: 0 0.95rem;
+}
+
+.createTextarea {
+  min-height: 128px;
+  padding: 0.95rem 1rem;
+  resize: vertical;
+}
+
+.createInput:focus,
+.createSelect:focus,
+.createTextarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.fieldHint,
+.dateChangeHint {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.bookingNotice {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.bookingNoticeSuccess {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
+
+.bookingNoticeDanger {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+
+.startTimeSlotGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.startTimeSlotButton {
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 140, 255, 0.18);
+  background: rgba(46, 31, 74, 0.42);
+  color: #e2e8f0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.startTimeSlotButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.26), rgba(56, 189, 248, 0.22));
+  border-color: rgba(96, 165, 250, 0.36);
+  color: #f8fafc;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.dateChangeWindowList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.dateChangeWindowPill,
+.dateChangeWindowPillMuted,
+.dateChangeWindowButton {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dateChangeWindowButton,
+.dateChangeWindowPill {
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+}
+
+.dateChangeWindowButtonActive {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.32);
+  color: #bfdbfe;
+}
+
+.dateChangeWindowPillMuted {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
+.dateChangeRequestHero {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 38%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.dateChangeAvailability {
+  gap: 0.75rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.qrModal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.qrCard {
+  padding: 1rem;
+  border-radius: 24px;
+  background: white;
+}
+
+.qrImage {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
 @media (max-width: 1180px) {
   .page .statsGrid,
   .page .overviewGrid,
