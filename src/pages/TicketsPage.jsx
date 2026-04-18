@@ -32,11 +32,13 @@ import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constan
 import { formatDateTime } from '../utils/formatters';
 
 const initialForm = {
+  title: '',
   resourceName: '',
   category: '',
   priority: 'Medium',
   preferredContact: '',
   description: '',
+  attachments: [],
 };
 
 const CATEGORY_MAP = {
@@ -204,6 +206,19 @@ export default function TicketsPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleAttachmentChange = (event) => {
+    const selectedAttachments = Array.from(event.target.files || []);
+
+    if (selectedAttachments.length > 3) {
+      alert('You can upload a maximum of 3 images.');
+    }
+
+    setForm((current) => ({
+      ...current,
+      attachments: selectedAttachments.slice(0, 3),
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -214,7 +229,7 @@ export default function TicketsPage() {
     const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
     const location = (mockFacilities.find((facility) => facility.name === form.resourceName)?.location ?? form.resourceName) || 'Campus';
     const payload = {
-      title: form.category.trim() || 'General incident reported',
+      title: form.title.trim() || 'General incident reported',
       description: form.description,
       location,
       category: normalizedCategory,
@@ -353,6 +368,17 @@ export default function TicketsPage() {
       }
     >
       <form className={styles.formGrid} onSubmit={handleSubmit}>
+        <FormField id="title" label="Incident title">
+          <input
+            id="title"
+            type="text"
+            name="title"
+            className={fieldStyles.control}
+            value={form.title}
+            onChange={handleInputChange}
+            placeholder="e.g. WiFi not working"
+          />
+        </FormField>
         <SelectField
           id="resourceName"
           label="Resource or location"
@@ -398,6 +424,25 @@ export default function TicketsPage() {
           onChange={handleInputChange}
           hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
         />
+        <FormField id="attachments" label="Image attachments" hint="You can select up to 3 images for this incident.">
+          <input
+            id="attachments"
+            type="file"
+            accept="image/*"
+            multiple
+            className={fieldStyles.control}
+            onChange={handleAttachmentChange}
+          />
+        </FormField>
+        {form.attachments.length ? (
+          <div className={styles.sidePanelList}>
+            {form.attachments.slice(0, 3).map((file) => (
+              <div key={`${file.name}-${file.lastModified}`} className={styles.sidePanelItem}>
+                <strong>{file.name}</strong>
+              </div>
+            ))}
+          </div>
+        ) : null}
         <Button type="submit" icon={Wrench}>
           Submit ticket
         </Button>
