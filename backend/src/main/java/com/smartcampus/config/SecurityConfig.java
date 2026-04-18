@@ -1,17 +1,18 @@
 package com.smartcampus.config;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -22,6 +23,7 @@ import org.springframework.web.util.UriUtils;
 
 @Configuration
 public class SecurityConfig {
+
   @Bean
   public SecurityFilterChain securityFilterChain(
     HttpSecurity http,
@@ -32,7 +34,8 @@ public class SecurityConfig {
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-        .requestMatchers("/api/auth/signup", "/api/auth/login", "/oauth2/**", "/login/**").permitAll()
+        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+        // Keep API access open for the current frontend-driven auth/demo flow.
         .requestMatchers("/api/**").permitAll()
         .anyRequest().authenticated()
       )
@@ -58,19 +61,21 @@ public class SecurityConfig {
       if (provider == null || provider.isBlank()) {
         provider = "oauth";
       }
+
       String email = oauthUser.getAttribute("email");
       if (email == null || email.isBlank()) {
         response.sendRedirect("http://localhost:5173/login");
         return;
       }
+
       String name = oauthUser.getAttribute("name");
       if (name == null || name.isBlank()) {
         int at = email.indexOf('@');
         name = at > 0 ? email.substring(0, at) : "Google User";
       }
 
-      String encodedEmail = UriUtils.encode(email, java.nio.charset.StandardCharsets.UTF_8);
-      String encodedName = UriUtils.encode(name, java.nio.charset.StandardCharsets.UTF_8);
+      String encodedEmail = UriUtils.encode(email, StandardCharsets.UTF_8);
+      String encodedName = UriUtils.encode(name, StandardCharsets.UTF_8);
       response.sendRedirect(
         "http://localhost:5173/login?oauth=" + provider + "&email=" + encodedEmail + "&name=" + encodedName
       );
@@ -97,8 +102,13 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedOrigins(List.of(
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173"
+    ));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
 
@@ -106,42 +116,4 @@ public class SecurityConfig {
     source.registerCorsConfiguration("/**", configuration);
     return source;
   }
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/test").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/resources", "/api/resources/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/resources").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/resources/**").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/api/resources/**").permitAll()
-                .requestMatchers(HttpMethod.PATCH, "/api/resources/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .httpBasic(Customizer.withDefaults());
-
-        return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:4173",
-            "http://127.0.0.1:4173"
-        ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/resources/**", configuration);
-        source.registerCorsConfiguration("/api/resources", configuration);
-        return source;
-    }
 }
-
-

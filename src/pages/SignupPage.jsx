@@ -10,7 +10,10 @@ import { createPendingSignup } from '../utils/adminStorage';
 import logoImage from '../assets/logo.jpeg';
 
 const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
-const SIGNUP_API_URL = 'http://localhost:8080/api/auth/signup';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const SIGNUP_API_URL = `${BACKEND_URL}/api/auth/signup`;
+const GOOGLE_AUTH_URL =
+  import.meta.env.VITE_GOOGLE_AUTH_URL || `${BACKEND_URL}/oauth2/authorization/google?prompt=select_account`;
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -26,8 +29,6 @@ export default function SignupPage() {
   const [toastVisible, setToastVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
 
   const toastTimerRef = useRef(null);
 
@@ -177,7 +178,7 @@ export default function SignupPage() {
       }),
     );
 
-    window.location.href = googleAuthUrl;
+    window.location.href = GOOGLE_AUTH_URL;
   };
 
   return (

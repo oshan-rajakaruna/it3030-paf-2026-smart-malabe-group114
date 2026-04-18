@@ -11,10 +11,13 @@ import GoogleMfaQrSetup from '../components/auth/GoogleMfaQrSetup';
 import logoImage from '../assets/logo.jpeg';
 
 const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
-const LOGIN_API_URL = 'http://localhost:8080/api/auth/login';
-const OAUTH_SIGNUP_API_URL = 'http://localhost:8080/api/auth/oauth/signup';
-const OAUTH_LOGIN_API_URL = 'http://localhost:8080/api/auth/oauth/login';
-const OAUTH_VERIFY_OTP_API_URL = 'http://localhost:8080/api/auth/oauth/verify-otp';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const LOGIN_API_URL = `${BACKEND_URL}/api/auth/login`;
+const OAUTH_SIGNUP_API_URL = `${BACKEND_URL}/api/auth/oauth/signup`;
+const OAUTH_LOGIN_API_URL = `${BACKEND_URL}/api/auth/oauth/login`;
+const OAUTH_VERIFY_OTP_API_URL = `${BACKEND_URL}/api/auth/oauth/verify-otp`;
+const GOOGLE_AUTH_URL =
+  import.meta.env.VITE_GOOGLE_AUTH_URL || `${BACKEND_URL}/oauth2/authorization/google?prompt=select_account`;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -28,8 +31,6 @@ export default function LoginPage() {
   const [googleOtpCode, setGoogleOtpCode] = useState('');
   const [isVerifyingGoogleOtp, setIsVerifyingGoogleOtp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const googleAuthUrl = 'http://localhost:8080/oauth2/authorization/google?prompt=select_account';
 
   const toastTimerRef = useRef(null);
   const socialTimerRef = useRef(null);
@@ -307,7 +308,7 @@ export default function LoginPage() {
     setFormError('');
     setGoogleChallenge(null);
     setGoogleOtpCode('');
-    window.location.href = googleAuthUrl;
+    window.location.href = GOOGLE_AUTH_URL;
   };
 
   const handleSocial = (provider) => {
