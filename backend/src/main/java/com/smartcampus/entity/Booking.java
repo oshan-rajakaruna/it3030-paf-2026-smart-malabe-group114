@@ -1,49 +1,45 @@
 package com.smartcampus.entity;
 
-import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.LocalDateTime;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
-@Entity
-@Table(name = "bookings")
+@Document(collection = "bookings")
 public class Booking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;
+    private String resourceId;
 
-    @Column(name = "resource_id", nullable = false)
-    private Long resourceId;
-
-    @Column(name = "booking_date", nullable = false)
-    private LocalDate date;
-
-    @Column(name = "start_time", nullable = false)
+    // 🔥 consistent naming
+    private LocalDate bookingDate;
     private LocalTime startTime;
-
-    @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    @Column(name = "description")
-    private String purpose;
+    private String description;
+    private Integer attendeesCount;
 
-    @Column(name = "attendees_count")
-    private int attendees;
-
-    private String status; // PENDING
-
-    @Column(name = "rejection_reason")
+    private String status;
+    private Boolean urgentApproval;
     private String rejectionReason;
+    private Boolean checkedIn;
+    private LocalDateTime checkedInAt;
+    private Boolean dateChangeRequested;
+    private Boolean dateChangeApproved;
+    private LocalDate requestedDate;
+    private LocalTime requestedStartTime;
+    private LocalTime requestedEndTime;
+    private LocalDate previousDate;
+    private LocalTime previousStartTime;
+    private LocalTime previousEndTime;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
