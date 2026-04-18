@@ -3,7 +3,8 @@ import axios from 'axios';
 
 import styles from './GoogleMfaQrSetup.module.css';
 
-const MFA_QR_API_URL = 'http://localhost:8080/api/auth/2fa/qr';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const MFA_QR_API_URL = `${BACKEND_URL}/api/auth/2fa/qr`;
 
 export default function GoogleMfaQrSetup({ email, otpAuthUrlFallback = '' }) {
   const [qrCodeBase64, setQrCodeBase64] = useState('');
