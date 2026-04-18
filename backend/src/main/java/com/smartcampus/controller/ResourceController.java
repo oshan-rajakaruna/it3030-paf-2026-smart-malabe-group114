@@ -44,10 +44,11 @@ public class ResourceController {
         @RequestParam(required = false) ResourceType type,
         @RequestParam(required = false) String location,
         @RequestParam(required = false) ResourceStatus status,
+        @RequestParam(required = false) Boolean isActive,
         @RequestParam(required = false) Integer minCapacity,
         @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(resourceService.getAllResources(type, location, status, minCapacity, search));
+        return ResponseEntity.ok(resourceService.getAllResources(type, location, status, isActive, minCapacity, search));
     }
 
     @GetMapping("/{id}")

@@ -20,6 +20,7 @@ import {
 import { useDeferredValue, useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
+import { useLocation } from 'react-router-dom';
 
 import styles from './BookingsPage.module.css';
 import fieldStyles from '../components/ui/Field.module.css';
@@ -646,6 +647,7 @@ function drawHexBadge(pdf, x, y, radius, fillColor) {
 
 export default function BookingsPage() {
   const { currentUser } = useAuth();
+  const location = useLocation();
   const student = currentUser ?? { id: 'user-001', name: 'Student', department: 'Smart Campus' };
   const isAdmin = student.role === ROLES.ADMIN;
   const dismissedStorageKey = `${DATE_CHANGE_DISMISS_KEY}.${student.id}`;
@@ -808,6 +810,22 @@ export default function BookingsPage() {
 
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    const preselectedResourceId = location.state?.bookingPrefillResourceId;
+    if (!preselectedResourceId || isAdmin) {
+      return;
+    }
+
+    setReleasedSlotPrefill(null);
+    setSubmitMessage('');
+    setActiveSection(PAGE_SECTIONS.CREATE);
+    setCreateViewMode(CREATE_VIEW_MODES.FORM);
+    setForm((current) => ({
+      ...current,
+      facilityId: String(preselectedResourceId),
+    }));
+  }, [isAdmin, location.key, location.state]);
 
   useEffect(() => {
     fetchAvailableNowSlots();

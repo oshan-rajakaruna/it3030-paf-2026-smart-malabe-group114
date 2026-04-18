@@ -191,6 +191,7 @@ private boolean isActiveBooking(Booking booking) {
         ResourceType type,
         String location,
         ResourceStatus status,
+        Boolean isActive,
         Integer minCapacity,
         String search
     ) {
@@ -198,7 +199,7 @@ private boolean isActiveBooking(Booking booking) {
 
         return resourceRepository.findAll()
             .stream()
-            .filter(resource -> matchesFilters(resource, type, location, status, minCapacity, search))
+            .filter(resource -> matchesFilters(resource, type, location, status, isActive, minCapacity, search))
             .map(this::mapToResponseDto)
             .toList();
     }
@@ -264,19 +265,22 @@ private boolean isActiveBooking(Booking booking) {
         ResourceType type,
         String location,
         ResourceStatus status,
+        Boolean isActive,
         Integer minCapacity,
         String search
     ) {
+        boolean resourceIsActive = resource.getIsActive() == null || resource.getIsActive();
         boolean matchesType = type == null || resource.getType() == type;
         boolean matchesLocation = location == null || location.isBlank()
             || safeValue(resource.getLocation()).toLowerCase().contains(location.toLowerCase());
         boolean matchesStatus = status == null || resource.getStatus() == status;
+        boolean matchesActiveState = isActive == null || isActive.equals(resourceIsActive);
         boolean matchesCapacity = minCapacity == null
             || (resource.getCapacity() != null && resource.getCapacity() >= minCapacity);
         boolean matchesSearch = search == null || search.isBlank()
             || buildSearchableText(resource).contains(search.toLowerCase());
 
-        return matchesType && matchesLocation && matchesStatus && matchesCapacity && matchesSearch;
+        return matchesType && matchesLocation && matchesStatus && matchesActiveState && matchesCapacity && matchesSearch;
     }
 
     private String buildSearchableText(Resource resource) {
