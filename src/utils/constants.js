@@ -87,10 +87,10 @@ export const NAV_ITEMS = [
     roles: [ROLES.USER, ROLES.ADMIN, ROLES.TECHNICIAN],
   },
   {
-    label: 'Admin',
+    label: 'User Role',
     path: '/admin',
     icon: ShieldCheck,
-    description: 'Roles, approvals, assignments',
+    description: 'User roles, approvals, assignments',
     roles: [ROLES.ADMIN],
   },
   {

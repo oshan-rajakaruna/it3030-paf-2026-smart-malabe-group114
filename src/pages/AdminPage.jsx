@@ -148,7 +148,7 @@ export default function AdminPage() {
         eyebrow="Admin Management"
         title="Admin command center"
         description="User and role management is now synced directly with the database, so deleted users disappear automatically."
-        actions={<Button icon={ShieldCheck} onClick={() => void loadAdminData()}>Refresh DB data</Button>}
+        
       />
 
       <section className={styles.statsGrid}>
