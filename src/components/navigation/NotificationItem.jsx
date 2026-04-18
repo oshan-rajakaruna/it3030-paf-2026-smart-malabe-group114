@@ -5,9 +5,25 @@ import styles from './NotificationItem.module.css';
 import StatusBadge from '../ui/StatusBadge';
 import { formatDateTime } from '../../utils/formatters';
 
-export default function NotificationItem({ notification }) {
+export default function NotificationItem({ notification, onClick }) {
   return (
-    <article className={styles.item} data-unread={!notification.read}>
+    <article
+      className={styles.item}
+      data-unread={!notification.read}
+      data-clickable={Boolean(onClick)}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (!onClick) {
+          return;
+        }
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className={styles.main}>
         <div className={styles.header}>
           <StatusBadge status={notification.type} />

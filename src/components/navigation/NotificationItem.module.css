@@ -7,6 +7,14 @@
   background: var(--surface);
 }
 
+.item[data-clickable='true'] {
+  cursor: pointer;
+}
+
+.item[data-clickable='true']:hover {
+  border-color: var(--primary);
+}
+
 .item[data-unread='true'] {
   box-shadow: inset 3px 0 0 var(--primary);
 }

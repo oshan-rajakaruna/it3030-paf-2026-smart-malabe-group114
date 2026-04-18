@@ -1,0 +1,45 @@
+.container {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(115, 153, 255, 0.2);
+  border-radius: 0.75rem;
+  background: rgba(12, 24, 54, 0.45);
+}
+
+.title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: rgba(234, 242, 255, 0.95);
+  font-weight: 600;
+}
+
+.info {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.82rem;
+  color: rgba(178, 196, 232, 0.9);
+}
+
+.qrImage {
+  display: block;
+  width: 180px;
+  height: 180px;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(115, 153, 255, 0.28);
+  background: #ffffff;
+  padding: 0.3rem;
+  margin: 0 auto 0.55rem auto;
+}
+
+.error {
+  margin: 0 0 0.45rem 0;
+  color: #ff9ca8;
+  font-size: 0.8rem;
+}
+
+.linkText {
+  margin: 0;
+  color: rgba(178, 196, 232, 0.9);
+  font-size: 0.74rem;
+  word-break: break-all;
+  line-height: 1.4;
+}

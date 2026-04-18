@@ -1,4 +1,6 @@
-import { ShieldCheck, UserCog, UserRoundCheck, Wrench } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ShieldCheck, UserRoundCheck, UserSearch, Wrench } from 'lucide-react';
+import axios from 'axios';
 
 import styles from './AdminPage.module.css';
 import Button from '../components/ui/Button';
@@ -7,29 +9,73 @@ import DataTable from '../components/ui/DataTable';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
-import { mockBookings } from '../data/bookings';
 import { mockTickets } from '../data/tickets';
-import { mockUsers } from '../data/users';
-import { formatDate, formatRoleLabel } from '../utils/formatters';
+import { formatDateTime } from '../utils/formatters';
+
+const USERS_API_BASE = 'http://localhost:8080/api/users';
 
 export default function AdminPage() {
-  const pendingBookings = mockBookings.filter((booking) => booking.status === 'PENDING');
-  const technicianUsers = mockUsers.filter((user) => user.role === 'TECHNICIAN');
+  const [managedUsers, setManagedUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [actionMessage, setActionMessage] = useState('');
+
+  const loadAdminData = useCallback(async () => {
+    try {
+      const [usersResponse, pendingResponse] = await Promise.all([
+        axios.get(USERS_API_BASE),
+        axios.get(`${USERS_API_BASE}/pending`),
+      ]);
+      setManagedUsers(usersResponse.data || []);
+      setPendingUsers(pendingResponse.data || []);
+    } catch (error) {
+      console.error('Failed to load admin dashboard data', error);
+      setActionMessage('Failed to load latest database users. Please retry.');
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAdminData();
+    const refreshTimer = setInterval(() => {
+      void loadAdminData();
+    }, 8000);
+
+    return () => clearInterval(refreshTimer);
+  }, [loadAdminData]);
+
+  const handleApproveSignup = async (userId) => {
+    setActionMessage('');
+    try {
+      await axios.put(`${USERS_API_BASE}/${userId}/approve`);
+      setActionMessage('User approved. They can now sign in.');
+      await loadAdminData();
+    } catch (error) {
+      console.error('Approve failed', error);
+      setActionMessage('Approve failed. Please check backend logs.');
+    }
+  };
+
+  const handleRejectSignup = async (userId) => {
+    setActionMessage('');
+    try {
+      await axios.put(`${USERS_API_BASE}/${userId}/reject`);
+      setActionMessage('User rejected successfully.');
+      await loadAdminData();
+    } catch (error) {
+      console.error('Reject failed', error);
+      setActionMessage('Reject failed. Please check backend logs.');
+    }
+  };
 
   const userColumns = [
     {
       key: 'name',
       header: 'User',
-      render: (user) => (
-        <div className={styles.primaryCell}>
-          <strong>{user.name}</strong>
-          <span>{user.email}</span>
-        </div>
-      ),
+      render: (user) => <strong>{user.name}</strong>,
     },
     {
-      key: 'department',
-      header: 'Department',
+      key: 'email',
+      header: 'Email',
+      render: (user) => <span className={styles.muted}>{user.email}</span>,
     },
     {
       key: 'role',
@@ -37,52 +83,58 @@ export default function AdminPage() {
       render: (user) => <StatusBadge status={user.role} />,
     },
     {
+      key: 'lastLoginAt',
+      header: 'Last Login',
+      render: (user) => (user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className={styles.muted}>Never</span>),
+    },
+    {
       key: 'actions',
-      header: 'Actions',
+      header: 'Action',
       align: 'right',
       render: () => (
-        <Button variant="secondary" size="sm">
-          Edit role
+        <Button variant="secondary" size="sm" disabled>
+          Synced
         </Button>
       ),
     },
   ];
 
-  const bookingColumns = [
+  const signupColumns = [
     {
-      key: 'purpose',
-      header: 'Request',
-      render: (booking) => (
+      key: 'name',
+      header: 'Signup User',
+      render: (user) => (
         <div className={styles.primaryCell}>
-          <strong>{booking.purpose}</strong>
-          <span>{booking.requesterName}</span>
+          <strong>{user.name || 'Not provided'}</strong>
+          <span>{user.email || 'No email provided'}</span>
         </div>
       ),
     },
     {
-      key: 'facilityName',
-      header: 'Facility',
+      key: 'idNumber',
+      header: 'ID Number',
+      render: (user) => <span className={styles.muted}>{user.idNumber || '-'}</span>,
     },
     {
-      key: 'date',
-      header: 'Date',
-      render: (booking) => formatDate(booking.date),
+      key: 'role',
+      header: 'Role',
+      render: (user) => <StatusBadge status={user.role || 'USER'} />,
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (booking) => <StatusBadge status={booking.status} />,
+      key: 'createdAt',
+      header: 'Requested At',
+      render: (user) => (user.createdAt ? formatDateTime(user.createdAt) : <span className={styles.muted}>-</span>),
     },
     {
-      key: 'actions',
+      key: 'decision',
       header: 'Decision',
       align: 'right',
-      render: () => (
+      render: (user) => (
         <div className={styles.rowActions}>
-          <Button variant="success" size="sm">
+          <Button variant="success" size="sm" onClick={() => handleApproveSignup(user.id)}>
             Approve
           </Button>
-          <Button variant="danger" size="sm">
+          <Button variant="danger" size="sm" onClick={() => handleRejectSignup(user.id)}>
             Reject
           </Button>
         </div>
@@ -95,53 +147,51 @@ export default function AdminPage() {
       <PageHeader
         eyebrow="Admin Management"
         title="Admin command center"
-        description="This page groups role management, booking approvals, and technician workload placeholders so individual team contributions stay visible and easy to demo."
-        actions={<Button icon={ShieldCheck}>Admin action placeholder</Button>}
+        description="User and role management is now synced directly with the database, so deleted users disappear automatically."
+        actions={<Button icon={ShieldCheck} onClick={() => void loadAdminData()}>Refresh DB data</Button>}
       />
 
       <section className={styles.statsGrid}>
-        <StatCard icon={UserRoundCheck} label="Users in mock directory" value={mockUsers.length} meta="Ready for future user service integration" />
-        <StatCard icon={ShieldCheck} label="Pending approvals" value={pendingBookings.length} meta="Bookings waiting for admin action" tone="warning" />
-        <StatCard icon={Wrench} label="Open maintenance issues" value={mockTickets.filter((ticket) => ticket.status !== 'CLOSED').length} meta="Cross-team visibility for operations" tone="secondary" />
+        <StatCard
+          icon={UserRoundCheck}
+          label="Users in database"
+          value={managedUsers.length}
+          meta="Live user records from MySQL"
+        />
+        <StatCard
+          icon={ShieldCheck}
+          label="Pending signup approvals"
+          value={pendingUsers.length}
+          meta="Users waiting for admin decision"
+          tone="warning"
+        />
+        <StatCard
+          icon={Wrench}
+          label="Open maintenance issues"
+          value={mockTickets.filter((ticket) => ticket.status !== 'CLOSED').length}
+          meta="Cross-team visibility for operations"
+          tone="secondary"
+        />
       </section>
 
       <section className={styles.grid}>
-        <Card title="User and role management" subtitle="Shared table structure minimizes future RBAC UI duplication.">
-          <DataTable columns={userColumns} rows={mockUsers} />
+        <Card title="User and role management" subtitle="Live records from database users table.">
+          <DataTable columns={userColumns} rows={managedUsers} />
         </Card>
 
-        <Card title="Approve or reject bookings" subtitle="Admin actions are placeholders until backend decisions and notifications are wired.">
-          <DataTable columns={bookingColumns} rows={pendingBookings} />
+        <Card title="Signup approval queue" subtitle="Approve or reject pending users from the database.">
+          <DataTable
+            columns={signupColumns}
+            rows={pendingUsers}
+            emptyState={{
+              icon: UserSearch,
+              title: 'No pending signups',
+              description: 'No users are currently waiting for admin approval.',
+            }}
+          />
+          {actionMessage ? <p className={styles.muted}>{actionMessage}</p> : null}
         </Card>
       </section>
-
-      <Card title="Technician assignment board" subtitle="Simple workload cards help the team extend this into SLA or dispatch management later.">
-        <div className={styles.technicianGrid}>
-          {technicianUsers.map((technician) => {
-            const assignedCount = mockTickets.filter((ticket) => ticket.technicianId === technician.id && ticket.status !== 'CLOSED').length;
-
-            return (
-              <article key={technician.id} className={styles.technicianCard}>
-                <div className={styles.technicianHeader}>
-                  <div>
-                    <strong>{technician.name}</strong>
-                    <span>{formatRoleLabel(technician.role)}</span>
-                  </div>
-                  <StatusBadge status="IN_PROGRESS" />
-                </div>
-                <p>{technician.department}</p>
-                <div className={styles.technicianMeta}>
-                  <span>Active assignments</span>
-                  <strong>{assignedCount}</strong>
-                </div>
-                <Button variant="secondary" icon={UserCog}>
-                  Reassign work
-                </Button>
-              </article>
-            );
-          })}
-        </div>
-      </Card>
     </div>
   );
 }
