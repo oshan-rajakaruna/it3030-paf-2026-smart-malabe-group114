@@ -434,6 +434,10 @@ function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
 }
 
 function getResourceAvailabilityValidationMessage(facility) {
+  if (facility && facility.isActive === false) {
+    return `${facility.name} is currently inactive and cannot be booked.`;
+  }
+
   const resourceStatus = String(facility?.status ?? '').trim().toUpperCase();
   if (!facility || !resourceStatus || resourceStatus === 'AVAILABLE') {
     return '';
@@ -450,6 +454,10 @@ function getResourceAvailabilityValidationMessage(facility) {
   return `${facility.name} is not available for booking right now.`;
 }
 
+function isUserVisibleResource(resource) {
+  return resource?.isActive !== false;
+}
+
 function mapBackendResource(resource) {
   return {
     id: String(resource.id),
@@ -458,6 +466,7 @@ function mapBackendResource(resource) {
     location: resource.location ?? 'Campus resource hub',
     capacity: resource.capacity ?? 0,
     status: resource.status ?? 'AVAILABLE',
+    isActive: resource.isActive ?? true,
     description: resource.description ?? '',
   };
 }
@@ -906,7 +915,7 @@ export default function BookingsPage() {
     .sort((left, right) => new Date(`${left.date}T${left.startTime}`).getTime() - new Date(`${right.date}T${right.startTime}`).getTime())[0];
   const availableSuggestionResources = suggestionResources.filter((resource) => {
     const status = String(resource.status ?? '').toUpperCase();
-    return !status || status === 'AVAILABLE';
+    return isUserVisibleResource(resource) && (!status || status === 'AVAILABLE');
   });
   const resourceTypeOptions = [...new Set((backendResources.length ? backendResources : mockFacilities).map((facility) => facility.type).filter(Boolean))];
   const leastBusyResource = [...availableSuggestionResources]
@@ -3511,7 +3520,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
   );
 
   const renderCreateView = () => {
-    const createResources = backendResources.length ? backendResources : [];
+    const createResources = (backendResources.length ? backendResources : []).filter(isUserVisibleResource);
     const minimumBookingDate = getTodayDateKey();
     const selectedFacility =
       createResources.find((facility) => facility.id === form.facilityId) ??
@@ -4137,7 +4146,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                           required
                         >
                           <option value="">Choose a resource...</option>
-                          {backendResources.map((facility) => (
+                          {backendResources.filter(isUserVisibleResource).map((facility) => (
                             <option
                               key={facility.id}
                               value={facility.id}
