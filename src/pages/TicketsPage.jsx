@@ -83,6 +83,7 @@ export default function TicketsPage() {
   const { currentUser } = useAuth();
   const isAdmin = currentUser.role === ROLES.ADMIN;
   const isTechnician = currentUser.role === ROLES.TECHNICIAN;
+  const isUser = currentUser.role === ROLES.USER;
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -240,6 +241,17 @@ export default function TicketsPage() {
     try {
       const response = await createTicket(payload);
       console.log('Ticket created successfully:', response);
+
+      if (form.attachments.length) {
+        for (const file of form.attachments) {
+          try {
+            await uploadAttachment(response.id, file);
+          } catch (attachmentError) {
+            console.error(`Failed to upload attachment: ${file.name}`, attachmentError);
+          }
+        }
+      }
+
       await loadTickets();
       setForm(initialForm);
       setSubmitMessage('Ticket created successfully.');
@@ -598,7 +610,7 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={() => setSelectedTicket(null)}>
                 Close
               </Button>
-              <Button onClick={handleModalWorkflowUpdate}>Update workflow</Button>
+              {!isUser ? <Button onClick={handleModalWorkflowUpdate}>Update workflow</Button> : null}
             </>
           ) : null
         }
@@ -623,17 +635,21 @@ export default function TicketsPage() {
             </div>
             <div className={styles.modalBlock}>
               <span>Status</span>
-              <select className={styles.select} value={modalStatus} onChange={(event) => setModalStatus(event.target.value)}>
-                {TICKET_STATUS_OPTIONS.filter((status) => status !== 'ALL').map((status) => (
-                  <option key={status} value={status}>
-                    {status.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
+              {isUser ? (
+                <StatusBadge status={selectedTicket.status || 'OPEN'} />
+              ) : (
+                <select className={styles.select} value={modalStatus} onChange={(event) => setModalStatus(event.target.value)}>
+                  {TICKET_STATUS_OPTIONS.filter((status) => status !== 'ALL').map((status) => (
+                    <option key={status} value={status}>
+                      {status.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className={styles.modalBlock}>
               <span>Assigned technician</span>
-              {isTechnician ? (
+              {isUser || isTechnician ? (
                 <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
               ) : (
                 <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
@@ -663,15 +679,19 @@ export default function TicketsPage() {
                 <strong>Resolution</strong>
                 <UserRoundCog size={18} />
               </div>
-              <TextAreaField
-                id="modalResolution"
-                label="Resolution note"
-                name="modalResolution"
-                rows={4}
-                value={modalResolution}
-                onChange={(event) => setModalResolution(event.target.value)}
-                hint="Add or update the current resolution note for this ticket."
-              />
+              {isUser ? (
+                <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
+              ) : (
+                <TextAreaField
+                  id="modalResolution"
+                  label="Resolution note"
+                  name="modalResolution"
+                  rows={4}
+                  value={modalResolution}
+                  onChange={(event) => setModalResolution(event.target.value)}
+                  hint="Add or update the current resolution note for this ticket."
+                />
+              )}
             </div>
             <div className={styles.commentsPanel}>
               <div className={styles.commentsHeader}>
@@ -705,17 +725,21 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={handleAddComment}>
                 Add Comment
               </Button>
-              <FormField id="attachmentUpload" label="Upload attachment">
-                <input
-                  id="attachmentUpload"
-                  type="file"
-                  className={fieldStyles.control}
-                  onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-                />
-              </FormField>
-              <Button variant="secondary" onClick={handleUploadAttachment}>
-                Upload
-              </Button>
+              {!isUser ? (
+                <>
+                  <FormField id="attachmentUpload" label="Upload attachment">
+                    <input
+                      id="attachmentUpload"
+                      type="file"
+                      className={fieldStyles.control}
+                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                    />
+                  </FormField>
+                  <Button variant="secondary" onClick={handleUploadAttachment}>
+                    Upload
+                  </Button>
+                </>
+              ) : null}
               {attachments.length ? (
                 attachments.map((attachment) => (
                   <article key={attachment.id} className={styles.comment}>
