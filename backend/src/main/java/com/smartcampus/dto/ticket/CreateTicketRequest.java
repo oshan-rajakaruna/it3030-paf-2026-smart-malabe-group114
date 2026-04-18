@@ -24,4 +24,6 @@ public class CreateTicketRequest {
     private TicketPriority priority;
 
     private String createdBy;
+
+    private String preferredContact;
 }

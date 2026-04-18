@@ -32,6 +32,8 @@ public class TicketResponse {
 
     private String createdBy;
 
+    private String preferredContact;
+
     private String assignedTechnician;
 
     private String resolutionNotes;

@@ -52,6 +52,7 @@ public class TicketService {
             .priority(request.getPriority())
             .status(TicketStatus.OPEN)
             .createdBy(request.getCreatedBy())
+            .preferredContact(request.getPreferredContact())
             .createdAt(now)
             .updatedAt(now)
             .build();
@@ -187,6 +188,7 @@ public class TicketService {
             .priority(ticket.getPriority())
             .status(ticket.getStatus())
             .createdBy(ticket.getCreatedBy())
+            .preferredContact(ticket.getPreferredContact())
             .assignedTechnician(ticket.getAssignedTechnician())
             .resolutionNotes(ticket.getResolutionNotes())
             .createdAt(ticket.getCreatedAt())
