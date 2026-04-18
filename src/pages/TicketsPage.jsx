@@ -195,6 +195,10 @@ export default function TicketsPage() {
     return matchesRole && matchesStatus && matchesQuery;
   });
 
+  const assignedCount = visibleTickets.length;
+  const inProgressCount = visibleTickets.filter((ticket) => ticket.status === 'IN_PROGRESS').length;
+  const closedCount = visibleTickets.filter((ticket) => ticket.status === 'CLOSED').length;
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -414,26 +418,41 @@ export default function TicketsPage() {
       }
     >
       <div className={styles.sidePanelList}>
-        <div className={styles.sidePanelItem}>
-          <strong>{isTechnician ? 'Assigned tickets' : 'Assignment'}</strong>
-          <span>
-            {isTechnician
-              ? 'Focus on tickets already assigned to you and use the table below as the main working queue.'
-              : 'Admins can later assign technicians by workload, skill, or location.'}
-          </span>
-        </div>
-        <div className={styles.sidePanelItem}>
-          <strong>Status progression</strong>
-          <span>OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED when necessary.</span>
-        </div>
-        <div className={styles.sidePanelItem}>
-          <strong>{isAdmin ? 'Queue oversight' : 'Comments and evidence'}</strong>
-          <span>
-            {isAdmin
-              ? 'The ticket table remains the main management surface for prioritization, triage, and workload visibility.'
-              : 'Ticket conversations and image attachments can plug into the modal panel below.'}
-          </span>
-        </div>
+        {isTechnician ? (
+          <>
+            <div className={styles.sidePanelItem}>
+              <strong>Assigned tickets</strong>
+              <span>{assignedCount}</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>In progress</strong>
+              <span>{inProgressCount}</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>Closed</strong>
+              <span>{closedCount}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={styles.sidePanelItem}>
+              <strong>Assignment</strong>
+              <span>Admins can later assign technicians by workload, skill, or location.</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>Status progression</strong>
+              <span>OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED when necessary.</span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>{isAdmin ? 'Queue oversight' : 'Comments and evidence'}</strong>
+              <span>
+                {isAdmin
+                  ? 'The ticket table remains the main management surface for prioritization, triage, and workload visibility.'
+                  : 'Ticket conversations and image attachments can plug into the modal panel below.'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </Card>
   );
@@ -509,16 +528,16 @@ export default function TicketsPage() {
             ? 'The admin view prioritizes the full ticket queue first, while still keeping incident creation available as a secondary action.'
             : isTechnician
               ? 'The technician view keeps assigned work and workflow progress in focus without changing the shared page structure.'
-              : 'The user view keeps incident reporting first, with your visible tickets listed below in the same shared workflow.'
+          : 'The user view keeps incident reporting first, with your visible tickets listed below in the same shared workflow.'
         }
-        actions={<Button icon={PlusCircle}>Create incident flow</Button>}
+        actions={!isTechnician ? <Button icon={PlusCircle}>Create incident flow</Button> : null}
       />
 
       {isAdmin || isTechnician ? queueSection : null}
 
       <section className={styles.topGrid}>
         {isAdmin || isTechnician ? workflowPanelSection : createTicketSection}
-        {isAdmin || isTechnician ? createTicketSection : workflowPanelSection}
+        {!isTechnician ? (isAdmin ? createTicketSection : workflowPanelSection) : null}
       </section>
 
       {!isAdmin && !isTechnician ? queueSection : null}
