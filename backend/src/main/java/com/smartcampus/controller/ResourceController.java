@@ -1,7 +1,8 @@
 package com.smartcampus.controller;
 
+import com.smartcampus.dto.AvailableNowSlot;
 import com.smartcampus.entity.Resource;
-import com.smartcampus.repository.ResourceRepository;
+import com.smartcampus.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +17,15 @@ import java.util.List;
 public class ResourceController {
 
     @Autowired
-    private ResourceRepository repo;
+    private ResourceService service;
 
     @GetMapping
     public List<Resource> getAllResources() {
-        return repo.findAll();
+        return service.getAllResources();
+    }
+
+    @GetMapping("/available-now")
+    public List<AvailableNowSlot> getAvailableNow() {
+        return service.getAvailableNowSlots();
     }
 }

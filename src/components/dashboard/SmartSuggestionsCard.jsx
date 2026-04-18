@@ -5,7 +5,7 @@ import styles from './SmartSuggestionsCard.module.css';
 import Card from '../ui/Card';
 import { joinClassNames } from '../../utils/formatters';
 
-const suggestions = [
+const fallbackSuggestions = [
   {
     id: 'free-slot',
     icon: Clock3,
@@ -44,23 +44,30 @@ const suggestions = [
   },
 ];
 
-export default function SmartSuggestionsCard({ onAction, onViewAll }) {
+export default function SmartSuggestionsCard({ suggestions = fallbackSuggestions, onAction, onViewAll }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const visibleSuggestions = suggestions.length ? suggestions : fallbackSuggestions;
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % suggestions.length);
+      setActiveIndex((current) => (current + 1) % visibleSuggestions.length);
     }, 3800);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [visibleSuggestions.length]);
+
+  useEffect(() => {
+    if (activeIndex >= visibleSuggestions.length) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, visibleSuggestions.length]);
 
   const goToPrevious = () => {
-    setActiveIndex((current) => (current === 0 ? suggestions.length - 1 : current - 1));
+    setActiveIndex((current) => (current === 0 ? visibleSuggestions.length - 1 : current - 1));
   };
 
   const goToNext = () => {
-    setActiveIndex((current) => (current + 1) % suggestions.length);
+    setActiveIndex((current) => (current + 1) % visibleSuggestions.length);
   };
 
   return (
@@ -81,7 +88,7 @@ export default function SmartSuggestionsCard({ onAction, onViewAll }) {
     >
       <div className={styles.viewport}>
         <div className={styles.track} style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
-          {suggestions.map((suggestion) => {
+          {visibleSuggestions.map((suggestion) => {
             const SuggestionIcon = suggestion.icon;
 
             return (
@@ -120,7 +127,7 @@ export default function SmartSuggestionsCard({ onAction, onViewAll }) {
 
       <div className={styles.footer}>
         <div className={styles.dots}>
-          {suggestions.map((suggestion, index) => (
+          {visibleSuggestions.map((suggestion, index) => (
             <button
               key={suggestion.id}
               type="button"
@@ -131,7 +138,7 @@ export default function SmartSuggestionsCard({ onAction, onViewAll }) {
           ))}
         </div>
 
-        <button type="button" className={styles.viewAll} onClick={() => onViewAll?.(suggestions)}>
+        <button type="button" className={styles.viewAll} onClick={() => onViewAll?.(visibleSuggestions)}>
           View all suggestions
         </button>
       </div>

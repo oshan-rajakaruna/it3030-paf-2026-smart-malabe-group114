@@ -1,24 +1,17 @@
 package com.smartcampus.entity;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Entity
-@Table(name = "booking_history")
+@Document(collection = "booking_history")
 public class BookingHistory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String status;
-
-    @ManyToOne
-    @JoinColumn(name = "booking_id")
-    private Booking booking;
-
-    @ManyToOne
-    @JoinColumn(name = "changed_by")
-    private User user;
+    private String bookingId;
+    private String userId;
 }

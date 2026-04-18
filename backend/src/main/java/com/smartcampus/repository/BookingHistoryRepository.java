@@ -1,7 +1,7 @@
 package com.smartcampus.repository;
 
 import com.smartcampus.entity.BookingHistory;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface BookingHistoryRepository extends JpaRepository<BookingHistory, Long> {
+public interface BookingHistoryRepository extends MongoRepository<BookingHistory, String> {
 }
