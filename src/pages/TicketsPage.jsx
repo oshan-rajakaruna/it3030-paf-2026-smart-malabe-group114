@@ -613,62 +613,86 @@ export default function TicketsPage() {
       title={isTechnician ? 'Assigned work focus' : 'Workflow guide'}
       subtitle={
         isAdmin
-          ? 'Management actions, status flow, and technician assignment stay visible beside the queue.'
+          ? 'Admin workflow helper and queue management tools.'
           : isTechnician
-            ? 'This panel keeps current technician workflow priorities visible while backend actions grow over time.'
-            : 'The UI already reserves a clean space for assignment and SLA workflows.'
+            ? 'Track your assigned incidents and progress updates.'
+            : 'Understanding ticket lifecycle and status progression.'
       }
     >
       <div className={styles.cardHero}>
         <span className={styles.cardEyebrow}>{isTechnician ? 'Execution view' : 'Shared workflow'}</span>
         <p className={styles.cardLead}>
-          The ticket area should help users report issues quickly, help technicians focus on the next action, and help admins manage ownership and resolution.
+          Streamlined incident management with clear status tracking and technician coordination.
         </p>
       </div>
       <div className={styles.sidePanelList}>
-        {isTechnician ? (
+        <div className={styles.sidePanelItem}>
+          <strong>Workflow guide</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--primary)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>OPEN</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--warning)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>IN_PROGRESS</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--success)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>RESOLVED</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--text-muted)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>CLOSED</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-soft)', marginTop: '4px' }}>
+            REJECTED is available for admin-only exception handling.
+          </div>
+        </div>
+        
+        {isAdmin ? (
           <>
             <div className={styles.sidePanelItem}>
-              <strong>Assigned tickets</strong>
-              <span>{assignedCount}</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>In progress</strong>
-              <span>{inProgressCount}</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>Closed</strong>
-              <span>{closedCount}</span>
+              <strong>Admin responsibilities</strong>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Review new incidents</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Assign technician</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Monitor progress</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Confirm resolution</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Close or reject when needed</span>
+              </div>
             </div>
           </>
-        ) : (
-          <>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Assignment' : 'Ticket workflow'}</strong>
-              <span>
-                {isAdmin
-                  ? 'Admin can assign technicians based on issue type, urgency, and availability.'
-                  : 'OPEN - IN_PROGRESS - RESOLVED - CLOSED. Admin may also mark a ticket as REJECTED when required.'}
-              </span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Status progression' : 'What happens after submission'}</strong>
-              <span>
-                {isAdmin
-                  ? 'OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED available when necessary.'
-                  : 'Your ticket will be reviewed and may be assigned to a technician. You can track progress from your ticket list and ticket details.'}
-              </span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Queue oversight' : 'Evidence and comments'}</strong>
-              <span>
-                {isAdmin
-                  ? 'Review ticket priority, ownership, and progress from the management queue.'
-                  : 'You can upload up to 3 images when reporting an issue. Comments and attachments can be viewed from ticket details.'}
-              </span>
-            </div>
-          </>
-        )}
+        ) : null}
+        
+        <div className={styles.sidePanelItem}>
+          <strong>Queue focus</strong>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Prioritize high-priority tickets</span>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Review unassigned tickets first</span>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Use comments and attachments as evidence</span>
+          </div>
+        </div>
       </div>
     </Card>
   );
