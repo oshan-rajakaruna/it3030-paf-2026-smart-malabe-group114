@@ -14,8 +14,6 @@ import SearchBar from '../components/ui/SearchBar';
 import SelectField from '../components/ui/SelectField';
 import StatusBadge from '../components/ui/StatusBadge';
 import TextAreaField from '../components/ui/TextAreaField';
-import { mockFacilities } from '../data/facilities';
-import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
 import {
   addComment,
@@ -30,6 +28,10 @@ import {
 } from '../services/ticketService';
 import { PRIORITY_OPTIONS, ROLES, TICKET_STATUS_OPTIONS } from '../utils/constants';
 import { formatDateTime } from '../utils/formatters';
+import { getResources } from '../services/resourceService';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const USERS_API_URL = `${BACKEND_URL}/api/users`;
 
 const initialForm = {
   title: '',
@@ -55,7 +57,10 @@ const PRIORITY_MAP = {
   high: 'HIGH',
 };
 
-function mapTicketToUi(ticket) {
+function mapTicketToUi(ticket, technicianLookup = {}) {
+  const assignedTechnician = ticket.assignedTechnician ?? '';
+  const technicianName = technicianLookup[assignedTechnician]?.name ?? assignedTechnician ?? 'Unassigned';
+
   return {
     id: ticket.id ?? ticket._id,
     title: ticket.title ?? 'Untitled ticket',
@@ -63,14 +68,14 @@ function mapTicketToUi(ticket) {
     location: ticket.location ?? 'Campus',
     priority: ticket.priority ?? 'Medium',
     status: ticket.status ?? 'OPEN',
-    assigned: ticket.assignedTechnician ?? 'Unassigned',
+    assigned: technicianName || 'Unassigned',
     updated: ticket.updatedAt ?? '',
     resourceName: ticket.location ?? 'Campus',
     category: ticket.category ?? 'General',
     reporterId: ticket.createdBy ?? '',
     reporterName: ticket.createdBy ?? 'Unknown user',
-    technicianId: ticket.assignedTechnician ?? '',
-    technicianName: ticket.assignedTechnician ?? 'Unassigned',
+    technicianId: assignedTechnician,
+    technicianName: technicianName || 'Unassigned',
     createdAt: ticket.createdAt ?? '',
     updatedAt: ticket.updatedAt ?? '',
     preferredContact: 'Not provided',
@@ -103,17 +108,28 @@ export default function TicketsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
+  const [resources, setResources] = useState([]);
+  const [resourceOptions, setResourceOptions] = useState([]);
+  const [technicianOptions, setTechnicianOptions] = useState([]);
   const deferredQuery = useDeferredValue(searchQuery.toLowerCase());
-  const technicianOptions = mockUsers.filter((user) => user.role === ROLES.TECHNICIAN);
 
-  async function loadTickets() {
+  function buildTechnicianLookup(options = technicianOptions) {
+    return Object.fromEntries(
+      options.map((technician) => [
+        technician.value,
+        { name: technician.label },
+      ]),
+    );
+  }
+
+  async function loadTickets(technicianLookup = buildTechnicianLookup()) {
     setLoading(true);
     setError('');
 
     try {
       const response = await getAllTickets();
       console.log(response);
-      const mappedTickets = response.map(mapTicketToUi);
+      const mappedTickets = response.map((ticket) => mapTicketToUi(ticket, technicianLookup));
       setTickets(mappedTickets);
       return mappedTickets;
     } catch (fetchError) {
@@ -125,7 +141,45 @@ export default function TicketsPage() {
   }
 
   useEffect(() => {
-    loadTickets();
+    async function loadTicketPageData() {
+      try {
+        const [resourcesResponse, usersResponse] = await Promise.all([
+          getResources(),
+          fetch(USERS_API_URL),
+        ]);
+
+        if (!usersResponse.ok) {
+          throw new Error(`Failed to load users (${usersResponse.status})`);
+        }
+
+        const users = await usersResponse.json();
+        const approvedTechnicians = users
+          .filter((user) => user.role === ROLES.TECHNICIAN)
+          .filter((user) => !user.status || user.status === 'APPROVED')
+          .map((user) => ({
+            value: user.id,
+            label: user.name || user.email || user.id,
+          }));
+
+        const technicianLookup = buildTechnicianLookup(approvedTechnicians);
+
+        const resources = Array.isArray(resourcesResponse) ? resourcesResponse : [];
+        setResources(resources);
+        setResourceOptions(
+          resources.map((resource) => ({
+            value: resource.id,
+            label: resource.name || resource.resourceCode || resource.location || 'Unnamed resource',
+          })),
+        );
+        setTechnicianOptions(approvedTechnicians);
+
+        await loadTickets(technicianLookup);
+      } catch (loadError) {
+        setError(loadError.message || 'Failed to load ticket page data.');
+      }
+    }
+
+    void loadTicketPageData();
   }, []);
 
   useEffect(() => {
@@ -228,7 +282,12 @@ export default function TicketsPage() {
 
     const normalizedCategory = CATEGORY_MAP[form.category.trim().toLowerCase()] ?? 'OTHER';
     const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
-    const location = (mockFacilities.find((facility) => facility.name === form.resourceName)?.location ?? form.resourceName) || 'Campus';
+    const selectedResource = resources.find((resource) => resource.id === form.resourceName);
+    const location =
+      selectedResource?.location
+      || selectedResource?.name
+      || selectedResource?.resourceCode
+      || 'Campus';
     const payload = {
       title: form.title.trim() || 'General incident reported',
       description: form.description,
@@ -398,7 +457,7 @@ export default function TicketsPage() {
           name="resourceName"
           value={form.resourceName}
           onChange={handleInputChange}
-          options={mockFacilities.map((facility) => facility.name)}
+          options={resourceOptions}
           placeholder="Select a resource"
         />
         <FormField id="category" label="Category">
@@ -663,8 +722,8 @@ export default function TicketsPage() {
                 <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
                   <option value="">Unassigned</option>
                   {technicianOptions.map((technician) => (
-                    <option key={technician.id} value={technician.id}>
-                      {technician.name}
+                    <option key={technician.value} value={technician.value}>
+                      {technician.label}
                     </option>
                   ))}
                 </select>
