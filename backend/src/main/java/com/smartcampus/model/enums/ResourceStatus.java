@@ -3,5 +3,9 @@ package com.smartcampus.model.enums;
 public enum ResourceStatus {
     AVAILABLE,
     UNAVAILABLE,
-    MAINTENANCE
+    MAINTENANCE;
+
+    public String trim() {
+        return "";
+    }
 }
