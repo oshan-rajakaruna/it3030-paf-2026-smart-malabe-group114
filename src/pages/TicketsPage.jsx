@@ -1,4 +1,4 @@
-import { MessageSquareText, PlusCircle, UserRoundCog, Wrench } from 'lucide-react';
+import { MessageSquareText, UserRoundCog, Wrench } from 'lucide-react';
 import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './TicketsPage.module.css';
@@ -594,9 +594,8 @@ export default function TicketsPage() {
             ? 'The admin view prioritizes the full ticket queue first, while still keeping incident creation available as a secondary action.'
             : isTechnician
               ? 'The technician view keeps assigned work and workflow progress in focus without changing the shared page structure.'
-          : 'The user view keeps incident reporting first, with your visible tickets listed below in the same shared workflow.'
+              : 'The user view keeps incident reporting first, with your visible tickets listed below in the same shared workflow.'
         }
-        actions={!isTechnician ? <Button icon={PlusCircle}>Create incident flow</Button> : null}
       />
 
       {isAdmin || isTechnician ? queueSection : null}
