@@ -197,6 +197,281 @@
   gap: 1rem;
 }
 
+.dateChangeSuccessStack {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.dateChangeSuccessBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 36%),
+    linear-gradient(135deg, rgba(12, 29, 25, 0.96), rgba(18, 63, 38, 0.88));
+  border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.dateChangeSuccessContent {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.dateChangeSuccessEyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86efac;
+}
+
+.dateChangeSuccessContent strong {
+  font-size: 1rem;
+}
+
+.dateChangeSuccessContent p {
+  margin: 0;
+  color: rgba(220, 252, 231, 0.9);
+}
+
+.suggestionsModalList {
+  display: grid;
+  gap: 1rem;
+}
+
+.suggestionModalCard {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+
+.suggestionModalblue {
+  background: linear-gradient(135deg, rgba(13, 101, 255, 0.16), rgba(110, 58, 255, 0.14));
+}
+
+.suggestionModalteal {
+  background: linear-gradient(135deg, rgba(12, 181, 176, 0.16), rgba(44, 107, 255, 0.12));
+}
+
+.suggestionModalamber {
+  background: linear-gradient(135deg, rgba(204, 126, 24, 0.16), rgba(140, 47, 166, 0.12));
+}
+
+.suggestionModalviolet {
+  background: linear-gradient(135deg, rgba(24, 46, 104, 0.18), rgba(214, 68, 155, 0.14));
+}
+
+.suggestionModalTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.suggestionModalIcon {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+}
+
+.suggestionModalCopy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.suggestionModalEyebrow {
+  color: var(--secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.suggestionModalCopy strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.suggestionModalCopy p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.suggestionModalActionRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.suggestionModalMeta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fef08a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.suggestionsHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(9, 18, 37, 0.92), rgba(32, 16, 58, 0.9));
+  box-shadow: var(--shadow-soft);
+}
+
+.suggestionsHeroCopy,
+.suggestionsHeroStats,
+.suggestionsCatalog,
+.suggestionsInsightColumn {
+  display: grid;
+  gap: 1rem;
+}
+
+.suggestionsHeroCopy h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.suggestionsHeroCopy p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+.suggestionsHeroStats {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.suggestionsHeroStat,
+.suggestionsInsightCard {
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.suggestionsHeroStat span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.suggestionsHeroStat strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.suggestionsSpotlightCard {
+  overflow: hidden;
+  border-radius: 28px;
+}
+
+.suggestionsSpotlightShell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 30%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.16));
+}
+
+.suggestionsSpotlightBadge {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+  flex-shrink: 0;
+}
+
+.suggestionsSpotlightCopy {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.suggestionsSpotlightCopy h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.suggestionsSpotlightCopy p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.suggestionsSpotlightAction {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.suggestionsSectionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.suggestionsCatalog {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.suggestionsSectionCard {
+  min-height: 100%;
+}
+
+.suggestionsInsightCard {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.suggestionsInsightCard h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+}
+
+.suggestionsInsightCard p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .upcomingBookingCard {
   width: 100%;
   display: grid;
@@ -225,6 +500,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.upcomingApprovalRow {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.dateChangeApprovedPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .upcomingBookingMain {
@@ -333,6 +626,19 @@
 .adminPrimaryCell span {
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.adminUrgentFlag {
+  width: fit-content;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: #fca5a5 !important;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .adminRowActions {
@@ -503,6 +809,59 @@
 .adminTableSkeleton {
   height: 2.9rem;
   border-radius: 14px;
+}
+
+.checkedInTimerCard {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.95rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
+}
+
+.checkedInTimerEyebrow {
+  color: #86efac;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.checkedInTimerCard strong {
+  font-size: 1rem;
+}
+
+.checkedInTimerCard p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.checkedInLatePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.75rem;
+  min-height: 2rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.checkedInLateYes {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+}
+
+.checkedInLateNo {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.24);
 }
 
 .adminEmptyState {
@@ -1042,6 +1401,258 @@
   gap: 1rem;
 }
 
+.editBookingModal {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.editBookingHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.editBookingHero h3 {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.editBookingHero p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 34rem;
+}
+
+.editBookingEyebrow,
+.editBookingSidebarLabel {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.92);
+}
+
+.editBookingHighlights {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.editBookingHighlights span {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.editBookingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+  gap: 1rem;
+}
+
+.editBookingPanel,
+.editBookingSidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.editBookingSidebarCard {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem;
+}
+
+.editBookingTips {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 0.65rem;
+  color: var(--text-muted);
+}
+
+.editBookingPreview {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.editBookingPreview strong {
+  font-size: 1rem;
+}
+
+.dateChangeRequestCard {
+  overflow: hidden;
+}
+
+.dateChangeRequestList {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dateChangeRequestItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.1), transparent 34%),
+    linear-gradient(135deg, rgba(14, 25, 45, 0.94), rgba(31, 22, 61, 0.9));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.dateChangeRequestContent {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dateChangeRequestContent p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.dateChangeRequestEyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.95);
+}
+
+.dateChangeRequestActions {
+  display: flex;
+  align-items: center;
+}
+
+.dateChangeWindowList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dateChangeWindowPill,
+.dateChangeWindowPillMuted {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dateChangeWindowButton {
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.dateChangeWindowButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.dateChangeWindowButtonActive {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.32);
+  color: #bfdbfe;
+}
+
+.dateChangeWindowPill {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.dateChangeWindowPillMuted {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
+.dateChangeRequestModal {
+  display: grid;
+  gap: 1rem;
+}
+
+.dateChangeRequestHero {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 38%),
+    linear-gradient(135deg, rgba(17, 29, 49, 0.96), rgba(47, 26, 74, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.dateChangeRequestHero h3,
+.dateChangeAvailability strong {
+  margin: 0 0 0.35rem;
+}
+
+.dateChangeRequestHero p,
+.dateChangeAvailability {
+  margin: 0;
+}
+
+.dateChangeAvailability {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.startTimeSlotGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.startTimeSlotButton {
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 140, 255, 0.18);
+  background: rgba(46, 31, 74, 0.42);
+  color: #e2e8f0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.startTimeSlotButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.34);
+}
+
+.startTimeSlotButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.26), rgba(56, 189, 248, 0.22));
+  border-color: rgba(96, 165, 250, 0.36);
+  color: #f8fafc;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
 .createInput,
 .createSelect,
 .createTextarea {
@@ -1050,6 +1661,11 @@
   border-radius: 14px;
   background: rgba(15, 17, 23, 0.92);
   color: var(--text);
+}
+
+.createSelect option {
+  background: #111827;
+  color: #f8fafc;
 }
 
 .createInput,
@@ -1062,6 +1678,13 @@
   min-height: 128px;
   padding: 0.95rem 1rem;
   resize: vertical;
+}
+
+.fieldHint {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .createInput:focus,
@@ -1184,6 +1807,17 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.bookingBlockLocked {
+  cursor: not-allowed;
+  opacity: 0.74;
+}
+
+.dateChangeHint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
 }
 
 .submitMessageSuccess {
@@ -1594,6 +2228,112 @@
   border-color: var(--border-strong);
 }
 
+:global(:root:not([data-theme='dark'])) .createSelect option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+:global(:root:not([data-theme='dark'])) .editBookingHero {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(238, 242, 255, 0.95));
+  border-color: rgba(99, 102, 241, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .editBookingHighlights span {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeRequestItem,
+:global(:root:not([data-theme='dark'])) .dateChangeRequestHero {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(238, 242, 255, 0.95));
+  border-color: rgba(99, 102, 241, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeSuccessBanner {
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 36%),
+    linear-gradient(135deg, rgba(240, 253, 244, 0.98), rgba(220, 252, 231, 0.95));
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalCard {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalIcon {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
+  color: #0f172a;
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionModalMeta {
+  background: rgba(255, 255, 255, 0.58);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #a16207;
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsHero {
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.1), transparent 34%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 36%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 242, 255, 0.94));
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsHeroStat,
+:global(:root:not([data-theme='dark'])) .suggestionsInsightCard {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsSpotlightShell {
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(224, 231, 255, 0.9));
+}
+
+:global(:root:not([data-theme='dark'])) .suggestionsSpotlightBadge {
+  background: rgba(255, 255, 255, 0.76);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #1e293b;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeWindowButton {
+  background: rgba(34, 197, 94, 0.1);
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .startTimeSlotButton {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #1e293b;
+}
+
+:global(:root:not([data-theme='dark'])) .startTimeSlotButtonActive {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(8, 145, 178, 0.1));
+  border-color: rgba(79, 70, 229, 0.18);
+  color: #1e293b;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.1);
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeWindowButtonActive {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeSuccessContent p {
+  color: #166534;
+}
+
+:global(:root:not([data-theme='dark'])) .dateChangeAvailability {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
 :global(:root:not([data-theme='dark'])) .submitMessage {
   color: var(--primary-strong);
 }
@@ -1674,6 +2414,15 @@
 
 :global(:root:not([data-theme='dark'])) .adminTableRowPending {
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.09), rgba(255, 255, 255, 0.9) 42%);
+}
+
+:global(:root:not([data-theme='dark'])) .checkedInTimerCard {
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.92), rgba(236, 253, 245, 0.96));
+  border-color: rgba(34, 197, 94, 0.16);
+}
+
+:global(:root:not([data-theme='dark'])) .checkedInTimerEyebrow {
+  color: #15803d;
 }
 
 :global(:root:not([data-theme='dark'])) .adminPrimaryCell span,
@@ -1758,6 +2507,7 @@
   .adminScannerLayout,
   .createBookingLayout,
   .createBookingSplit,
+  .editBookingLayout,
   .filterGrid,
   .formSplit,
   .bookingDetailGrid,
@@ -1785,6 +2535,32 @@
   .myBookingsHeader,
   .createBookingHeader {
     display: grid;
+  }
+
+  .dateChangeRequestItem {
+    display: grid;
+  }
+
+  .dateChangeSuccessBanner {
+    display: grid;
+  }
+
+  .suggestionsHero,
+  .suggestionsSectionGrid,
+  .suggestionsCatalog {
+    grid-template-columns: 1fr;
+  }
+
+  .suggestionsSpotlightShell {
+    display: grid;
+  }
+
+  .editBookingHero {
+    padding: 1rem;
+  }
+
+  .editBookingHighlights {
+    justify-content: flex-start;
   }
 
   .adminRowActions {
