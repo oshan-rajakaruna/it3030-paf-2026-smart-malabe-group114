@@ -494,19 +494,27 @@ export default function TicketsPage() {
         ) : (
           <>
             <div className={styles.sidePanelItem}>
-              <strong>Assignment</strong>
-              <span>Admins can later assign technicians by workload, skill, or location.</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>Status progression</strong>
-              <span>OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED when necessary.</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Queue oversight' : 'Comments and evidence'}</strong>
+              <strong>{isAdmin ? 'Assignment' : 'Ticket workflow'}</strong>
               <span>
                 {isAdmin
-                  ? 'The ticket table remains the main management surface for prioritization, triage, and workload visibility.'
-                  : 'Ticket conversations and image attachments can plug into the modal panel below.'}
+                  ? 'Admin can assign technicians based on issue type, urgency, and availability.'
+                  : 'OPEN - IN_PROGRESS - RESOLVED - CLOSED. Admin may also mark a ticket as REJECTED when required.'}
+              </span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>{isAdmin ? 'Status progression' : 'What happens after submission'}</strong>
+              <span>
+                {isAdmin
+                  ? 'OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED available when necessary.'
+                  : 'Your ticket will be reviewed and may be assigned to a technician. You can track progress from your ticket list and ticket details.'}
+              </span>
+            </div>
+            <div className={styles.sidePanelItem}>
+              <strong>{isAdmin ? 'Queue oversight' : 'Evidence and comments'}</strong>
+              <span>
+                {isAdmin
+                  ? 'Review ticket priority, ownership, and progress from the management queue.'
+                  : 'You can upload up to 3 images when reporting an issue. Comments and attachments can be viewed from ticket details.'}
               </span>
             </div>
           </>
