@@ -106,6 +106,42 @@ public class SecurityConfig {
     source.registerCorsConfiguration("/**", configuration);
     return source;
   }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(Customizer.withDefaults())
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/test").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/resources", "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/resources").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/resources/**").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/resources/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults());
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:4173",
+            "http://127.0.0.1:4173"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/resources/**", configuration);
+        source.registerCorsConfiguration("/api/resources", configuration);
+        return source;
+    }
 }
 
 
