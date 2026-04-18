@@ -1,7 +1,7 @@
 package com.smartcampus.controller;
 
 import com.smartcampus.dto.AvailableNowSlot;
-import com.smartcampus.entity.Resource;
+import com.smartcampus.model.Resource;
 import com.smartcampus.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;

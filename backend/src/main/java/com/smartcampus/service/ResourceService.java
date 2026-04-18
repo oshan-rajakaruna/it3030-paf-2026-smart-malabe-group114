@@ -1,8 +1,8 @@
 package com.smartcampus.service;
 
 import com.smartcampus.dto.AvailableNowSlot;
-import com.smartcampus.entity.Booking;
-import com.smartcampus.entity.Resource;
+import com.smartcampus.model.Booking;
+import com.smartcampus.model.Resource;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.ResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,6 @@
 package com.smartcampus.service;
 
-import com.smartcampus.entity.User;
+import com.smartcampus.model.User;
 import com.smartcampus.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

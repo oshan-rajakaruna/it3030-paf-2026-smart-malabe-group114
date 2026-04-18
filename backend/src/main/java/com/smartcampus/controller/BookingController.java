@@ -4,7 +4,7 @@ import com.smartcampus.dto.BookingScannerDetails;
 import com.smartcampus.dto.CheckinResponse;
 import com.smartcampus.dto.CheckinStats;
 import com.smartcampus.dto.CheckedInBookingRow;
-import com.smartcampus.entity.Booking;
+import com.smartcampus.model.Booking;
 import com.smartcampus.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.smartcampus.entity;
+package com.smartcampus.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

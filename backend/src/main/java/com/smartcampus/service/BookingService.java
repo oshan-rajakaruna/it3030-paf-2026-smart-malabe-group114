@@ -4,10 +4,10 @@ import com.smartcampus.dto.BookingScannerDetails;
 import com.smartcampus.dto.CheckinResponse;
 import com.smartcampus.dto.CheckinStats;
 import com.smartcampus.dto.CheckedInBookingRow;
-import com.smartcampus.entity.Booking;
-import com.smartcampus.entity.Checkin;
-import com.smartcampus.entity.Resource;
-import com.smartcampus.entity.User;
+import com.smartcampus.model.Booking;
+import com.smartcampus.model.Checkin;
+import com.smartcampus.model.Resource;
+import com.smartcampus.model.User;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.CheckinRepository;
 import com.smartcampus.repository.ResourceRepository;
@@ -352,6 +352,13 @@ public class BookingService {
     }
 
     private void validateResourceAvailability(Resource resource) {
+        if (Boolean.FALSE.equals(resource.getIsActive())) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                resource.getName() + " is currently inactive and cannot be booked."
+            );
+        }
+
         String status = resource.getStatus() == null ? "" : resource.getStatus().trim().toUpperCase();
         if (status.isBlank() || "AVAILABLE".equals(status)) {
             return;

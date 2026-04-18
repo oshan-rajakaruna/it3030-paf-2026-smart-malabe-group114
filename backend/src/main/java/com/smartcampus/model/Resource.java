@@ -1,4 +1,4 @@
-package com.smartcampus.entity;
+package com.smartcampus.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -16,5 +16,6 @@ public class Resource {
     private String location;
     private Integer capacity;
     private String status;
+    private Boolean isActive;
     private String description;
 }
