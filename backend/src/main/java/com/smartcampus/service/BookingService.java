@@ -7,11 +7,18 @@ import com.smartcampus.dto.CheckedInBookingRow;
 import com.smartcampus.model.Booking;
 import com.smartcampus.model.Checkin;
 import com.smartcampus.model.Resource;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.CheckinRepository;
 import com.smartcampus.repository.ResourceRepository;
 import com.smartcampus.repository.rolemanagement.UserRepository;
+import com.smartcampus.service.rolemanagement.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +36,8 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @Service
 public class BookingService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookingService.class);
+
     @Autowired
     private BookingRepository repo;
 
@@ -40,6 +49,9 @@ public class BookingService {
 
     @Autowired
     private CheckinRepository checkinRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
@@ -79,7 +91,23 @@ public class BookingService {
         booking.setCreatedAt(now);
         booking.setUpdatedAt(now);
 
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        try {
+            notificationService.notifyRole(
+                NotificationAudienceRole.ADMIN,
+                "New Booking Request",
+                "A new booking request was created" + (saved.getId() != null ? " (Booking " + saved.getId() + ")." : "."),
+                NotificationModule.BOOKING,
+                NotificationPriority.HIGH,
+                NotificationChannel.WEB,
+                saved.getUserId()
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Booking created but admin notification failed for bookingId={}", saved.getId(), notificationError);
+        }
+
+        return saved;
     }
 
     public List<Booking> getAllBookings() {
@@ -388,7 +416,25 @@ public class BookingService {
         Booking booking = repo.findById(id).orElseThrow();
         booking.setStatus("APPROVED");
         booking.setUpdatedAt(LocalDateTime.now());
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        if (saved.getUserId() != null && !saved.getUserId().isBlank()) {
+            try {
+                notificationService.notifyUser(
+                    saved.getUserId(),
+                    "Booking Approved",
+                    "Your booking request has been approved.",
+                    NotificationModule.BOOKING,
+                    NotificationPriority.NORMAL,
+                    NotificationChannel.WEB,
+                    "ADMIN"
+                );
+            } catch (Exception notificationError) {
+                LOGGER.warn("Booking approved but user notification failed for bookingId={}", saved.getId(), notificationError);
+            }
+        }
+
+        return saved;
     }
 
     public Booking rejectBooking(String id, String reason) {

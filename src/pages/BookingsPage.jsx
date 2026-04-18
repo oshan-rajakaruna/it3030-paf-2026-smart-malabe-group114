@@ -33,9 +33,15 @@ import SearchBar from '../components/ui/SearchBar';
 import SkeletonBlock from '../components/ui/SkeletonBlock';
 import StatusBadge from '../components/ui/StatusBadge';
 import { mockFacilities } from '../data/facilities';
-import { mockNotifications } from '../data/notifications';
 import { mockUsers } from '../data/users';
 import { useAuth } from '../hooks/useAuth';
+import {
+  getNotificationContext,
+  getRoleNotifications,
+  getUserNotifications,
+  mapNotificationToUi,
+  markNotificationAsRead as markNotificationAsReadApi,
+} from '../services/notificationApi';
 import { ROLES } from '../utils/constants';
 import { formatDate, formatDateTime, joinClassNames } from '../utils/formatters';
 
@@ -663,7 +669,7 @@ export default function BookingsPage() {
   const [form, setForm] = useState(initialForm);
   const [conflictMessage, setConflictMessage] = useState('');
   const [submitMessage, setSubmitMessage] = useState('');
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState([]);
   const [createViewMode, setCreateViewMode] = useState(CREATE_VIEW_MODES.LIST);
   const [backendResources, setBackendResources] = useState([]);
   const [backendUsers, setBackendUsers] = useState([]);
@@ -968,6 +974,49 @@ export default function BookingsPage() {
     }));
   }, [backendResources, bookings, editForm.attendees, editForm.date, editForm.facilityId, editForm.startTime, editingBooking]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRoleBasedNotifications = async () => {
+      try {
+        const context = getNotificationContext();
+        const role = context.role || String(student.role || '').toUpperCase();
+        const userId = context.userId || student.id;
+
+        let payload = [];
+        if (role === 'ADMIN') {
+          payload = await getRoleNotifications('ADMIN');
+        } else if (role === 'TECHNICIAN') {
+          payload = await getRoleNotifications('TECHNICIAN');
+        } else if (userId) {
+          payload = await getUserNotifications(userId);
+        }
+
+        const mapped = (Array.isArray(payload) ? payload : [])
+          .map(mapNotificationToUi)
+          .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+        if (isMounted) {
+          setNotifications(mapped);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('Failed to load booking notifications preview:', error);
+        }
+      }
+    };
+
+    void loadRoleBasedNotifications();
+    const timer = window.setInterval(() => {
+      void loadRoleBasedNotifications();
+    }, LIVE_BOOKING_SYNC_INTERVAL_MS);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, [student.id, student.role]);
+
   const filteredBookings = bookings.filter((booking) => {
     const facility =
       backendResources.find((item) => item.id === booking.facilityId) ??
@@ -1002,7 +1051,9 @@ export default function BookingsPage() {
     .sort((left, right) => new Date(`${left.date}T${left.startTime}`).getTime() - new Date(`${right.date}T${right.startTime}`).getTime())
     .slice(0, 4);
   const calendarDays = getCalendarDays(calendarAnchor, calendarMode);
-  const unreadNotifications = notifications.filter((notification) => !notification.read);
+  const bookingNotificationsPreview = notifications
+    .filter((notification) => String(notification.module || '').toUpperCase() === 'BOOKING')
+    .slice(0, 3);
   const suggestionResources = backendResources.length ? backendResources : mockFacilities;
   const nextUpcomingBooking = [...bookings]
     .filter(isFutureOrTodayBooking)
@@ -1825,10 +1876,18 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     }
   };
 
-  const markNotificationAsRead = (notificationId) => {
+  const markNotificationAsRead = async (notificationId) => {
     setNotifications((current) =>
-      current.map((notification) => (notification.id === notificationId ? { ...notification, read: true } : notification)),
+      current.map((notification) =>
+        notification.id === notificationId ? { ...notification, read: true, status: 'READ' } : notification,
+      ),
     );
+
+    try {
+      await markNotificationAsReadApi(notificationId);
+    } catch (error) {
+      console.error('Failed to mark booking preview notification as read:', error);
+    }
   };
 
   const openEditBooking = (booking) => {
@@ -1970,45 +2029,25 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
   const persistAdminStatusChange = async (booking, action, reason = '') => {
     const backendId = booking.backendId || booking.id.replace(/^bk-/, '');
     let url = '';
-    let options = {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
+    let options = { method: 'PUT' };
     let fallbackAdminNote = '';
 
-    if (action === 'approve' || action === 'reject' || action === 'cancel') {
-      const nextStatus =
-        action === 'approve'
-          ? 'APPROVED'
-          : action === 'reject'
-            ? 'REJECTED'
-            : 'CANCELLED';
-
-      fallbackAdminNote =
-        action === 'approve'
-          ? 'Approved by admin after booking review.'
-          : action === 'reject'
-            ? reason.trim() || 'Rejected by admin after booking review.'
-            : 'Cancelled by admin after manual review.';
-
-      url = `${BOOKINGS_API_URL}/${backendId}`;
+    if (action === 'approve') {
+      fallbackAdminNote = 'Approved by admin after booking review.';
+      url = `${BOOKINGS_API_URL}/${backendId}/approve`;
+    } else if (action === 'reject') {
+      fallbackAdminNote = reason.trim() || 'Rejected by admin after booking review.';
+      url = `${BOOKINGS_API_URL}/${backendId}/reject`;
       options = {
         ...options,
-        body: JSON.stringify({
-          userId: booking.requesterId,
-          resourceId: String(booking.facilityId),
-          bookingDate: booking.date,
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-          description: booking.purpose,
-          attendeesCount: Number(booking.attendees),
-          status: nextStatus,
-          urgentApproval: false,
-          rejectionReason: action === 'reject' ? fallbackAdminNote : '',
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: fallbackAdminNote }),
       };
+    } else if (action === 'cancel') {
+      fallbackAdminNote = 'Cancelled by admin after manual review.';
+      url = `${BOOKINGS_API_URL}/${backendId}/cancel`;
     } else {
       return;
     }
@@ -3321,21 +3360,26 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
 
       <Card title="Notification preview" subtitle="Approvals, rejections, and reminders without leaving the page." className={styles.panelCard}>
         <div className={styles.notificationPreview}>
-          {notifications.slice(0, 3).map((notification) => (
-            <article key={notification.id} className={styles.notificationRow}>
-              <div>
-                <strong>{notification.title}</strong>
-                <p>{notification.message}</p>
-              </div>
-              {!notification.read ? (
-                <button type="button" className={styles.markRead} onClick={() => markNotificationAsRead(notification.id)}>
-                  Mark as read
-                </button>
-              ) : (
-                <span className={styles.readState}>Read</span>
-              )}
-            </article>
-          ))}
+          {bookingNotificationsPreview.length ? (
+            bookingNotificationsPreview.map((notification) => (
+              <article key={notification.id} className={styles.notificationRow}>
+                <div>
+                  <strong>{notification.title}</strong>
+                  <p>{notification.message}</p>
+                  <small>{formatDateTime(notification.createdAt)}</small>
+                </div>
+                {!notification.read ? (
+                  <button type="button" className={styles.markRead} onClick={() => void markNotificationAsRead(notification.id)}>
+                    Mark as read
+                  </button>
+                ) : (
+                  <span className={styles.readState}>Read</span>
+                )}
+              </article>
+            ))
+          ) : (
+            <span className={styles.readState}>No booking notifications yet.</span>
+          )}
         </div>
       </Card>
     </section>

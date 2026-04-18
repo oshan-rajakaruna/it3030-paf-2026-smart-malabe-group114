@@ -6,12 +6,18 @@ import com.smartcampus.dto.UpdateResourceRequestDto;
 import com.smartcampus.model.Resource;
 import com.smartcampus.model.enums.ResourceStatus;
 import com.smartcampus.model.enums.ResourceType;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.repository.ResourceRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.smartcampus.dto.AvailableNowSlot;
 import com.smartcampus.model.Booking;
 import com.smartcampus.repository.BookingRepository;
@@ -20,15 +26,19 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import com.smartcampus.service.rolemanagement.NotificationService;
 
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResourceService.class);
+
     private final ResourceRepository resourceRepository;
 
     private final BookingRepository bookingRepository;
     private final BookingService bookingService;
+    private final NotificationService notificationService;
 
     private static final LocalTime DAY_END = LocalTime.of(19, 0);
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -184,6 +194,31 @@ private boolean isActiveBooking(Booking booking) {
         resource.setCreatedAt(now);
         resource.setUpdatedAt(now);
         Resource savedResource = resourceRepository.save(resource);
+
+        String message = "New resource added: " + savedResource.getName();
+        try {
+            notificationService.notifyRole(
+                NotificationAudienceRole.ADMIN,
+                "New Resource Added",
+                message,
+                NotificationModule.RESOURCE,
+                NotificationPriority.NORMAL,
+                NotificationChannel.WEB,
+                "SYSTEM"
+            );
+            notificationService.notifyRole(
+                NotificationAudienceRole.TECHNICIAN,
+                "New Resource Added",
+                message,
+                NotificationModule.RESOURCE,
+                NotificationPriority.NORMAL,
+                NotificationChannel.WEB,
+                "SYSTEM"
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Resource created but notification dispatch failed for resourceId={}", savedResource.getId(), notificationError);
+        }
+
         return mapToResponseDto(savedResource);
     }
 

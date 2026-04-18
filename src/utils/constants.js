@@ -56,7 +56,7 @@ export const NAV_ITEMS = [
     path: '/dashboard',
     icon: LayoutDashboard,
     description: 'Overview and live activity',
-    roles: [ROLES.USER, ROLES.ADMIN],
+    roles: [ROLES.USER, ROLES.ADMIN, ROLES.TECHNICIAN],
   },
   {
     label: 'Facilities',
@@ -91,6 +91,13 @@ export const NAV_ITEMS = [
     path: '/admin',
     icon: ShieldCheck,
     description: 'User roles, approvals, assignments',
+    roles: [ROLES.ADMIN],
+  },
+  {
+    label: 'Notify Admin',
+    path: '/admin/notifications',
+    icon: Bell,
+    description: 'Send and manage targeted alerts',
     roles: [ROLES.ADMIN],
   },
   {

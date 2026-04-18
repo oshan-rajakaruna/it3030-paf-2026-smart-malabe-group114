@@ -22,14 +22,14 @@ import com.smartcampus.dto.rolemanagement.SignupResponse;
 import com.smartcampus.dto.rolemanagement.TwoFactorQrResponse;
 import com.smartcampus.exception.rolemanagement.BadRequestException;
 import com.smartcampus.exception.rolemanagement.UnauthorizedException;
-import com.smartcampus.model.rolemanagement.AppNotification;
-import com.smartcampus.model.rolemanagement.NotificationStatus;
-import com.smartcampus.model.rolemanagement.NotificationType;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.model.rolemanagement.UserRole;
 import com.smartcampus.model.rolemanagement.UserStatus;
 import com.smartcampus.repository.rolemanagement.ExistingIdRepository;
-import com.smartcampus.repository.rolemanagement.NotificationRepository;
 import com.smartcampus.repository.rolemanagement.UserRepository;
 import com.smartcampus.util.QrCodeUtil;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
@@ -47,7 +47,7 @@ public class AuthService {
 
   private final UserRepository userRepository;
   private final ExistingIdRepository existingIdRepository;
-  private final NotificationRepository notificationRepository;
+  private final NotificationService notificationService;
   private final PasswordEncoder passwordEncoder;
   private final QrCodeUtil qrCodeUtil;
   private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
@@ -531,32 +531,15 @@ public class AuthService {
       ? "NO-ID"
       : pendingUser.getIdNumber();
     String message = "New signup pending approval: " + pendingUser.getName() + " (" + safeIdNumber + ")";
-    List<User> admins = userRepository.findByRole(UserRole.ADMIN);
-
-    if (admins.isEmpty()) {
-      notificationRepository.save(
-        AppNotification.builder()
-          .userId(null)
-          .message(message)
-          .type(NotificationType.SIGNUP_REVIEW)
-          .status(NotificationStatus.UNREAD)
-          .createdAt(LocalDateTime.now())
-          .build()
-      );
-      return;
-    }
-
-    List<AppNotification> notifications = admins.stream()
-      .map(admin -> AppNotification.builder()
-        .userId(admin.getId())
-        .message(message)
-        .type(NotificationType.SIGNUP_REVIEW)
-        .status(NotificationStatus.UNREAD)
-        .createdAt(LocalDateTime.now())
-        .build())
-      .toList();
-
-    notificationRepository.saveAll(notifications);
+    notificationService.notifyRole(
+      NotificationAudienceRole.ADMIN,
+      "New Signup Request",
+      message,
+      NotificationModule.AUTH,
+      NotificationPriority.HIGH,
+      NotificationChannel.WEB,
+      "SYSTEM"
+    );
   }
 }
 

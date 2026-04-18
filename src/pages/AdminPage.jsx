@@ -10,6 +10,7 @@ import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
 import { mockTickets } from '../data/tickets';
+import { ROUTE_PATHS } from '../routes/routeConfig';
 import { formatDateTime } from '../utils/formatters';
 
 const USERS_API_BASE = 'http://localhost:8080/api/users';
@@ -148,7 +149,9 @@ export default function AdminPage() {
         eyebrow="Admin Management"
         title="Admin command center"
         description="User and role management is now synced directly with the database, so deleted users disappear automatically."
-        
+        actions={
+          <Button to={ROUTE_PATHS.ADMIN_NOTIFICATIONS}>Open Notifications Admin</Button>
+        }
       />
 
       <section className={styles.statsGrid}>

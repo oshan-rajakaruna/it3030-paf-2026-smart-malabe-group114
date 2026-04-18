@@ -6,6 +6,9 @@ import StatusBadge from '../ui/StatusBadge';
 import { formatDateTime } from '../../utils/formatters';
 
 export default function NotificationItem({ notification, onClick }) {
+  const badgeValue = notification.module || notification.type || 'SYSTEM';
+  const hasActionLink = notification.actionPath && notification.actionLabel;
+
   return (
     <article
       className={styles.item}
@@ -26,20 +29,22 @@ export default function NotificationItem({ notification, onClick }) {
     >
       <div className={styles.main}>
         <div className={styles.header}>
-          <StatusBadge status={notification.type} />
+          <StatusBadge status={badgeValue} />
           {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
         </div>
         <div className={styles.copy}>
-          <h3>{notification.title}</h3>
+          <h3>{notification.title || 'Notification'}</h3>
           <p>{notification.message}</p>
         </div>
       </div>
       <div className={styles.meta}>
         <time dateTime={notification.createdAt}>{formatDateTime(notification.createdAt)}</time>
-        <Link className={styles.link} to={notification.actionPath}>
-          {notification.actionLabel}
-          <ArrowRight size={16} />
-        </Link>
+        {hasActionLink ? (
+          <Link className={styles.link} to={notification.actionPath}>
+            {notification.actionLabel}
+            <ArrowRight size={16} />
+          </Link>
+        ) : null}
       </div>
     </article>
   );

@@ -18,28 +18,40 @@ import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.model.Ticket;
 import com.smartcampus.model.TicketAttachment;
 import com.smartcampus.model.TicketComment;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.enums.TicketStatus;
 import com.smartcampus.repository.TicketAttachmentRepository;
 import com.smartcampus.repository.TicketCommentRepository;
 import com.smartcampus.repository.TicketRepository;
+import com.smartcampus.service.rolemanagement.NotificationService;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class TicketService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TicketService.class);
+
     private final TicketRepository ticketRepository;
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final TicketCommentRepository ticketCommentRepository;
+    private final NotificationService notificationService;
 
     public TicketService(
         TicketRepository ticketRepository,
         TicketAttachmentRepository ticketAttachmentRepository,
-        TicketCommentRepository ticketCommentRepository
+        TicketCommentRepository ticketCommentRepository,
+        NotificationService notificationService
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.ticketCommentRepository = ticketCommentRepository;
+        this.notificationService = notificationService;
     }
 
     public TicketResponse createTicket(CreateTicketRequest request) {
@@ -58,6 +70,21 @@ public class TicketService {
             .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+
+        try {
+            notificationService.notifyRole(
+                NotificationAudienceRole.TECHNICIAN,
+                "New Ticket Created",
+                "A new support ticket was created: " + savedTicket.getTitle(),
+                NotificationModule.TICKET,
+                NotificationPriority.HIGH,
+                NotificationChannel.WEB,
+                savedTicket.getCreatedBy()
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Ticket created but technician notification failed for ticketId={}", savedTicket.getId(), notificationError);
+        }
+
         return mapToResponse(savedTicket);
     }
 
@@ -83,6 +110,23 @@ public class TicketService {
         ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+        if (updatedTicket.getStatus() == TicketStatus.RESOLVED
+            && updatedTicket.getCreatedBy() != null
+            && !updatedTicket.getCreatedBy().isBlank()) {
+            try {
+                notificationService.notifyUser(
+                    updatedTicket.getCreatedBy(),
+                    "Ticket Resolved",
+                    "Your ticket has been resolved: " + updatedTicket.getTitle(),
+                    NotificationModule.TICKET,
+                    NotificationPriority.NORMAL,
+                    NotificationChannel.WEB,
+                    updatedTicket.getAssignedTechnician()
+                );
+            } catch (Exception notificationError) {
+                LOGGER.warn("Ticket resolved but user notification failed for ticketId={}", updatedTicket.getId(), notificationError);
+            }
+        }
         return mapToResponse(updatedTicket);
     }
 

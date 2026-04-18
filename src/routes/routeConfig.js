@@ -9,5 +9,7 @@ export const ROUTE_PATHS = {
   TICKETS: '/tickets',
   NOTIFICATIONS: '/notifications',
   ADMIN: '/admin',
+  ADMIN_NOTIFICATIONS: '/admin/notifications',
+  ADMIN_NOTIFICATIONS_CREATE: '/admin/notifications/create',
   SETTINGS: '/settings',
 };

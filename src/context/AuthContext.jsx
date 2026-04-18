@@ -65,6 +65,13 @@ export function AuthProvider({ children }) {
       loggedInAt: new Date().toISOString(),
     });
 
+    try {
+      window.localStorage.setItem('role', String(finalRole));
+      window.localStorage.setItem('userId', String(finalUserId));
+    } catch (error) {
+      // Ignore localStorage sync errors; session storage hook still handles auth state.
+    }
+
     appendLoginActivity({
       userId: finalUserId,
       name: finalName,
@@ -77,6 +84,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    try {
+      window.localStorage.removeItem('role');
+      window.localStorage.removeItem('userId');
+    } catch (error) {
+      // Ignore localStorage cleanup errors.
+    }
     setSession(null);
   };
 
