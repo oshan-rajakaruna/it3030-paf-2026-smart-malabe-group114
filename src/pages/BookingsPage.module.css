@@ -3,22 +3,22 @@
   gap: 1.5rem;
 }
 
-.pageNav,
-.pageNavActions,
-.calendarToolbar,
-.modeToggle,
-.calendarNav,
-.notificationRow,
-.bookingFacts,
-.bookingActions,
-.scannerControls,
-.footerRow {
+.page .pageNav,
+.page .pageNavActions,
+.page .calendarToolbar,
+.page .modeToggle,
+.page .calendarNav,
+.page .notificationRow,
+.page .bookingFacts,
+.page .bookingActions,
+.page .scannerControls,
+.page .footerRow {
   display: flex;
   align-items: center;
   gap: 0.85rem;
 }
 
-.pageNav {
+.page .pageNav {
   justify-content: space-between;
   flex-wrap: wrap;
   padding: 1rem 1.15rem;
@@ -30,13 +30,13 @@
   box-shadow: var(--shadow-soft);
 }
 
-.pageNavBrand {
+.page .pageNavBrand {
   display: grid;
   gap: 0.2rem;
 }
 
-.pageNavEyebrow,
-.statLabel {
+.page .pageNavEyebrow,
+.page .statLabel {
   color: var(--secondary);
   font-size: 0.8rem;
   font-weight: 700;
@@ -44,21 +44,21 @@
   text-transform: uppercase;
 }
 
-.pageNavBrand strong,
-.statValue {
+.page .pageNavBrand strong,
+.page .statValue {
   font-family: var(--font-display);
   font-size: 1.2rem;
   letter-spacing: -0.03em;
 }
 
-.pageNavActions {
+.page .pageNavActions {
   flex-wrap: wrap;
 }
 
-.pageNavLink,
-.modeButton,
-.iconAction,
-.scannerToggle {
+.page .pageNavLink,
+.page .modeButton,
+.page .iconAction,
+.page .scannerToggle {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
@@ -70,67 +70,67 @@
     color var(--transition-base);
 }
 
-.pageNavLink {
+.page .pageNavLink {
   min-height: 2.75rem;
   padding: 0 1rem;
 }
 
-.modeButton {
+.page .modeButton {
   min-height: 3.15rem;
   padding: 0 1.35rem;
   font-size: 1rem;
   font-weight: 700;
 }
 
-.pageNavLink:hover,
-.modeButton:hover,
-.iconAction:hover,
-.scannerToggle:hover,
-.upcomingItem:hover,
-.monthCell:hover,
-.weeklyBookingBlock:hover,
-.monthBookingBlock:hover,
-.slotButton:hover {
+.page .pageNavLink:hover,
+.page .modeButton:hover,
+.page .iconAction:hover,
+.page .scannerToggle:hover,
+.page .upcomingItem:hover,
+.page .monthCell:hover,
+.page .weeklyBookingBlock:hover,
+.page .monthBookingBlock:hover,
+.page .slotButton:hover {
   transform: translateY(-1px);
   border-color: rgba(124, 140, 255, 0.34);
 }
 
-.pageNavActive,
-.modeButtonActive,
-.scannerToggleActive {
+.page .pageNavActive,
+.page .modeButtonActive,
+.page .scannerToggleActive {
   background: linear-gradient(135deg, rgba(124, 140, 255, 0.18), rgba(34, 211, 238, 0.16));
   border-color: rgba(124, 140, 255, 0.3);
   color: var(--text);
   font-weight: 700;
 }
 
-.statsGrid,
-.overviewGrid,
-.createGrid,
-.filterGrid,
-.formSplit {
+.page .statsGrid,
+.page .overviewGrid,
+.page .createGrid,
+.page .filterGrid,
+.page .formSplit {
   display: grid;
   gap: 1rem;
 }
 
-.statsGrid {
+.page .statsGrid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.statCard,
-.panelCard,
-.filterCard,
-.bookingCard,
-.monthCell,
-.weekSlot,
-.resourceCard,
-.conflictPanel,
-.noSlots,
-.detailSummary,
-.timelineStep,
-.scannerResult,
-.reminderStrip,
-.upcomingItem {
+.page .statCard,
+.page .panelCard,
+.page .filterCard,
+.page .bookingCard,
+.page .monthCell,
+.page .weekSlot,
+.page .resourceCard,
+.page .conflictPanel,
+.page .noSlots,
+.page .detailSummary,
+.page .timelineStep,
+.page .scannerResult,
+.page .reminderStrip,
+.page .upcomingItem {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 22px;
   background:
@@ -138,14 +138,14 @@
     rgba(7, 17, 31, 0.44);
 }
 
-.statCard {
+.page .statCard {
   position: relative;
   overflow: hidden;
   min-height: 140px;
   padding: 1.35rem;
 }
 
-.statGlow {
+.page .statGlow {
   position: absolute;
   width: 140px;
   height: 140px;
@@ -156,54 +156,54 @@
   opacity: 0.6;
 }
 
-.statGlowprimary { background: rgba(124, 140, 255, 0.24); }
-.statGlowsuccess { background: rgba(34, 197, 94, 0.2); }
-.statGlowwarning { background: rgba(245, 158, 11, 0.2); }
-.statGlowdanger { background: rgba(248, 113, 113, 0.2); }
+.page .statGlowprimary { background: rgba(124, 140, 255, 0.24); }
+.page .statGlowsuccess { background: rgba(34, 197, 94, 0.2); }
+.page .statGlowwarning { background: rgba(245, 158, 11, 0.2); }
+.page .statGlowdanger { background: rgba(248, 113, 113, 0.2); }
 
-.overviewGrid {
+.page .overviewGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.overviewWideCard {
+.page .overviewWideCard {
   grid-column: 1 / -1;
 }
 
-.bookingList,
-.notificationPreview,
-.formGrid,
-.availabilityPanel,
-.resourceHighlights,
-.detailModal,
-.timeline,
-.tabContent,
-.myBookingsList,
-.myBookingTop,
-.myBookingHeader,
-.detailFields {
+.page .bookingList,
+.page .notificationPreview,
+.page .formGrid,
+.page .availabilityPanel,
+.page .resourceHighlights,
+.page .detailModal,
+.page .timeline,
+.page .tabContent,
+.page .myBookingsList,
+.page .myBookingTop,
+.page .myBookingHeader,
+.page .detailFields {
   display: grid;
   gap: 1rem;
 }
 
-.upcomingItem {
+.page .upcomingItem {
   width: 100%;
   padding: 1rem;
   color: inherit;
   text-align: left;
 }
 
-.upcomingCards {
+.page .upcomingCards {
   display: grid;
   gap: 1rem;
 }
 
-.dateChangeSuccessStack {
+.page .dateChangeSuccessStack {
   display: grid;
   gap: 0.85rem;
   margin-bottom: 1rem;
 }
 
-.dateChangeSuccessBanner {
+.page .dateChangeSuccessBanner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -216,12 +216,12 @@
   border: 1px solid rgba(34, 197, 94, 0.22);
 }
 
-.dateChangeSuccessContent {
+.page .dateChangeSuccessContent {
   display: grid;
   gap: 0.3rem;
 }
 
-.dateChangeSuccessEyebrow {
+.page .dateChangeSuccessEyebrow {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -229,21 +229,21 @@
   color: #86efac;
 }
 
-.dateChangeSuccessContent strong {
+.page .dateChangeSuccessContent strong {
   font-size: 1rem;
 }
 
-.dateChangeSuccessContent p {
+.page .dateChangeSuccessContent p {
   margin: 0;
   color: rgba(220, 252, 231, 0.9);
 }
 
-.suggestionsModalList {
+.page .suggestionsModalList {
   display: grid;
   gap: 1rem;
 }
 
-.suggestionModalCard {
+.page .suggestionModalCard {
   display: grid;
   gap: 0.9rem;
   padding: 1rem 1.05rem;
@@ -252,29 +252,29 @@
   box-shadow: var(--shadow-soft);
 }
 
-.suggestionModalblue {
+.page .suggestionModalblue {
   background: linear-gradient(135deg, rgba(13, 101, 255, 0.16), rgba(110, 58, 255, 0.14));
 }
 
-.suggestionModalteal {
+.page .suggestionModalteal {
   background: linear-gradient(135deg, rgba(12, 181, 176, 0.16), rgba(44, 107, 255, 0.12));
 }
 
-.suggestionModalamber {
+.page .suggestionModalamber {
   background: linear-gradient(135deg, rgba(204, 126, 24, 0.16), rgba(140, 47, 166, 0.12));
 }
 
-.suggestionModalviolet {
+.page .suggestionModalviolet {
   background: linear-gradient(135deg, rgba(24, 46, 104, 0.18), rgba(214, 68, 155, 0.14));
 }
 
-.suggestionModalTop {
+.page .suggestionModalTop {
   display: flex;
   align-items: flex-start;
   gap: 0.9rem;
 }
 
-.suggestionModalIcon {
+.page .suggestionModalIcon {
   width: 2.8rem;
   height: 2.8rem;
   display: grid;
@@ -285,12 +285,12 @@
   color: #f8fafc;
 }
 
-.suggestionModalCopy {
+.page .suggestionModalCopy {
   display: grid;
   gap: 0.25rem;
 }
 
-.suggestionModalEyebrow {
+.page .suggestionModalEyebrow {
   color: var(--secondary);
   font-size: 0.76rem;
   font-weight: 800;
@@ -298,22 +298,22 @@
   text-transform: uppercase;
 }
 
-.suggestionModalCopy strong {
+.page .suggestionModalCopy strong {
   font-size: 1rem;
   letter-spacing: -0.02em;
 }
 
-.suggestionModalCopy p {
+.page .suggestionModalCopy p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.suggestionModalActionRow {
+.page .suggestionModalActionRow {
   display: flex;
   justify-content: flex-start;
 }
 
-.suggestionModalMeta {
+.page .suggestionModalMeta {
   display: inline-flex;
   align-items: center;
   min-height: 2.4rem;
@@ -326,7 +326,7 @@
   font-weight: 800;
 }
 
-.suggestionsHero {
+.page .suggestionsHero {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
   gap: 1rem;
@@ -340,41 +340,41 @@
   box-shadow: var(--shadow-soft);
 }
 
-.suggestionsHeroCopy,
-.suggestionsHeroStats,
-.suggestionsCatalog,
-.suggestionsInsightColumn {
+.page .suggestionsHeroCopy,
+.page .suggestionsHeroStats,
+.page .suggestionsCatalog,
+.page .suggestionsInsightColumn {
   display: grid;
   gap: 1rem;
 }
 
-.suggestionsHeroCopy h2 {
+.page .suggestionsHeroCopy h2 {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.4rem);
   letter-spacing: -0.04em;
 }
 
-.suggestionsHeroCopy p {
+.page .suggestionsHeroCopy p {
   margin: 0;
   color: var(--text-muted);
   max-width: 60ch;
 }
 
-.suggestionsHeroStats {
+.page .suggestionsHeroStats {
   grid-template-columns: 1fr;
   align-content: start;
 }
 
-.suggestionsHeroStat,
-.suggestionsInsightCard {
+.page .suggestionsHeroStat,
+.page .suggestionsInsightCard {
   padding: 1rem 1.05rem;
   border-radius: 22px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: rgba(255, 255, 255, 0.06);
 }
 
-.suggestionsHeroStat span {
+.page .suggestionsHeroStat span {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 700;
@@ -382,7 +382,7 @@
   text-transform: uppercase;
 }
 
-.suggestionsHeroStat strong {
+.page .suggestionsHeroStat strong {
   display: block;
   margin-top: 0.3rem;
   font-family: var(--font-display);
@@ -390,12 +390,12 @@
   letter-spacing: -0.04em;
 }
 
-.suggestionsSpotlightCard {
+.page .suggestionsSpotlightCard {
   overflow: hidden;
   border-radius: 28px;
 }
 
-.suggestionsSpotlightShell {
+.page .suggestionsSpotlightShell {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -407,7 +407,7 @@
     linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.16));
 }
 
-.suggestionsSpotlightBadge {
+.page .suggestionsSpotlightBadge {
   width: 3.2rem;
   height: 3.2rem;
   display: grid;
@@ -419,60 +419,60 @@
   flex-shrink: 0;
 }
 
-.suggestionsSpotlightCopy {
+.page .suggestionsSpotlightCopy {
   display: grid;
   gap: 0.25rem;
   flex: 1;
 }
 
-.suggestionsSpotlightCopy h3 {
+.page .suggestionsSpotlightCopy h3 {
   margin: 0;
   font-size: 1.2rem;
   letter-spacing: -0.03em;
 }
 
-.suggestionsSpotlightCopy p {
+.page .suggestionsSpotlightCopy p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.suggestionsSpotlightAction {
+.page .suggestionsSpotlightAction {
   display: flex;
   justify-content: flex-end;
 }
 
-.suggestionsSectionGrid {
+.page .suggestionsSectionGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.75fr);
   gap: 1rem;
   align-items: start;
 }
 
-.suggestionsCatalog {
+.page .suggestionsCatalog {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.suggestionsSectionCard {
+.page .suggestionsSectionCard {
   min-height: 100%;
 }
 
-.suggestionsInsightCard {
+.page .suggestionsInsightCard {
   display: grid;
   gap: 0.45rem;
 }
 
-.suggestionsInsightCard h3 {
+.page .suggestionsInsightCard h3 {
   margin: 0;
   font-size: 1.02rem;
   letter-spacing: -0.02em;
 }
 
-.suggestionsInsightCard p {
+.page .suggestionsInsightCard p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.upcomingBookingCard {
+.page .upcomingBookingCard {
   width: 100%;
   display: grid;
   gap: 1rem;
@@ -488,26 +488,26 @@
     background var(--transition-base);
 }
 
-.upcomingBookingCard:hover {
+.page .upcomingBookingCard:hover {
   transform: translateY(-2px);
   border-color: rgba(124, 140, 255, 0.3);
   background: rgba(51, 65, 85, 0.72);
 }
 
-.upcomingBookingTop,
-.upcomingMetaRow {
+.page .upcomingBookingTop,
+.page .upcomingMetaRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.upcomingApprovalRow {
+.page .upcomingApprovalRow {
   display: flex;
   justify-content: flex-start;
 }
 
-.dateChangeApprovedPill {
+.page .dateChangeApprovedPill {
   display: inline-flex;
   align-items: center;
   padding: 0.45rem 0.8rem;
@@ -520,18 +520,18 @@
   letter-spacing: 0.02em;
 }
 
-.upcomingBookingMain {
+.page .upcomingBookingMain {
   display: grid;
   gap: 0.45rem;
 }
 
-.upcomingBookingMain strong {
+.page .upcomingBookingMain strong {
   font-size: 1rem;
   letter-spacing: -0.02em;
 }
 
-.upcomingLocation,
-.upcomingMetaRow span {
+.page .upcomingLocation,
+.page .upcomingMetaRow span {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -539,32 +539,32 @@
   font-size: 0.92rem;
 }
 
-.notificationRow {
+.page .notificationRow {
   justify-content: space-between;
   padding: 1rem;
 }
 
-.adminGrid,
-.adminInsightStack {
+.page .adminGrid,
+.page .adminInsightStack {
   display: grid;
   gap: 1rem;
 }
 
-.adminTabBar,
-.adminTableActionsHead,
-.pieLegend,
-.pieLegendItem,
-.barLabelRow {
+.page .adminTabBar,
+.page .adminTableActionsHead,
+.page .pieLegend,
+.page .pieLegendItem,
+.page .barLabelRow {
   display: flex;
   align-items: center;
   gap: 0.85rem;
 }
 
-.adminGrid {
+.page .adminGrid {
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
 }
 
-.adminTabBar {
+.page .adminTabBar {
   flex-wrap: wrap;
   padding: 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -572,7 +572,7 @@
   background: rgba(7, 17, 31, 0.42);
 }
 
-.adminTabButton {
+.page .adminTabButton {
   min-height: 3rem;
   padding: 0 1.25rem;
   border: 1px solid transparent;
@@ -587,48 +587,48 @@
     border-color var(--transition-base);
 }
 
-.adminTabButton:hover {
+.page .adminTabButton:hover {
   transform: translateY(-1px);
   color: var(--text);
 }
 
-.adminTabButtonActive {
+.page .adminTabButtonActive {
   background: linear-gradient(135deg, rgba(124, 140, 255, 0.2), rgba(34, 211, 238, 0.18));
   border-color: rgba(124, 140, 255, 0.28);
   color: var(--text);
 }
 
-.adminAnalyticsGrid,
-.chartStack,
-.pieChartLayout,
-.adminScannerLayout,
-.adminScannerColumn,
-.adminScannerActions,
-.adminScannerInfoList {
+.page .adminAnalyticsGrid,
+.page .chartStack,
+.page .pieChartLayout,
+.page .adminScannerLayout,
+.page .adminScannerColumn,
+.page .adminScannerActions,
+.page .adminScannerInfoList {
   display: grid;
   gap: 0.8rem;
 }
 
-.adminAnalyticsGrid {
+.page .adminAnalyticsGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.adminScannerLayout {
+.page .adminScannerLayout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
 }
 
-.adminPrimaryCell {
+.page .adminPrimaryCell {
   display: grid;
   gap: 0.2rem;
 }
 
-.adminPrimaryCell span {
+.page .adminPrimaryCell span {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-.adminUrgentFlag {
+.page .adminUrgentFlag {
   width: fit-content;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
@@ -641,14 +641,14 @@
   text-transform: uppercase;
 }
 
-.adminRowActions {
+.page .adminRowActions {
   display: flex;
   justify-content: flex-end;
   gap: 0.55rem;
   flex-wrap: wrap;
 }
 
-.adminReviewButton {
+.page .adminReviewButton {
   border: none;
   background: transparent;
   color: var(--secondary);
@@ -656,15 +656,15 @@
   font-weight: 700;
 }
 
-.adminReviewButton:hover {
+.page .adminReviewButton:hover {
   color: #67e8f9;
 }
 
-.adminActionState {
+.page .adminActionState {
   color: var(--text-muted);
 }
 
-.adminStatusPill {
+.page .adminStatusPill {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -676,25 +676,25 @@
   font-weight: 800;
 }
 
-.adminStatusApproved {
+.page .adminStatusApproved {
   background: rgba(34, 197, 94, 0.14);
   border-color: rgba(34, 197, 94, 0.28);
   color: #86efac;
 }
 
-.adminStatusPending {
+.page .adminStatusPending {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.28);
   color: #fcd34d;
 }
 
-.adminStatusRejected {
+.page .adminStatusRejected {
   background: rgba(248, 113, 113, 0.14);
   border-color: rgba(248, 113, 113, 0.28);
   color: #fca5a5;
 }
 
-.adminScannerInput {
+.page .adminScannerInput {
   width: 100%;
   min-height: 3.2rem;
   padding: 0 1rem;
@@ -704,7 +704,7 @@
   color: var(--text);
 }
 
-.adminVerifyButton {
+.page .adminVerifyButton {
   min-height: 3.15rem;
   display: inline-flex;
   align-items: center;
@@ -718,66 +718,66 @@
   font-weight: 700;
 }
 
-.adminVerifyButton:hover {
+.page .adminVerifyButton:hover {
   border-color: rgba(124, 140, 255, 0.28);
 }
 
-.adminScannerTestCard {
+.page .adminScannerTestCard {
   border-color: rgba(245, 158, 11, 0.28);
 }
 
-.adminScannerInfoRow,
-.adminCheckinStat {
+.page .adminScannerInfoRow,
+.page .adminCheckinStat {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.adminScannerInfoRow span,
-.adminScannerMuted,
-.adminCheckinStat span {
+.page .adminScannerInfoRow span,
+.page .adminScannerMuted,
+.page .adminCheckinStat span {
   color: var(--text-muted);
 }
 
-.adminCheckinStatsCompact {
+.page .adminCheckinStatsCompact {
   display: grid;
   gap: 0.35rem;
 }
 
-.adminCheckinStat {
+.page .adminCheckinStat {
   padding: 0.2rem 0;
 }
 
-.adminCheckinValid {
+.page .adminCheckinValid {
   color: var(--success);
 }
 
-.adminCheckinInvalid {
+.page .adminCheckinInvalid {
   color: var(--danger);
 }
 
-.adminTableWrap {
+.page .adminTableWrap {
   overflow-x: auto;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 22px;
   background: rgba(7, 17, 31, 0.26);
 }
 
-.adminTable {
+.page .adminTable {
   width: 100%;
   min-width: 980px;
   border-collapse: collapse;
 }
 
-.adminTable th,
-.adminTable td {
+.page .adminTable th,
+.page .adminTable td {
   padding: 1rem 1.1rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   vertical-align: middle;
 }
 
-.adminTable th {
+.page .adminTable th {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 700;
@@ -786,32 +786,32 @@
   text-align: left;
 }
 
-.adminTable tbody tr:last-child td {
+.page .adminTable tbody tr:last-child td {
   border-bottom: none;
 }
 
-.adminTable tbody tr:hover {
+.page .adminTable tbody tr:hover {
   background: rgba(124, 140, 255, 0.05);
 }
 
-.adminTable td {
+.page .adminTable td {
   font-size: 0.94rem;
 }
 
-.adminTableRowPending {
+.page .adminTableRowPending {
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent 42%);
 }
 
-.adminTableRowProcessing {
+.page .adminTableRowProcessing {
   opacity: 0.8;
 }
 
-.adminTableSkeleton {
+.page .adminTableSkeleton {
   height: 2.9rem;
   border-radius: 14px;
 }
 
-.checkedInTimerCard {
+.page .checkedInTimerCard {
   display: grid;
   gap: 0.35rem;
   margin-top: 0.95rem;
@@ -821,7 +821,7 @@
   background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
 }
 
-.checkedInTimerEyebrow {
+.page .checkedInTimerEyebrow {
   color: #86efac;
   font-size: 0.72rem;
   font-weight: 800;
@@ -829,17 +829,17 @@
   text-transform: uppercase;
 }
 
-.checkedInTimerCard strong {
+.page .checkedInTimerCard strong {
   font-size: 1rem;
 }
 
-.checkedInTimerCard p {
+.page .checkedInTimerCard p {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.92rem;
 }
 
-.checkedInLatePill {
+.page .checkedInLatePill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -852,19 +852,19 @@
   letter-spacing: 0.08em;
 }
 
-.checkedInLateYes {
+.page .checkedInLateYes {
   background: rgba(248, 113, 113, 0.14);
   color: #fca5a5;
   border: 1px solid rgba(248, 113, 113, 0.24);
 }
 
-.checkedInLateNo {
+.page .checkedInLateNo {
   background: rgba(34, 197, 94, 0.14);
   color: #86efac;
   border: 1px solid rgba(34, 197, 94, 0.24);
 }
 
-.adminEmptyState {
+.page .adminEmptyState {
   display: grid;
   gap: 0.35rem;
   justify-items: center;
@@ -873,7 +873,7 @@
   text-align: center;
 }
 
-.adminInsightCard {
+.page .adminInsightCard {
   display: grid;
   gap: 0.35rem;
   padding: 1rem;
@@ -882,50 +882,50 @@
   background: var(--surface-muted);
 }
 
-.adminInsightCard strong {
+.page .adminInsightCard strong {
   font-family: var(--font-display);
   font-size: 1.5rem;
   letter-spacing: -0.04em;
 }
 
-.adminInsightCard span,
-.adminRolePill {
+.page .adminInsightCard span,
+.page .adminRolePill {
   color: var(--text-muted);
 }
 
-.barRow {
+.page .barRow {
   display: grid;
   gap: 0.45rem;
 }
 
-.barLabelRow {
+.page .barLabelRow {
   justify-content: space-between;
 }
 
-.barTrack {
+.page .barTrack {
   height: 0.75rem;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.18);
 }
 
-.barFill {
+.page .barFill {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, rgba(34, 211, 238, 0.95), rgba(124, 140, 255, 0.95));
 }
 
-.lineChartWrap {
+.page .lineChartWrap {
   display: grid;
   gap: 0.75rem;
 }
 
-.lineChart {
+.page .lineChart {
   width: 100%;
   height: 180px;
 }
 
-.lineChartLabels {
+.page .lineChartLabels {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   color: var(--text-muted);
@@ -933,64 +933,64 @@
   text-align: center;
 }
 
-.pieChartLayout {
+.page .pieChartLayout {
   grid-template-columns: 150px 1fr;
   align-items: center;
 }
 
-.pieChart {
+.page .pieChart {
   width: 150px;
   height: 150px;
   border-radius: 50%;
   box-shadow: inset 0 0 0 18px rgba(7, 17, 31, 0.72);
 }
 
-.pieLegend {
+.page .pieLegend {
   display: grid;
   gap: 0.85rem;
 }
 
-.pieLegendItem {
+.page .pieLegendItem {
   align-items: flex-start;
 }
 
-.pieLegendItem div {
+.page .pieLegendItem div {
   display: grid;
   gap: 0.15rem;
 }
 
-.pieLegendItem span {
+.page .pieLegendItem span {
   color: var(--text-muted);
 }
 
-.pieLegendDot {
+.page .pieLegendDot {
   width: 0.8rem;
   height: 0.8rem;
   margin-top: 0.25rem;
   border-radius: 999px;
 }
 
-.rejectForm {
+.page .rejectForm {
   display: grid;
   gap: 1rem;
 }
 
-.rejectForm p {
+.page .rejectForm p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.reviewModalBody,
-.reviewModeSwitch {
+.page .reviewModalBody,
+.page .reviewModeSwitch {
   display: grid;
   gap: 1rem;
 }
 
-.reviewModeSwitch {
+.page .reviewModeSwitch {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.reviewModeButton {
+.page .reviewModeButton {
   min-height: 3.2rem;
   display: inline-flex;
   align-items: center;
@@ -1004,19 +1004,19 @@
   font-weight: 700;
 }
 
-.reviewModeApproveActive {
+.page .reviewModeApproveActive {
   background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.92));
   border-color: rgba(34, 197, 94, 0.42);
   color: white;
 }
 
-.reviewModeRejectActive {
+.page .reviewModeRejectActive {
   background: linear-gradient(135deg, rgba(248, 113, 113, 0.96), rgba(239, 68, 68, 0.94));
   border-color: rgba(248, 113, 113, 0.4);
   color: white;
 }
 
-.reviewReasonInput {
+.page .reviewReasonInput {
   width: 100%;
   min-height: 132px;
   padding: 1rem 1.1rem;
@@ -1027,50 +1027,50 @@
   resize: vertical;
 }
 
-.reviewNotice {
+.page .reviewNotice {
   padding: 1rem 1.1rem;
   border: 1px solid transparent;
   border-radius: 18px;
   font-size: 0.98rem;
 }
 
-.reviewNoticeApprove {
+.page .reviewNoticeApprove {
   background: rgba(34, 197, 94, 0.12);
   border-color: rgba(34, 197, 94, 0.24);
   color: #16a34a;
 }
 
-.reviewNoticeReject {
+.page .reviewNoticeReject {
   background: rgba(248, 113, 113, 0.12);
   border-color: rgba(248, 113, 113, 0.24);
   color: #dc2626;
 }
 
-.notificationRow p,
-.readState,
-.resourceCard p,
-.timelineStep p,
-.monthCellEmpty,
-.timeLabel,
-.weekDayHeader span,
-.monthCellHeader span,
-.qrMeta p {
+.page .notificationRow p,
+.page .readState,
+.page .resourceCard p,
+.page .timelineStep p,
+.page .monthCellEmpty,
+.page .timeLabel,
+.page .weekDayHeader span,
+.page .monthCellHeader span,
+.page .qrMeta p {
   color: var(--text-muted);
 }
 
-.markRead {
+.page .markRead {
   border: none;
   background: transparent;
   color: var(--secondary);
   font-weight: 700;
 }
 
-.filterGrid {
+.page .filterGrid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
-.select,
-.textarea {
+.page .select,
+.page .textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -1078,17 +1078,17 @@
   color: var(--text);
 }
 
-.select {
+.page .select {
   min-height: 3rem;
   padding: 0 0.95rem;
 }
 
-.textarea {
+.page .textarea {
   padding: 0.9rem 1rem;
   resize: vertical;
 }
 
-.iconAction {
+.page .iconAction {
   width: 2.5rem;
   height: 2.5rem;
   display: inline-flex;
@@ -1096,26 +1096,26 @@
   justify-content: center;
 }
 
-.monthlyCalendar,
-.weeklyPlanner {
+.page .monthlyCalendar,
+.page .weeklyPlanner {
   display: grid;
   gap: 1rem;
 }
 
-.monthHeaderRow,
-.weeklyHeader,
-.weekRow {
+.page .monthHeaderRow,
+.page .weeklyHeader,
+.page .weekRow {
   display: grid;
   gap: 0.75rem;
 }
 
-.monthHeaderRow,
-.weeklyHeader {
+.page .monthHeaderRow,
+.page .weeklyHeader {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.monthHeaderCell,
-.weekDayHeader {
+.page .monthHeaderCell,
+.page .weekDayHeader {
   display: grid;
   justify-items: start;
   padding: 0.75rem 1rem;
@@ -1123,84 +1123,84 @@
   background: rgba(31, 41, 55, 0.82);
 }
 
-.monthHeaderCell {
+.page .monthHeaderCell {
   color: var(--text-muted);
   font-weight: 700;
 }
 
-.monthlyGrid {
+.page .monthlyGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
-.monthCell {
+.page .monthCell {
   min-height: 156px;
   padding: 0.8rem;
   transition: transform var(--transition-base), border-color var(--transition-base);
 }
 
-.monthCellMuted {
+.page .monthCellMuted {
   opacity: 0.55;
 }
 
-.monthCellHeader {
+.page .monthCellHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 0.8rem;
 }
 
-.monthCellBody {
+.page .monthCellBody {
   display: grid;
   gap: 0.45rem;
 }
 
-.monthCellEmpty {
+.page .monthCellEmpty {
   padding: 0.6rem 0.7rem;
   border: 1px dashed rgba(148, 163, 184, 0.18);
   border-radius: 14px;
   font-size: 0.84rem;
 }
 
-.bookingBlock {
+.page .bookingBlock {
   color: white;
   border-radius: 14px;
   padding: 0.7rem 0.75rem;
   cursor: grab;
 }
 
-.bookingBlock strong,
-.monthBookingBlock strong,
-.weeklyBookingBlock strong {
+.page .bookingBlock strong,
+.page .monthBookingBlock strong,
+.page .weeklyBookingBlock strong {
   display: block;
   font-size: 0.84rem;
 }
 
-.bookingBlock span,
-.monthBookingBlock span,
-.weeklyBookingBlock span,
-.upcomingItem span,
-.resourceCard span,
-.detailSummary span,
-.detailSummary small {
+.page .bookingBlock span,
+.page .monthBookingBlock span,
+.page .weeklyBookingBlock span,
+.page .upcomingItem span,
+.page .resourceCard span,
+.page .detailSummary span,
+.page .detailSummary small {
   color: rgba(236, 244, 255, 0.74);
   font-size: 0.8rem;
 }
 
-.blockApproved { background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(22, 101, 52, 0.92)); }
-.blockPending { background: linear-gradient(180deg, rgba(245, 158, 11, 0.92), rgba(180, 83, 9, 0.92)); }
-.blockRejected { background: linear-gradient(180deg, rgba(248, 113, 113, 0.92), rgba(185, 28, 28, 0.92)); }
+.page .blockApproved { background: linear-gradient(180deg, rgba(34, 197, 94, 0.92), rgba(22, 101, 52, 0.92)); }
+.page .blockPending { background: linear-gradient(180deg, rgba(245, 158, 11, 0.92), rgba(180, 83, 9, 0.92)); }
+.page .blockRejected { background: linear-gradient(180deg, rgba(248, 113, 113, 0.92), rgba(185, 28, 28, 0.92)); }
 
-.monthBookingBlock {
+.page .monthBookingBlock {
   min-height: 56px;
 }
 
-.weeklyHeader {
+.page .weeklyHeader {
   grid-template-columns: 100px repeat(7, minmax(0, 1fr));
 }
 
-.timeHeaderCell {
+.page .timeHeaderCell {
   display: grid;
   place-items: center start;
   padding: 0.85rem 1rem;
@@ -1210,16 +1210,16 @@
   font-weight: 700;
 }
 
-.weeklyBody {
+.page .weeklyBody {
   display: grid;
   gap: 0.45rem;
 }
 
-.weekRow {
+.page .weekRow {
   grid-template-columns: 100px repeat(7, minmax(0, 1fr));
 }
 
-.timeLabel {
+.page .timeLabel {
   display: grid;
   place-items: center start;
   min-height: 72px;
@@ -1228,45 +1228,45 @@
   background: #020617;
 }
 
-.weekSlot {
+.page .weekSlot {
   min-height: 72px;
   padding: 0.45rem;
 }
 
-.weeklyBookingBlock {
+.page .weeklyBookingBlock {
   min-height: 100%;
 }
 
-.createGrid {
+.page .createGrid {
   grid-template-columns: 1.15fr 0.85fr;
 }
 
-.myBookingsList {
+.page .myBookingsList {
   gap: 1rem;
 }
 
-.myBookingsHeader,
-.createBookingHeader {
+.page .myBookingsHeader,
+.page .createBookingHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.myBookingsHeader h2,
-.createBookingHeader h2 {
+.page .myBookingsHeader h2,
+.page .createBookingHeader h2 {
   margin: 0;
   font-size: 2rem;
   letter-spacing: -0.04em;
 }
 
-.myBookingsHeader p,
-.createBookingHeader p {
+.page .myBookingsHeader p,
+.page .createBookingHeader p {
   margin: 0.45rem 0 0;
   color: var(--text-muted);
 }
 
-.myBookingCard {
+.page .myBookingCard {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1274,67 +1274,67 @@
   padding: 1.2rem;
 }
 
-.myBookingTop {
+.page .myBookingTop {
   flex: 1;
 }
 
-.myBookingHeader {
+.page .myBookingHeader {
   grid-template-columns: 1fr auto;
   align-items: center;
 }
 
-.myBookingHeader h3 {
+.page .myBookingHeader h3 {
   font-size: 1.08rem;
   letter-spacing: -0.02em;
 }
 
-.bookingDetailGrid {
+.page .bookingDetailGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.8rem 1rem;
 }
 
-.bookingInfoItem,
-.bookingTimelineInline,
-.detailFields label {
+.page .bookingInfoItem,
+.page .bookingTimelineInline,
+.page .detailFields label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.bookingInfoItem,
-.bookingTimelineInline {
+.page .bookingInfoItem,
+.page .bookingTimelineInline {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-.bookingCardActions {
+.page .bookingCardActions {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 
-.timelineStateDot {
+.page .timelineStateDot {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 999px;
 }
 
-.timelineApproved {
+.page .timelineApproved {
   background: var(--success);
 }
 
-.timelinePending {
+.page .timelinePending {
   background: var(--warning);
   box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.08);
 }
 
-.timelineRejected {
+.page .timelineRejected {
   background: var(--danger);
 }
 
-.deleteButton {
+.page .deleteButton {
   width: 2.4rem;
   height: 2.4rem;
   display: inline-flex;
@@ -1346,40 +1346,40 @@
   color: var(--danger);
 }
 
-.deleteButton:hover {
+.page .deleteButton:hover {
   background: var(--danger-soft);
 }
 
-.emptyBookingsCard {
+.page .emptyBookingsCard {
   padding: 2rem;
 }
 
-.emptyBookingsInner {
+.page .emptyBookingsInner {
   display: grid;
   justify-items: center;
   gap: 0.9rem;
   text-align: center;
 }
 
-.createBookingView,
-.createBookingForm,
-.createBookingSideColumn,
-.tipCardBody,
-.supportCardBody,
-.tipList {
+.page .createBookingView,
+.page .createBookingForm,
+.page .createBookingSideColumn,
+.page .tipCardBody,
+.page .supportCardBody,
+.page .tipList {
   display: grid;
   gap: 1rem;
 }
 
-.createBookingLayout {
+.page .createBookingLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
   gap: 1.25rem;
 }
 
-.createBookingFormCard,
-.tipCard,
-.supportCard {
+.page .createBookingFormCard,
+.page .tipCard,
+.page .supportCard {
   background:
     radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 34%),
     rgba(8, 10, 18, 0.92);
@@ -1387,26 +1387,26 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
 
-.createBookingFormCard {
+.page .createBookingFormCard {
   padding: 1.85rem;
 }
 
-.createBookingForm {
+.page .createBookingForm {
   gap: 1.35rem;
 }
 
-.createBookingSplit {
+.page .createBookingSplit {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
-.editBookingModal {
+.page .editBookingModal {
   display: grid;
   gap: 1.25rem;
 }
 
-.editBookingHero {
+.page .editBookingHero {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1419,19 +1419,19 @@
   border: 1px solid rgba(96, 165, 250, 0.16);
 }
 
-.editBookingHero h3 {
+.page .editBookingHero h3 {
   margin: 0.2rem 0 0.35rem;
   font-size: 1.25rem;
 }
 
-.editBookingHero p {
+.page .editBookingHero p {
   margin: 0;
   color: var(--text-muted);
   max-width: 34rem;
 }
 
-.editBookingEyebrow,
-.editBookingSidebarLabel {
+.page .editBookingEyebrow,
+.page .editBookingSidebarLabel {
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1439,14 +1439,14 @@
   color: rgba(125, 211, 252, 0.92);
 }
 
-.editBookingHighlights {
+.page .editBookingHighlights {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.55rem;
 }
 
-.editBookingHighlights span {
+.page .editBookingHighlights span {
   padding: 0.55rem 0.85rem;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.52);
@@ -1455,25 +1455,25 @@
   font-weight: 700;
 }
 
-.editBookingLayout {
+.page .editBookingLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
   gap: 1rem;
 }
 
-.editBookingPanel,
-.editBookingSidebar {
+.page .editBookingPanel,
+.page .editBookingSidebar {
   display: grid;
   gap: 1rem;
 }
 
-.editBookingSidebarCard {
+.page .editBookingSidebarCard {
   display: grid;
   gap: 0.9rem;
   padding: 1.15rem;
 }
 
-.editBookingTips {
+.page .editBookingTips {
   margin: 0;
   padding-left: 1.05rem;
   display: grid;
@@ -1481,25 +1481,25 @@
   color: var(--text-muted);
 }
 
-.editBookingPreview {
+.page .editBookingPreview {
   display: grid;
   gap: 0.55rem;
 }
 
-.editBookingPreview strong {
+.page .editBookingPreview strong {
   font-size: 1rem;
 }
 
-.dateChangeRequestCard {
+.page .dateChangeRequestCard {
   overflow: hidden;
 }
 
-.dateChangeRequestList {
+.page .dateChangeRequestList {
   display: grid;
   gap: 0.9rem;
 }
 
-.dateChangeRequestItem {
+.page .dateChangeRequestItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1512,17 +1512,17 @@
   border: 1px solid rgba(96, 165, 250, 0.16);
 }
 
-.dateChangeRequestContent {
+.page .dateChangeRequestContent {
   display: grid;
   gap: 0.4rem;
 }
 
-.dateChangeRequestContent p {
+.page .dateChangeRequestContent p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.dateChangeRequestEyebrow {
+.page .dateChangeRequestEyebrow {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1530,26 +1530,26 @@
   color: rgba(125, 211, 252, 0.95);
 }
 
-.dateChangeRequestActions {
+.page .dateChangeRequestActions {
   display: flex;
   align-items: center;
 }
 
-.dateChangeWindowList {
+.page .dateChangeWindowList {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.dateChangeWindowPill,
-.dateChangeWindowPillMuted {
+.page .dateChangeWindowPill,
+.page .dateChangeWindowPillMuted {
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.dateChangeWindowButton {
+.page .dateChangeWindowButton {
   padding: 0.5rem 0.8rem;
   border-radius: 999px;
   border: 1px solid rgba(34, 197, 94, 0.2);
@@ -1563,35 +1563,35 @@
     background var(--transition-base);
 }
 
-.dateChangeWindowButton:hover {
+.page .dateChangeWindowButton:hover {
   transform: translateY(-1px);
   border-color: rgba(34, 197, 94, 0.3);
 }
 
-.dateChangeWindowButtonActive {
+.page .dateChangeWindowButtonActive {
   background: rgba(59, 130, 246, 0.18);
   border-color: rgba(96, 165, 250, 0.32);
   color: #bfdbfe;
 }
 
-.dateChangeWindowPill {
+.page .dateChangeWindowPill {
   background: rgba(34, 197, 94, 0.14);
   border: 1px solid rgba(34, 197, 94, 0.2);
   color: #86efac;
 }
 
-.dateChangeWindowPillMuted {
+.page .dateChangeWindowPillMuted {
   background: rgba(248, 113, 113, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.18);
   color: #fca5a5;
 }
 
-.dateChangeRequestModal {
+.page .dateChangeRequestModal {
   display: grid;
   gap: 1rem;
 }
 
-.dateChangeRequestHero {
+.page .dateChangeRequestHero {
   padding: 1rem 1.1rem;
   border-radius: 20px;
   background:
@@ -1600,17 +1600,17 @@
   border: 1px solid rgba(96, 165, 250, 0.16);
 }
 
-.dateChangeRequestHero h3,
-.dateChangeAvailability strong {
+.page .dateChangeRequestHero h3,
+.page .dateChangeAvailability strong {
   margin: 0 0 0.35rem;
 }
 
-.dateChangeRequestHero p,
-.dateChangeAvailability {
+.page .dateChangeRequestHero p,
+.page .dateChangeAvailability {
   margin: 0;
 }
 
-.dateChangeAvailability {
+.page .dateChangeAvailability {
   display: grid;
   gap: 0.75rem;
   padding: 1rem 1.05rem;
@@ -1619,13 +1619,13 @@
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.startTimeSlotGroup {
+.page .startTimeSlotGroup {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
 
-.startTimeSlotButton {
+.page .startTimeSlotButton {
   padding: 0.75rem 1.1rem;
   border-radius: 999px;
   border: 1px solid rgba(124, 140, 255, 0.18);
@@ -1641,21 +1641,21 @@
     color var(--transition-base);
 }
 
-.startTimeSlotButton:hover {
+.page .startTimeSlotButton:hover {
   transform: translateY(-1px);
   border-color: rgba(96, 165, 250, 0.34);
 }
 
-.startTimeSlotButtonActive {
+.page .startTimeSlotButtonActive {
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.26), rgba(56, 189, 248, 0.22));
   border-color: rgba(96, 165, 250, 0.36);
   color: #f8fafc;
   box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
 }
 
-.createInput,
-.createSelect,
-.createTextarea {
+.page .createInput,
+.page .createSelect,
+.page .createTextarea {
   width: 100%;
   border: 1px solid rgba(59, 130, 246, 0.32);
   border-radius: 14px;
@@ -1663,72 +1663,72 @@
   color: var(--text);
 }
 
-.createSelect option {
+.page .createSelect option {
   background: #111827;
   color: #f8fafc;
 }
 
-.createInput,
-.createSelect {
+.page .createInput,
+.page .createSelect {
   min-height: 3rem;
   padding: 0 0.95rem;
 }
 
-.createTextarea {
+.page .createTextarea {
   min-height: 128px;
   padding: 0.95rem 1rem;
   resize: vertical;
 }
 
-.fieldHint {
+.page .fieldHint {
   margin-top: 0.45rem;
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.createInput:focus,
-.createSelect:focus,
-.createTextarea:focus {
+.page .createInput:focus,
+.page .createSelect:focus,
+.page .createTextarea:focus {
   outline: none;
   border-color: rgba(96, 165, 250, 0.7);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
 }
 
-.bookingNotice {
+.page .bookingNotice {
   padding: 0.85rem 1rem;
   border-radius: 14px;
   font-size: 0.92rem;
   font-weight: 600;
 }
 
-.bookingNoticeSuccess {
+.page .bookingNoticeSuccess {
   background: rgba(34, 197, 94, 0.12);
   border: 1px solid rgba(34, 197, 94, 0.18);
   color: #86efac;
 }
 
-.bookingNoticeDanger {
+.page .bookingNoticeDanger {
   background: rgba(248, 113, 113, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.2);
   color: #fca5a5;
 }
 
-.tipCard,
-.supportCard {
+.page .tipCard,
+.page .supportCard {
   padding: 1.5rem;
 }
 
-.tipCard h3 {
+.page .tipCard h3 {
   margin: 0;
   font-size: 1.15rem;
 }
 
-.tipCardBody {
+.page .tipCardBody {
   gap: 0.55rem;
 }
 
-.tipList {
+.page .tipList {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1736,12 +1736,12 @@
   gap: 0.7rem;
 }
 
-.tipList li {
+.page .tipList li {
   position: relative;
   padding-left: 1.1rem;
 }
 
-.tipList li::before {
+.page .tipList li::before {
   content: '✓';
   position: absolute;
   left: 0;
@@ -1749,56 +1749,56 @@
   font-weight: 700;
 }
 
-.supportCardBody {
+.page .supportCardBody {
   min-height: 100%;
   align-content: center;
   text-align: center;
 }
 
-.supportCardBody p {
+.page .supportCardBody p {
   margin: 0;
   color: var(--text-muted);
 }
 
-.formField {
+.page .formField {
   display: grid;
   gap: 0.5rem;
 }
 
-.formField > span {
+.page .formField > span {
   font-size: 0.9rem;
   font-weight: 700;
 }
 
-.formSplit {
+.page .formSplit {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.conflictPanel,
-.noSlots,
-.slotButton,
-.scannerResult,
-.reminderStrip,
-.bookingFacts > div,
-.qrModal {
+.page .conflictPanel,
+.page .noSlots,
+.page .slotButton,
+.page .scannerResult,
+.page .reminderStrip,
+.page .bookingFacts > div,
+.page .qrModal {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.slotButton {
+.page .slotButton {
   justify-content: flex-start;
   padding: 1rem;
   color: var(--text);
   text-align: left;
 }
 
-.conflictSuccess,
-.validResult { color: var(--success); }
-.conflictDanger,
-.invalidResult { color: var(--danger); }
+.page .conflictSuccess,
+.page .validResult { color: var(--success); }
+.page .conflictDanger,
+.page .invalidResult { color: var(--danger); }
 
-.submitMessage {
+.page .submitMessage {
   padding: 0.9rem 1rem;
   border: 1px solid transparent;
   border-radius: 14px;
@@ -1809,63 +1809,63 @@
   word-break: break-word;
 }
 
-.bookingBlockLocked {
+.page .bookingBlockLocked {
   cursor: not-allowed;
   opacity: 0.74;
 }
 
-.dateChangeHint {
+.page .dateChangeHint {
   display: block;
   margin-top: 0.35rem;
   color: var(--text-muted);
 }
 
-.submitMessageSuccess {
+.page .submitMessageSuccess {
   background: rgba(8, 145, 178, 0.12);
   border-color: rgba(8, 145, 178, 0.18);
   color: var(--secondary);
 }
 
-.submitMessageError {
+.page .submitMessageError {
   background: rgba(248, 113, 113, 0.12);
   border-color: rgba(248, 113, 113, 0.24);
   color: #fca5a5;
 }
 
-.bookingCard h3 { font-size: 1.1rem; }
-.bookingFacts { flex-wrap: wrap; justify-content: flex-start; }
-.bookingActions { justify-content: flex-start; flex-wrap: wrap; }
+.page .bookingCard h3 { font-size: 1.1rem; }
+.page .bookingFacts { flex-wrap: wrap; justify-content: flex-start; }
+.page .bookingActions { justify-content: flex-start; flex-wrap: wrap; }
 
-.detailSummary,
-.timelineStep,
-.scannerResult,
-.reminderStrip,
-.resourceCard { padding: 1rem; }
+.page .detailSummary,
+.page .timelineStep,
+.page .scannerResult,
+.page .reminderStrip,
+.page .resourceCard { padding: 1rem; }
 
-.detailFields {
+.page .detailFields {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.detailFields > div {
+.page .detailFields > div {
   display: grid;
   gap: 0.35rem;
 }
 
-.detailFields label {
+.page .detailFields label {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 700;
 }
 
-.detailFields p {
+.page .detailFields p {
   line-height: 1.5;
 }
 
-.timeline {
+.page .timeline {
   position: relative;
 }
 
-.timeline::before {
+.page .timeline::before {
   content: '';
   position: absolute;
   left: 0.7rem;
@@ -1875,12 +1875,12 @@
   background: rgba(148, 163, 184, 0.24);
 }
 
-.timelineStep {
+.page .timelineStep {
   position: relative;
   margin-left: 1.6rem;
 }
 
-.timelineDot {
+.page .timelineDot {
   position: absolute;
   left: -1.45rem;
   top: 1.1rem;
@@ -1891,44 +1891,44 @@
   box-shadow: 0 0 0 6px rgba(7, 17, 31, 1);
 }
 
-.timelineStepActive .timelineDot { background: var(--secondary); }
-.timelineStepCancelled .timelineDot { background: var(--danger); }
+.page .timelineStepActive .timelineDot { background: var(--secondary); }
+.page .timelineStepCancelled .timelineDot { background: var(--danger); }
 
-.qrModal {
+.page .qrModal {
   display: grid;
   grid-template-columns: auto 1fr;
 }
 
-.qrCard {
+.page .qrCard {
   padding: 1rem;
   border-radius: 24px;
   background: white;
 }
 
-.qrGrid {
+.page .qrGrid {
   display: grid;
   grid-template-columns: repeat(7, 16px);
   gap: 4px;
 }
 
-.qrPixel,
-.qrPixelFilled {
+.page .qrPixel,
+.page .qrPixelFilled {
   width: 16px;
   height: 16px;
   border-radius: 4px;
   background: #dbeafe;
 }
 
-.qrPixelFilled { background: #111827; }
-.qrMeta { display: grid; gap: 0.5rem; }
+.page .qrPixelFilled { background: #111827; }
+.page .qrMeta { display: grid; gap: 0.5rem; }
 
-.qrImage {
+.page .qrImage {
   width: 220px;
   height: 220px;
   display: block;
 }
 
-.qrLoading {
+.page .qrLoading {
   width: 220px;
   height: 220px;
   display: grid;
@@ -1937,7 +1937,7 @@
   font-weight: 700;
 }
 
-.cameraFrame {
+.page .cameraFrame {
   display: grid;
   place-items: center;
   min-height: 280px;
@@ -1948,7 +1948,7 @@
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-.scanFrame {
+.page .scanFrame {
   position: relative;
   width: 220px;
   height: 220px;
@@ -1957,7 +1957,7 @@
   overflow: hidden;
 }
 
-.scanLine {
+.page .scanLine {
   position: absolute;
   inset-inline: 0;
   height: 2px;
@@ -1970,75 +1970,75 @@
   to { top: 88%; }
 }
 
-.scannerLayout {
+.page .scannerLayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
 }
 
-.scannerColumn,
-.scannerPanelCenter,
-.scannerActionStack,
-.resultInfoStack,
-.resultInfoGrid,
-.cameraFeedInner {
+.page .scannerColumn,
+.page .scannerPanelCenter,
+.page .scannerActionStack,
+.page .resultInfoStack,
+.page .resultInfoGrid,
+.page .cameraFeedInner {
   display: grid;
   gap: 1rem;
 }
 
-.scannerPanel {
+.page .scannerPanel {
   padding: 1.25rem;
 }
 
-.scannerPanelCenter,
-.scannerWaiting {
+.page .scannerPanelCenter,
+.page .scannerWaiting {
   justify-items: center;
   text-align: center;
 }
 
-.scannerHeroIcon {
+.page .scannerHeroIcon {
   width: 3.4rem;
   height: 3.4rem;
   color: var(--primary);
   opacity: 0.55;
 }
 
-.cameraFeed {
+.page .cameraFeed {
   padding: 1rem;
   border-radius: 22px;
   background: rgba(2, 6, 23, 0.82);
   border: 1px dashed rgba(124, 140, 255, 0.24);
 }
 
-.cameraFeedInner {
+.page .cameraFeedInner {
   justify-items: center;
   color: white;
   text-align: center;
 }
 
-.cameraFeedInner p {
+.page .cameraFeedInner p {
   font-size: 0.95rem;
   font-weight: 700;
 }
 
-.cameraFeedInner span,
-.cameraHint,
-.lastScanned,
-.resultInfoStack p,
-.resultInfoGrid p {
+.page .cameraFeedInner span,
+.page .cameraHint,
+.page .lastScanned,
+.page .resultInfoStack p,
+.page .resultInfoGrid p {
   color: var(--text-muted);
   font-size: 0.84rem;
 }
 
-.uploadLabel {
+.page .uploadLabel {
   display: block;
 }
 
-.hiddenInput {
+.page .hiddenInput {
   display: none;
 }
 
-.uploadButton {
+.page .uploadButton {
   width: 100%;
   min-height: 2.9rem;
   display: inline-flex;
@@ -2052,20 +2052,20 @@
   font-weight: 700;
 }
 
-.scannerTestPanel {
+.page .scannerTestPanel {
   background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(7, 17, 31, 0.44));
 }
 
-.scannerWaiting {
+.page .scannerWaiting {
   padding: 3rem 1.5rem;
 }
 
-.validBadgeWrap {
+.page .validBadgeWrap {
   display: grid;
   justify-items: center;
 }
 
-.validBadgeCircle {
+.page .validBadgeCircle {
   width: 3rem;
   height: 3rem;
   display: grid;
@@ -2075,21 +2075,21 @@
   color: white;
 }
 
-.resultInfoGrid {
+.page .resultInfoGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.resultInfoStack strong,
-.resultInfoGrid strong {
+.page .resultInfoStack strong,
+.page .resultInfoGrid strong {
   font-size: 0.98rem;
 }
 
-.statusPillRow {
+.page .statusPillRow {
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
 }
 
-.validStatusPill {
+.page .validStatusPill {
   display: inline-flex;
   align-items: center;
   min-height: 2rem;
@@ -2101,60 +2101,60 @@
   font-weight: 800;
 }
 
-.checkInSummary {
+.page .checkInSummary {
   background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(7, 17, 31, 0.44));
 }
 
-.invalidPanel {
+.page .invalidPanel {
   background: linear-gradient(180deg, rgba(248, 113, 113, 0.08), rgba(7, 17, 31, 0.44));
 }
 
-.invalidPanel h4 {
+.page .invalidPanel h4 {
   color: var(--danger);
 }
 
-.invalidList {
+.page .invalidList {
   display: grid;
   gap: 0.65rem;
   padding-left: 1rem;
   color: var(--text-muted);
 }
 
-.statRow {
+.page .statRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.statValid {
+.page .statValid {
   color: var(--success);
 }
 
-.statInvalid {
+.page .statInvalid {
   color: var(--danger);
 }
 
-.skeletonHero,
-.skeletonGrid {
+.page .skeletonHero,
+.page .skeletonGrid {
   display: grid;
   gap: 1rem;
 }
 
-.skeletonHero {
+.page .skeletonHero {
   padding: 2rem;
   border-radius: 30px;
   background: linear-gradient(135deg, rgba(9, 18, 37, 0.92), rgba(33, 16, 68, 0.9));
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-.skeletonGrid {
+.page .skeletonGrid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.skeletonTitle { width: min(420px, 100%); height: 52px; }
-.skeletonLine { width: min(620px, 100%); height: 18px; }
-.skeletonButtonRow { width: 240px; height: 42px; }
-.skeletonCard { min-height: 180px; border-radius: 24px; }
+.page .skeletonTitle { width: min(420px, 100%); height: 52px; }
+.page .skeletonLine { width: min(620px, 100%); height: 18px; }
+.page .skeletonButtonRow { width: 240px; height: 42px; }
+.page .skeletonCard { min-height: 180px; border-radius: 24px; }
 
 :global(:root:not([data-theme='dark'])) .pageNav {
   background:
@@ -2470,115 +2470,115 @@
 }
 
 @media (max-width: 1180px) {
-  .statsGrid,
-  .overviewGrid,
-  .createGrid,
-  .adminGrid,
-  .adminAnalyticsGrid,
-  .adminScannerLayout,
-  .createBookingLayout,
-  .filterGrid,
-  .detailFields,
-  .bookingDetailGrid,
-  .scannerLayout,
-  .resultInfoGrid {
+  .page .statsGrid,
+  .page .overviewGrid,
+  .page .createGrid,
+  .page .adminGrid,
+  .page .adminAnalyticsGrid,
+  .page .adminScannerLayout,
+  .page .createBookingLayout,
+  .page .filterGrid,
+  .page .detailFields,
+  .page .bookingDetailGrid,
+  .page .scannerLayout,
+  .page .resultInfoGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .monthlyGrid,
-  .monthHeaderRow,
-  .weeklyHeader,
-  .weekRow {
+  .page .monthlyGrid,
+  .page .monthHeaderRow,
+  .page .weeklyHeader,
+  .page .weekRow {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .timeHeaderCell,
-  .timeLabel {
+  .page .timeHeaderCell,
+  .page .timeLabel {
     display: none;
   }
 }
 
 @media (max-width: 860px) {
-  .statsGrid,
-  .overviewGrid,
-  .createGrid,
-  .adminGrid,
-  .adminAnalyticsGrid,
-  .adminScannerLayout,
-  .createBookingLayout,
-  .createBookingSplit,
-  .editBookingLayout,
-  .filterGrid,
-  .formSplit,
-  .bookingDetailGrid,
-  .detailFields,
-  .scannerLayout,
-  .resultInfoGrid,
-  .monthlyGrid,
-  .monthHeaderRow,
-  .weeklyHeader,
-  .weekRow,
-  .qrModal {
+  .page .statsGrid,
+  .page .overviewGrid,
+  .page .createGrid,
+  .page .adminGrid,
+  .page .adminAnalyticsGrid,
+  .page .adminScannerLayout,
+  .page .createBookingLayout,
+  .page .createBookingSplit,
+  .page .editBookingLayout,
+  .page .filterGrid,
+  .page .formSplit,
+  .page .bookingDetailGrid,
+  .page .detailFields,
+  .page .scannerLayout,
+  .page .resultInfoGrid,
+  .page .monthlyGrid,
+  .page .monthHeaderRow,
+  .page .weeklyHeader,
+  .page .weekRow,
+  .page .qrModal {
     grid-template-columns: 1fr;
   }
 
-  .upcomingBookingTop,
-  .upcomingMetaRow {
+  .page .upcomingBookingTop,
+  .page .upcomingMetaRow {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .myBookingCard {
+  .page .myBookingCard {
     flex-direction: column;
   }
 
-  .myBookingsHeader,
-  .createBookingHeader {
+  .page .myBookingsHeader,
+  .page .createBookingHeader {
     display: grid;
   }
 
-  .dateChangeRequestItem {
+  .page .dateChangeRequestItem {
     display: grid;
   }
 
-  .dateChangeSuccessBanner {
+  .page .dateChangeSuccessBanner {
     display: grid;
   }
 
-  .suggestionsHero,
-  .suggestionsSectionGrid,
-  .suggestionsCatalog {
+  .page .suggestionsHero,
+  .page .suggestionsSectionGrid,
+  .page .suggestionsCatalog {
     grid-template-columns: 1fr;
   }
 
-  .suggestionsSpotlightShell {
+  .page .suggestionsSpotlightShell {
     display: grid;
   }
 
-  .editBookingHero {
+  .page .editBookingHero {
     padding: 1rem;
   }
 
-  .editBookingHighlights {
+  .page .editBookingHighlights {
     justify-content: flex-start;
   }
 
-  .adminRowActions {
+  .page .adminRowActions {
     justify-content: flex-start;
   }
 
-  .adminTabBar,
-  .pieChartLayout {
+  .page .adminTabBar,
+  .page .pieChartLayout {
     grid-template-columns: 1fr;
   }
 
-  .adminTabBar {
+  .page .adminTabBar {
     display: grid;
   }
 
-  .pageNavLink,
-  .adminTabButton,
-  .modeButton {
+  .page .pageNavLink,
+  .page .adminTabButton,
+  .page .modeButton {
     width: 100%;
   }
 }

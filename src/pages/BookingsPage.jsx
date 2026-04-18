@@ -58,7 +58,8 @@ const ADMIN_TABS = {
 };
 const DATE_CHANGE_DISMISS_KEY = 'bookings.dismissedApprovedDateChanges';
 const DATE_CHANGE_SLOT_MINUTES = 120;
-const TEST_BOOKING_START_SLOT = '11:05';
+const TEST_BOOKING_START_SLOT = '03:18';
+const TODAY_EXTRA_TEST_SLOT = '15:20';
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
 const DAY_MINUTES_START = 8 * 60;
 const DAY_MINUTES_END = 19 * 60;
@@ -409,28 +410,31 @@ function getAvailableStartTimeSlots(bookings, facility, date, attendees, exclude
 
 function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
   const regularSlots = getAvailableStartTimeSlots(bookings, facility, date, attendees);
+  const specialSlots = [];
 
   if (!facility || !date) {
-    return [TEST_BOOKING_START_SLOT, ...regularSlots];
+    return [TEST_BOOKING_START_SLOT, ...specialSlots, ...regularSlots];
   }
 
-  if (!isStartSlotStillBookable(date, TEST_BOOKING_START_SLOT)) {
-    return regularSlots;
-  }
+  [TEST_BOOKING_START_SLOT, ...(date === getTodayDateKey() ? [TODAY_EXTRA_TEST_SLOT] : [])].forEach((slot) => {
+    if (!isStartSlotStillBookable(date, slot)) {
+      return;
+    }
 
-  const testDraft = {
-    date,
-    startTime: TEST_BOOKING_START_SLOT,
-    endTime: fromMinutes(toMinutes(TEST_BOOKING_START_SLOT) + DATE_CHANGE_SLOT_MINUTES),
-    attendees,
-  };
+    const testDraft = {
+      date,
+      startTime: slot,
+      endTime: fromMinutes(toMinutes(slot) + DATE_CHANGE_SLOT_MINUTES),
+      attendees,
+    };
 
-  const hasTestConflict = getBookingWindowValidationMessage(bookings, facility, testDraft);
-  if (hasTestConflict) {
-    return regularSlots;
-  }
+    const hasTestConflict = getBookingWindowValidationMessage(bookings, facility, testDraft);
+    if (!hasTestConflict && !specialSlots.includes(slot)) {
+      specialSlots.push(slot);
+    }
+  });
 
-  return [TEST_BOOKING_START_SLOT, ...regularSlots];
+  return [...specialSlots, ...regularSlots];
 }
 
 function getResourceAvailabilityValidationMessage(facility) {
@@ -3623,7 +3627,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                   <small className={styles.fieldHint}>
                     {isReleasedSlotLocked
                       ? `Released slot locked: ${formatTimeRange(form.startTime, form.endTime)}`
-                      : 'Test slot enabled: use `11:05` if you need to verify the QR check-in flow right now.'}
+                      : 'Test slots enabled: use `03:18` or today-only `15:20` if you need to verify the QR check-in flow right now.'}
                   </small>
                 </label>
 

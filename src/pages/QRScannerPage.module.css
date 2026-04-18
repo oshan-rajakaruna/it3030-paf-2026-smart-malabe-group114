@@ -3,99 +3,99 @@
   gap: 1.5rem;
 }
 
-.header {
+.page .header {
   display: grid;
   gap: 0.35rem;
 }
 
-.header h1 {
+.page .header h1 {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3rem);
   letter-spacing: -0.04em;
 }
 
-.header p,
-.helper,
-.cameraInner span,
-.infoStack p,
-.infoGrid p,
-.lastScanned {
+.page .header p,
+.page .helper,
+.page .cameraInner span,
+.page .infoStack p,
+.page .infoGrid p,
+.page .lastScanned {
   color: var(--text-muted);
 }
 
-.layout,
-.infoGrid {
+.page .layout,
+.page .infoGrid {
   display: grid;
   gap: 1.25rem;
 }
 
-.layout {
+.page .layout {
   grid-template-columns: 1fr 1fr;
 }
 
-.column,
-.centered,
-.actionStack,
-.infoStack,
-.cameraInner,
-.manualEntry,
-.cameraFooter {
+.page .column,
+.page .centered,
+.page .actionStack,
+.page .infoStack,
+.page .cameraInner,
+.page .manualEntry,
+.page .cameraFooter {
   display: grid;
   gap: 1rem;
 }
 
-.panel,
-.waitingCard,
-.confirmCard,
-.invalidPanel {
+.page .panel,
+.page .waitingCard,
+.page .confirmCard,
+.page .invalidPanel {
   padding: 1.25rem;
 }
 
-.errorCopy {
+.page .errorCopy {
   margin: 0 0 0.85rem;
   color: #fca5a5;
   font-weight: 600;
 }
 
-.successCopy {
+.page .successCopy {
   margin: 0;
   color: #86efac;
   font-weight: 700;
 }
 
-.centered,
-.waitingCard {
+.page .centered,
+.page .waitingCard {
   justify-items: center;
   text-align: center;
 }
 
-.heroIcon {
+.page .heroIcon {
   width: 3.4rem;
   height: 3.4rem;
   color: var(--primary);
   opacity: 0.55;
 }
 
-.cameraFeed {
+.page .cameraFeed {
   padding: 1rem;
   border-radius: 22px;
   background: rgba(2, 6, 23, 0.82);
   border: 1px dashed rgba(124, 140, 255, 0.24);
 }
 
-.cameraInner {
+.page .cameraInner {
   justify-items: center;
   color: white;
   text-align: center;
   position: relative;
 }
 
-.cameraInner p {
+.page .cameraInner p {
   font-size: 0.95rem;
   font-weight: 700;
 }
 
-.videoShell {
+.page .videoShell {
   position: relative;
   width: min(100%, 320px);
   aspect-ratio: 1;
@@ -104,14 +104,14 @@
   background: #020617;
 }
 
-.cameraVideo {
+.page .cameraVideo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.scanFrame {
+.page .scanFrame {
   position: relative;
   width: 220px;
   height: 220px;
@@ -120,7 +120,7 @@
   overflow: hidden;
 }
 
-.scanLine {
+.page .scanLine {
   position: absolute;
   inset-inline: 0;
   height: 2px;
@@ -128,7 +128,7 @@
   animation: scan 2.2s linear infinite;
 }
 
-.videoShell .scanFrame {
+.page .videoShell .scanFrame {
   position: absolute;
   inset: 50%;
   transform: translate(-50%, -50%);
@@ -144,19 +144,19 @@
   }
 }
 
-.uploadLabel {
+.page .uploadLabel {
   display: block;
 }
 
-.cameraFooter {
+.page .cameraFooter {
   align-items: start;
 }
 
-.hiddenInput {
+.page .hiddenInput {
   display: none;
 }
 
-.uploadButton {
+.page .uploadButton {
   width: 100%;
   min-height: 2.9rem;
   display: inline-flex;
@@ -170,7 +170,7 @@
   font-weight: 700;
 }
 
-.manualInput {
+.page .manualInput {
   width: 100%;
   min-height: 2.9rem;
   padding: 0 0.95rem;
@@ -180,19 +180,19 @@
   color: var(--text);
 }
 
-.testPanel {
+.page .testPanel {
   padding: 1.25rem;
   border: 1px solid rgba(245, 158, 11, 0.32);
   border-radius: 22px;
   background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), rgba(7, 17, 31, 0.44));
 }
 
-.waitingCard {
+.page .waitingCard {
   min-height: 240px;
 }
 
-.validAlert,
-.invalidAlert {
+.page .validAlert,
+.page .invalidAlert {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -201,24 +201,24 @@
   font-weight: 700;
 }
 
-.validAlert {
+.page .validAlert {
   background: rgba(34, 197, 94, 0.12);
   color: var(--success);
   border: 1px solid rgba(34, 197, 94, 0.32);
 }
 
-.invalidAlert {
+.page .invalidAlert {
   background: rgba(248, 113, 113, 0.12);
   color: var(--danger);
   border: 1px solid rgba(248, 113, 113, 0.32);
 }
 
-.validBadgeWrap {
+.page .validBadgeWrap {
   display: grid;
   justify-items: center;
 }
 
-.validBadgeCircle {
+.page .validBadgeCircle {
   width: 3rem;
   height: 3rem;
   display: grid;
@@ -228,21 +228,21 @@
   color: white;
 }
 
-.infoGrid {
+.page .infoGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.infoStack strong,
-.infoGrid strong {
+.page .infoStack strong,
+.page .infoGrid strong {
   font-size: 0.98rem;
 }
 
-.statusRow {
+.page .statusRow {
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
 }
 
-.statusPill {
+.page .statusPill {
   display: inline-flex;
   align-items: center;
   min-height: 2rem;
@@ -254,23 +254,23 @@
   font-weight: 800;
 }
 
-.confirmCard {
+.page .confirmCard {
   border: 1px solid rgba(34, 197, 94, 0.2);
   background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), rgba(7, 17, 31, 0.44));
 }
 
-.confirmHero,
-.confirmGrid {
+.page .confirmHero,
+.page .confirmGrid {
   display: grid;
   gap: 1rem;
 }
 
-.confirmHero {
+.page .confirmHero {
   grid-template-columns: auto 1fr;
   align-items: center;
 }
 
-.confirmOrb {
+.page .confirmOrb {
   width: 4rem;
   height: 4rem;
   display: grid;
@@ -283,7 +283,7 @@
   box-shadow: 0 18px 30px rgba(16, 185, 129, 0.24);
 }
 
-.confirmEyebrow {
+.page .confirmEyebrow {
   display: inline-block;
   margin-bottom: 0.3rem;
   color: #86efac;
@@ -293,19 +293,19 @@
   text-transform: uppercase;
 }
 
-.confirmHero h4 {
+.page .confirmHero h4 {
   margin: 0;
 }
 
-.confirmHero p {
+.page .confirmHero p {
   margin: 0.35rem 0 0;
 }
 
-.confirmGrid {
+.page .confirmGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.confirmTile {
+.page .confirmTile {
   display: grid;
   gap: 0.35rem;
   padding: 0.9rem 1rem;
@@ -314,14 +314,14 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.confirmTile span {
+.page .confirmTile span {
   color: var(--text-muted);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
-.confirmRibbon {
+.page .confirmRibbon {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
@@ -333,7 +333,7 @@
   font-weight: 600;
 }
 
-.confirmPulse {
+.page .confirmPulse {
   width: 0.65rem;
   height: 0.65rem;
   border-radius: 999px;
@@ -342,40 +342,40 @@
   animation: confirmPulse 1.8s ease-out infinite;
 }
 
-.invalidPanel {
+.page .invalidPanel {
   border: 1px solid rgba(248, 113, 113, 0.2);
   background: linear-gradient(180deg, rgba(248, 113, 113, 0.08), rgba(7, 17, 31, 0.44));
 }
 
-.invalidPanel h4 {
+.page .invalidPanel h4 {
   color: var(--danger);
 }
 
-.invalidList {
+.page .invalidList {
   display: grid;
   gap: 0.65rem;
   padding-left: 1rem;
   color: var(--text-muted);
 }
 
-.statRow {
+.page .statRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.statValid {
+.page .statValid {
   color: var(--success);
 }
 
-.statInvalid {
+.page .statInvalid {
   color: var(--danger);
 }
 
 @media (max-width: 1100px) {
-  .layout,
-  .infoGrid,
-  .confirmGrid {
+  .page .layout,
+  .page .infoGrid,
+  .page .confirmGrid {
     grid-template-columns: 1fr;
   }
 }
