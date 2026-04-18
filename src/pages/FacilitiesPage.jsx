@@ -66,6 +66,11 @@ const initialForm = {
   availableTo: '',
 };
 
+const RESOURCE_CAPACITY_MIN = 1;
+const RESOURCE_CAPACITY_MAX = 500;
+const RESOURCE_AVAILABLE_FROM_MIN = '08:00';
+const RESOURCE_AVAILABLE_TO_MAX = '20:00';
+
 function getMinimumCapacityValue(capacityFilter) {
   switch (capacityFilter) {
     case '1-20':
@@ -255,6 +260,43 @@ function buildResourcePayload(form) {
   };
 }
 
+function getResourceFormValidationMessage(form) {
+  const floor = form.floor.trim();
+  const capacity = Number(form.capacity);
+  const availableFrom = form.availableFrom;
+  const availableTo = form.availableTo;
+
+  if (!floor) {
+    return 'Floor is required';
+  }
+
+  if (!Number.isInteger(capacity) || capacity < RESOURCE_CAPACITY_MIN || capacity > RESOURCE_CAPACITY_MAX) {
+    return 'Capacity must be between 1 and 500';
+  }
+
+  if (!availableFrom) {
+    return 'Available from time is required';
+  }
+
+  if (!availableTo) {
+    return 'Available to time is required';
+  }
+
+  if (availableFrom < RESOURCE_AVAILABLE_FROM_MIN) {
+    return 'Available from time cannot be earlier than 08:00';
+  }
+
+  if (availableTo > RESOURCE_AVAILABLE_TO_MAX) {
+    return 'Available to time cannot be later than 20:00';
+  }
+
+  if (availableFrom >= availableTo) {
+    return 'Available from time must be earlier than available to time';
+  }
+
+  return '';
+}
+
 export default function FacilitiesPage() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -418,6 +460,7 @@ export default function FacilitiesPage() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
+    setFormError('');
     setForm((current) => ({
       ...current,
       [name]: name === 'isActive' ? value === 'true' : value,
@@ -428,6 +471,12 @@ export default function FacilitiesPage() {
     event.preventDefault();
 
     if (formMode === 'view') {
+      return;
+    }
+
+    const validationMessage = getResourceFormValidationMessage(form);
+    if (validationMessage) {
+      setFormError(validationMessage);
       return;
     }
 
@@ -956,24 +1005,26 @@ export default function FacilitiesPage() {
                   />
                 </FormField>
 
-                <FormField id="floor" label="Floor">
+                <FormField id="floor" label="Floor" required>
                   <input
                     id="floor"
                     name="floor"
                     className={fieldStyles.control}
                     value={form.floor}
                     onChange={handleInputChange}
-                    placeholder="Optional floor"
+                    placeholder="e.g. Level 3"
+                    required
                     disabled={isReadOnly}
                   />
                 </FormField>
 
-                <FormField id="capacity" label="Capacity" required>
+                <FormField id="capacity" label="Capacity" hint="Capacity must be between 1 and 500." required>
                   <input
                     id="capacity"
                     name="capacity"
                     type="number"
-                    min="0"
+                    min={RESOURCE_CAPACITY_MIN}
+                    max={RESOURCE_CAPACITY_MAX}
                     className={fieldStyles.control}
                     value={form.capacity}
                     onChange={handleInputChange}
@@ -1015,11 +1066,18 @@ export default function FacilitiesPage() {
                   />
                 </FormField>
 
-                <FormField id="availableFrom" label="Available from" required>
+                <FormField
+                  id="availableFrom"
+                  label="Available from"
+                  hint={`Must be from ${RESOURCE_AVAILABLE_FROM_MIN} and earlier than the available to time.`}
+                  required
+                >
                   <input
                     id="availableFrom"
                     name="availableFrom"
                     type="time"
+                    min={RESOURCE_AVAILABLE_FROM_MIN}
+                    max={RESOURCE_AVAILABLE_TO_MAX}
                     className={fieldStyles.control}
                     value={form.availableFrom}
                     onChange={handleInputChange}
@@ -1028,11 +1086,18 @@ export default function FacilitiesPage() {
                   />
                 </FormField>
 
-                <FormField id="availableTo" label="Available to" required>
+                <FormField
+                  id="availableTo"
+                  label="Available to"
+                  hint={`Must be up to ${RESOURCE_AVAILABLE_TO_MAX} and later than the available from time.`}
+                  required
+                >
                   <input
                     id="availableTo"
                     name="availableTo"
                     type="time"
+                    min={RESOURCE_AVAILABLE_FROM_MIN}
+                    max={RESOURCE_AVAILABLE_TO_MAX}
                     className={fieldStyles.control}
                     value={form.availableTo}
                     onChange={handleInputChange}

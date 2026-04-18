@@ -10,9 +10,12 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.FieldError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -78,6 +81,19 @@ public class ResourceController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleBadRequest(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(exception.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidation(MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .map(FieldError::getDefaultMessage)
+            .filter(value -> value != null && !value.isBlank())
+            .distinct()
+            .collect(Collectors.joining(" "));
+
+        return ResponseEntity.badRequest().body(message.isBlank() ? "Invalid resource request." : message);
     }
 
     @ExceptionHandler(IllegalStateException.class)

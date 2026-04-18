@@ -31,6 +31,8 @@ public class ResourceService {
     private final BookingService bookingService;
 
     private static final LocalTime DAY_END = LocalTime.of(19, 0);
+    private static final LocalTime RESOURCE_AVAILABLE_FROM_MIN = LocalTime.of(8, 0);
+    private static final LocalTime RESOURCE_AVAILABLE_TO_MAX = LocalTime.of(20, 0);
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public List<AvailableNowSlot> getAvailableNowSlots() {
@@ -161,7 +163,8 @@ private boolean isActiveBooking(Booking booking) {
 
 
     public ResourceResponseDto createResource(CreateResourceRequestDto requestDto) {
-        validateCapacity(requestDto.getCapacity());
+        validateResourceCapacity(requestDto.getCapacity());
+        validateAvailabilityWindow(requestDto.getAvailableFrom(), requestDto.getAvailableTo());
         validateUniqueResourceCode(requestDto.getResourceCode(), null);
 
         Resource resource = new Resource();
@@ -209,7 +212,8 @@ private boolean isActiveBooking(Booking booking) {
     }
 
     public ResourceResponseDto updateResource(String id, UpdateResourceRequestDto requestDto) {
-        validateCapacity(requestDto.getCapacity());
+        validateResourceCapacity(requestDto.getCapacity());
+        validateAvailabilityWindow(requestDto.getAvailableFrom(), requestDto.getAvailableTo());
 
         Resource existingResource = findResourceById(id);
         validateUniqueResourceCode(requestDto.getResourceCode(), existingResource.getId());
@@ -243,6 +247,26 @@ private boolean isActiveBooking(Booking booking) {
     private void validateCapacity(Integer capacity) {
         if (capacity != null && capacity < 0) {
             throw new IllegalArgumentException("Capacity cannot be negative");
+        }
+    }
+
+    private void validateResourceCapacity(Integer capacity) {
+        if (capacity == null || capacity < 1 || capacity > 500) {
+            throw new IllegalArgumentException("Capacity must be between 1 and 500");
+        }
+    }
+
+    private void validateAvailabilityWindow(LocalTime availableFrom, LocalTime availableTo) {
+        if (availableFrom != null && availableFrom.isBefore(RESOURCE_AVAILABLE_FROM_MIN)) {
+            throw new IllegalArgumentException("Available from time cannot be earlier than 08:00");
+        }
+
+        if (availableTo != null && availableTo.isAfter(RESOURCE_AVAILABLE_TO_MAX)) {
+            throw new IllegalArgumentException("Available to time cannot be later than 20:00");
+        }
+
+        if (availableFrom != null && availableTo != null && !availableFrom.isBefore(availableTo)) {
+            throw new IllegalArgumentException("Available from time must be earlier than available to time");
         }
     }
 
