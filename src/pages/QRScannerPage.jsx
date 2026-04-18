@@ -6,7 +6,8 @@ import styles from './QRScannerPage.module.css';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
-const API_BASE_URL = 'http://localhost:8081/api/bookings';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE_URL = `${BACKEND_URL}/api/bookings`;
 const SCAN_INTERVAL_MS = 300;
 const CAMERA_READY_MESSAGE = 'Start the scanner to begin live QR detection.';
 const SUCCESS_MESSAGE = 'Check-in successful';
