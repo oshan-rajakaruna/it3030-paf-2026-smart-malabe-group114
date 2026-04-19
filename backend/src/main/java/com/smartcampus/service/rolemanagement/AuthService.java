@@ -121,9 +121,13 @@ public class AuthService {
       return UserRole.TECHNICIAN;
     }
     if (normalizedIdNumber.startsWith("IT")) {
-      return UserRole.Student;
+      return UserRole.USER;
     }
     throw new BadRequestException("ID number must start with IT, AD, or TE");
+  }
+
+  private UserRole normalizeRole(UserRole role) {
+    return role == UserRole.Student ? UserRole.USER : role;
   }
 
   private void validateCampusIdNumber(String normalizedIdNumber) {
@@ -224,7 +228,7 @@ public class AuthService {
     if (normalizedEmail.isBlank()) {
       return OAuthLoginChallengeResponse.builder()
         .email("")
-        .role(UserRole.Student)
+        .role(UserRole.USER)
         .status(UserStatus.PENDING)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -234,7 +238,7 @@ public class AuthService {
     if (!GOOGLE_PROVIDER.equals(provider)) {
       return OAuthLoginChallengeResponse.builder()
         .email(normalizedEmail)
-        .role(UserRole.Student)
+        .role(UserRole.USER)
         .status(UserStatus.PENDING)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -253,7 +257,7 @@ public class AuthService {
           .name(fallbackName)
           .email(normalizedEmail)
           .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-          .role(UserRole.Student)
+          .role(UserRole.USER)
           .status(UserStatus.PENDING)
           .idNumber(null)
           .createdAt(LocalDateTime.now())
@@ -265,7 +269,7 @@ public class AuthService {
 
     boolean dirty = false;
     if (user.getRole() == null) {
-      user.setRole(UserRole.Student);
+      user.setRole(UserRole.USER);
       dirty = true;
     }
     if (user.getStatus() == null) {
@@ -288,7 +292,7 @@ public class AuthService {
         .id(user.getId())
         .name(user.getName())
         .email(user.getEmail())
-        .role(user.getRole())
+        .role(normalizeRole(user.getRole()))
         .status(currentStatus)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -300,7 +304,7 @@ public class AuthService {
         .id(user.getId())
         .name(user.getName())
         .email(user.getEmail())
-        .role(user.getRole())
+        .role(normalizeRole(user.getRole()))
         .status(currentStatus)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -317,7 +321,7 @@ public class AuthService {
       .id(user.getId())
       .name(user.getName())
       .email(user.getEmail())
-      .role(user.getRole())
+      .role(normalizeRole(user.getRole()))
       .status(currentStatus)
       .mfaRequired(true)
       .mfaSetupRequired(setupRequired)
@@ -358,7 +362,7 @@ public class AuthService {
     }
 
     if (user.getRole() == null) {
-      user.setRole(UserRole.Student);
+      user.setRole(UserRole.USER);
     }
     if (user.getStatus() == null) {
       user.setStatus(UserStatus.PENDING);
@@ -388,7 +392,7 @@ public class AuthService {
       .id(user.getId())
       .name(user.getName())
       .email(user.getEmail())
-      .role(user.getRole())
+      .role(normalizeRole(user.getRole()))
       .status(user.getStatus())
       .message("Google login successful")
       .build();
@@ -408,7 +412,7 @@ public class AuthService {
       .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
     if (user.getRole() == null) {
-      user.setRole(UserRole.Student);
+      user.setRole(UserRole.USER);
     }
     if (user.getStatus() == null) {
       user.setStatus(UserStatus.PENDING);
@@ -433,7 +437,7 @@ public class AuthService {
       .id(user.getId())
       .name(user.getName())
       .email(user.getEmail())
-      .role(user.getRole())
+      .role(normalizeRole(user.getRole()))
       .status(user.getStatus())
       .message("Login successful")
       .build();
@@ -445,7 +449,7 @@ public class AuthService {
       .name(user.getName())
       .email(user.getEmail())
       .idNumber(user.getIdNumber())
-      .role(user.getRole())
+      .role(normalizeRole(user.getRole()))
       .status(user.getStatus())
       .message(statusForMessage == UserStatus.APPROVED
         ? "Signup successful. Your account is approved."

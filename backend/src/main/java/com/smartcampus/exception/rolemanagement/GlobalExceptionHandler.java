@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,17 @@ public class GlobalExceptionHandler {
       message = "Duplicate value found. Email or ID may already exist.";
     }
     return buildError(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+  }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ApiErrorResponse> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+    HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+    HttpStatus resolvedStatus = status == null ? HttpStatus.BAD_REQUEST : status;
+    String message = ex.getReason() == null || ex.getReason().isBlank()
+      ? resolvedStatus.getReasonPhrase()
+      : ex.getReason();
+
+    return buildError(resolvedStatus, message, request.getRequestURI());
   }
 
   @ExceptionHandler(Exception.class)

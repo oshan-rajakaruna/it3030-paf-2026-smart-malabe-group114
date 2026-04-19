@@ -100,11 +100,16 @@ public class BookingService {
         Booking saved = repo.save(booking);
         saveBookingHistory(saved, saved.getStatus());
 
+        boolean urgentApproval = Boolean.TRUE.equals(saved.getUrgentApproval());
+
         try {
             notificationService.notifyRole(
                 NotificationAudienceRole.ADMIN,
-                "New Booking Request",
-                "A new booking request was created" + (saved.getId() != null ? " (Booking " + saved.getId() + ")." : "."),
+                urgentApproval ? "Urgent Booking Approval Needed" : "New Booking Request",
+                urgentApproval
+                    ? "A student requested a reopened no-show slot. Please review quickly because this time window is already running"
+                        + (saved.getId() != null ? " (Booking " + saved.getId() + ")." : ".")
+                    : "A new booking request was created" + (saved.getId() != null ? " (Booking " + saved.getId() + ")." : "."),
                 NotificationModule.BOOKING,
                 NotificationPriority.HIGH,
                 NotificationChannel.WEB,
@@ -297,6 +302,7 @@ public class BookingService {
         );
 
         validateResourceAvailability(resource);
+        validateResourceOperatingWindow(resource, startTime, endTime);
 
         Integer capacity = resource.getCapacity();
         if (capacity != null && attendeesCount > capacity) {
@@ -447,6 +453,29 @@ public class BookingService {
             BAD_REQUEST,
             resource.getName() + " is not available for booking right now."
         );
+    }
+
+    private void validateResourceOperatingWindow(Resource resource, LocalTime startTime, LocalTime endTime) {
+        LocalTime availableFrom = resource.getAvailableFrom();
+        LocalTime availableTo = resource.getAvailableTo();
+
+        if (availableFrom == null || availableTo == null) {
+            return;
+        }
+
+        if (!endTime.isAfter(startTime)) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Booking end time must be after start time."
+            );
+        }
+
+        if (startTime.isBefore(availableFrom) || endTime.isAfter(availableTo)) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                resource.getName() + " is available from " + availableFrom + " to " + availableTo + "."
+            );
+        }
     }
 
     public Booking approveBooking(String id) {
@@ -744,7 +773,15 @@ public class BookingService {
             return;
         }
 
-        if ("REJECTED".equalsIgnoreCase(booking.getStatus())) {
+        String normalizedStatus = booking.getStatus() == null
+            ? ""
+            : booking.getStatus().trim().toUpperCase().replace("-", "_");
+
+        if (
+            "REJECTED".equals(normalizedStatus)
+                || "CHECKED_IN".equals(normalizedStatus)
+                || "NO_SHOW".equals(normalizedStatus)
+        ) {
             return;
         }
 
