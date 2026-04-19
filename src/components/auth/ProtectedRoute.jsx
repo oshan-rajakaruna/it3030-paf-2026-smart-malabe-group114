@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
       <EmptyState
         icon={LockKeyhole}
         title="Restricted area"
-        description="This route is protected for future role-based access. Switch to an admin role in the demo settings to preview this page."
+        description="You do not have permission to open this page with the current account role."
         action={<Button variant="secondary" onClick={() => window.history.back()}>Go Back</Button>}
       />
     );

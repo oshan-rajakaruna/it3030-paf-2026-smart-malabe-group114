@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { ROLE_OPTIONS, ROLES } from '../utils/constants';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { createPendingSignup } from '../utils/adminStorage';
+import { getDefaultRouteForRole } from '../utils/authRouting';
 import logoImage from '../assets/logo.jpeg';
 
 const SIGNUP_INTENT_KEY = 'smart-campus-signup-intent';
@@ -45,7 +46,7 @@ export default function SignupPage() {
     if (!isAuthenticated) {
       return;
     }
-    const targetPath = currentUser?.role === ROLES.ADMIN ? ROUTE_PATHS.ADMIN : ROUTE_PATHS.DASHBOARD;
+    const targetPath = getDefaultRouteForRole(currentUser?.role);
     navigate(targetPath, { replace: true });
   }, [isAuthenticated, currentUser, navigate]);
 

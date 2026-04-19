@@ -1,10 +1,12 @@
+import { getDefaultRouteForRole } from '../utils/authRouting';
+
 const NOTIFICATION_API_BASE = 'http://localhost:8080/api/notifications';
 const MODULE_ACTION_PATHS = {
   AUTH: '/admin',
   BOOKING: '/bookings',
   RESOURCE: '/facilities',
   TICKET: '/tickets',
-  SYSTEM: '/dashboard',
+  SYSTEM: null,
 };
 
 function getNotificationActionPath(module, viewerRole = '') {
@@ -12,6 +14,9 @@ function getNotificationActionPath(module, viewerRole = '') {
   const normalizedViewerRole = String(viewerRole || '').toUpperCase();
   if (normalizedModule === 'AUTH' && normalizedViewerRole && normalizedViewerRole !== 'ADMIN') {
     return '/settings';
+  }
+  if (normalizedModule === 'SYSTEM') {
+    return getDefaultRouteForRole(normalizedViewerRole);
   }
   return MODULE_ACTION_PATHS[normalizedModule] || MODULE_ACTION_PATHS.SYSTEM;
 }

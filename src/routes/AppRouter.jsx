@@ -36,7 +36,14 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route path={ROUTE_PATHS.DASHBOARD} element={<DashboardPage />} />
+        <Route
+          path={ROUTE_PATHS.DASHBOARD}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path={ROUTE_PATHS.FACILITIES} element={<FacilitiesPage />} />
         <Route path={ROUTE_PATHS.BOOKINGS} element={<BookingsPage />} />
         <Route path={ROUTE_PATHS.TICKETS} element={<TicketsPage />} />
