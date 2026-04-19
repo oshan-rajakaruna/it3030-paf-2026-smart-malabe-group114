@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
@@ -6,6 +6,7 @@ import AdminPage from '../pages/AdminPage';
 import BookingsPage from '../pages/BookingsPage';
 import DashboardPage from '../pages/DashboardPage';
 import FacilitiesPage from '../pages/FacilitiesPage';
+import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import NotificationsPage from '../pages/NotificationsPage';
@@ -17,14 +18,10 @@ import TicketsPage from '../pages/TicketsPage';
 import { ROLES } from '../utils/constants';
 import { ROUTE_PATHS } from './routeConfig';
 
-function HomeRedirect() {
-  return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
-}
-
 export default function AppRouter() {
   return (
     <Routes>
-      <Route index element={<HomeRedirect />} />
+      <Route index element={<LandingPage />} />
       <Route path={ROUTE_PATHS.LOGIN} element={<LoginPage />} />
       <Route path={ROUTE_PATHS.SIGNUP} element={<SignupPage />} />
       <Route path={ROUTE_PATHS.SIGNUP_PENDING} element={<SignupPendingPage />} />

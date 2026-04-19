@@ -1,4 +1,5 @@
 export const ROUTE_PATHS = {
+  LANDING: '/',
   LOGIN: '/login',
   SIGNUP: '/signup',
   SIGNUP_PENDING: '/signup/pending',
