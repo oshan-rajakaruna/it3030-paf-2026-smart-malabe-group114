@@ -87,6 +87,12 @@ public class UserService {
     return toResponse(saved);
   }
 
+  public void deleteUser(String id) {
+    User user = userRepository.findById(id)
+      .orElseThrow(() -> new ResourceNotFoundException("User not found for id " + id));
+    userRepository.deleteById(user.getId());
+  }
+
   private UserResponse toResponse(User user) {
     return UserResponse.builder()
       .id(user.getId())

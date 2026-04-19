@@ -3,8 +3,10 @@ package com.smartcampus.controller.rolemanagement;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +41,18 @@ public class UserController {
   @PutMapping("/{id}/reject")
   public ResponseEntity<UserResponse> rejectUser(@PathVariable String id) {
     return ResponseEntity.ok(userService.rejectUser(id));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    userService.deleteUser(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/delete")
+  public ResponseEntity<Void> deleteUserFallback(@PathVariable String id) {
+    userService.deleteUser(id);
+    return ResponseEntity.noContent().build();
   }
 }
 

@@ -12,6 +12,7 @@ import SearchBar from '../components/ui/SearchBar';
 import StatCard from '../components/ui/StatCard';
 import { useAuth } from '../hooks/useAuth';
 import {
+  deleteNotification,
   getNotificationContext,
   getRoleNotifications,
   getUserNotifications,
@@ -103,6 +104,16 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await deleteNotification(notificationId);
+      setNotifications((current) => current.filter((notification) => notification.id !== notificationId));
+    } catch (requestError) {
+      console.error('Failed to delete notification', requestError);
+      setLoadError(requestError?.message || 'Failed to delete notification.');
+    }
+  };
+
   const handleMarkAllAsRead = async () => {
     const unreadIds = notifications.filter((notification) => !notification.read).map((notification) => notification.id);
     if (!unreadIds.length) {
@@ -126,7 +137,7 @@ export default function NotificationsPage() {
       }),
     [deferredQuery, moduleFilter, notifications],
   );
-
+ 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
   const readProgress =
     notifications.length === 0 ? '0%' : `${Math.round(((notifications.length - unreadCount) / notifications.length) * 100)}%`;
@@ -180,6 +191,7 @@ export default function NotificationsPage() {
             <NotificationItem
               key={notification.id}
               notification={notification}
+              onDelete={(id) => void handleDeleteNotification(id)}
               onClick={() => {
                 if (!notification.read) {
                   void markSingleAsRead(notification.id);

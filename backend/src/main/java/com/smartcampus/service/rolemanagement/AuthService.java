@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthService {
   private static final String GOOGLE_PROVIDER = "google";
   private static final String MFA_ISSUER = "SmartCampusHub";
+  private static final String CAMPUS_ID_REGEX = "^(IT|AD|TE)\\d{4}$";
 
   private final UserRepository userRepository;
   private final ExistingIdRepository existingIdRepository;
@@ -57,6 +58,7 @@ public class AuthService {
     log.info("Processing signup for email={}, idNumber={}", request.getEmail(), request.getIdNumber());
     String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
     String normalizedIdNumber = request.getIdNumber().trim().toUpperCase(Locale.ROOT);
+    validateCampusIdNumber(normalizedIdNumber);
     validateCampusEmail(normalizedEmail, normalizedIdNumber);
     UserRole resolvedRole = resolveRoleFromIdNumber(normalizedIdNumber);
 
@@ -118,7 +120,16 @@ public class AuthService {
     if (normalizedIdNumber.startsWith("TE")) {
       return UserRole.TECHNICIAN;
     }
-    return UserRole.USER;
+    if (normalizedIdNumber.startsWith("IT")) {
+      return UserRole.USER;
+    }
+    throw new BadRequestException("ID number must start with IT, AD, or TE");
+  }
+
+  private void validateCampusIdNumber(String normalizedIdNumber) {
+    if (!normalizedIdNumber.matches(CAMPUS_ID_REGEX)) {
+      throw new BadRequestException("ID number must be in format IT1234, AD1234, or TE1234");
+    }
   }
 
   private void validateGoogleEmail(String normalizedEmail) {
@@ -137,6 +148,7 @@ public class AuthService {
 
     String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
     String normalizedIdNumber = request.getIdNumber().trim().toUpperCase(Locale.ROOT);
+    validateCampusIdNumber(normalizedIdNumber);
     validateGoogleEmail(normalizedEmail);
 
     UserRole derivedRole = resolveRoleFromIdNumber(normalizedIdNumber);

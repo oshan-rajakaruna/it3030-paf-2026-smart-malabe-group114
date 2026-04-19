@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ShieldCheck, UserRoundCheck, UserSearch, Wrench } from 'lucide-react';
+import { ShieldCheck, Trash2, UserRoundCheck, UserSearch, Wrench } from 'lucide-react';
 import axios from 'axios';
 
 import styles from './AdminPage.module.css';
@@ -19,6 +19,8 @@ export default function AdminPage() {
   const [managedUsers, setManagedUsers] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [actionMessage, setActionMessage] = useState('');
+
+  const getUserId = (user) => user?.id || user?._id || '';
 
   const loadAdminData = useCallback(async () => {
     try {
@@ -45,25 +47,69 @@ export default function AdminPage() {
 
   const handleApproveSignup = async (userId) => {
     setActionMessage('');
+    if (!userId) {
+      setActionMessage('Unable to approve user: missing user id.');
+      return;
+    }
     try {
       await axios.put(`${USERS_API_BASE}/${userId}/approve`);
       setActionMessage('User approved. They can now sign in.');
       await loadAdminData();
     } catch (error) {
       console.error('Approve failed', error);
-      setActionMessage('Approve failed. Please check backend logs.');
+      const errorMessage = error?.response?.data?.message || 'Approve failed. Please check backend logs.';
+      setActionMessage(errorMessage);
     }
   };
 
   const handleRejectSignup = async (userId) => {
     setActionMessage('');
+    if (!userId) {
+      setActionMessage('Unable to reject user: missing user id.');
+      return;
+    }
     try {
       await axios.put(`${USERS_API_BASE}/${userId}/reject`);
       setActionMessage('User rejected successfully.');
       await loadAdminData();
     } catch (error) {
       console.error('Reject failed', error);
-      setActionMessage('Reject failed. Please check backend logs.');
+      const errorMessage = error?.response?.data?.message || 'Reject failed. Please check backend logs.';
+      setActionMessage(errorMessage);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    setActionMessage('');
+    if (!userId) {
+      setActionMessage('Unable to delete user: missing user id.');
+      return;
+    }
+    try {
+      await axios.delete(`${USERS_API_BASE}/${encodeURIComponent(userId)}`);
+      setManagedUsers((prevUsers) => prevUsers.filter((user) => getUserId(user) !== userId));
+      setPendingUsers((prevUsers) => prevUsers.filter((user) => getUserId(user) !== userId));
+      setActionMessage('User deleted successfully.');
+    } catch (error) {
+      const serverMessage = String(error?.response?.data?.message || '');
+      if (serverMessage.includes('No static resource')) {
+        try {
+          await axios.post(`${USERS_API_BASE}/${encodeURIComponent(userId)}/delete`);
+          setManagedUsers((prevUsers) => prevUsers.filter((user) => getUserId(user) !== userId));
+          setPendingUsers((prevUsers) => prevUsers.filter((user) => getUserId(user) !== userId));
+          setActionMessage('User deleted successfully.');
+        } catch (fallbackError) {
+          console.error('Delete user fallback failed', fallbackError);
+          const fallbackMessage = fallbackError?.response?.data?.message || 'Delete failed. Please check backend logs.';
+          setActionMessage(fallbackMessage);
+        }
+      } else {
+        console.error('Delete user failed', error);
+        const errorMessage = error?.response?.data?.message || 'Delete failed. Please check backend logs.';
+        setActionMessage(errorMessage);
+      }
+    } finally {
+      await loadAdminData();
     }
   };
 
@@ -92,9 +138,9 @@ export default function AdminPage() {
       key: 'actions',
       header: 'Action',
       align: 'right',
-      render: () => (
-        <Button variant="secondary" size="sm" disabled>
-          Synced
+      render: (user) => (
+        <Button variant="danger" size="sm" icon={Trash2} onClick={() => handleDeleteUser(getUserId(user))}>
+          Delete
         </Button>
       ),
     },
@@ -132,10 +178,10 @@ export default function AdminPage() {
       align: 'right',
       render: (user) => (
         <div className={styles.rowActions}>
-          <Button variant="success" size="sm" onClick={() => handleApproveSignup(user.id)}>
+          <Button variant="success" size="sm" onClick={() => handleApproveSignup(getUserId(user))}>
             Approve
           </Button>
-          <Button variant="danger" size="sm" onClick={() => handleRejectSignup(user.id)}>
+          <Button variant="danger" size="sm" onClick={() => handleRejectSignup(getUserId(user))}>
             Reject
           </Button>
         </div>
@@ -180,6 +226,7 @@ export default function AdminPage() {
       <section className={styles.grid}>
         <Card title="User and role management" subtitle="Live records from database users table.">
           <DataTable columns={userColumns} rows={managedUsers} />
+          {actionMessage ? <p className={styles.muted}>{actionMessage}</p> : null}
         </Card>
 
         <Card title="Signup approval queue" subtitle="Approve or reject pending users from the database.">
@@ -192,7 +239,6 @@ export default function AdminPage() {
               description: 'No users are currently waiting for admin approval.',
             }}
           />
-          {actionMessage ? <p className={styles.muted}>{actionMessage}</p> : null}
         </Card>
       </section>
     </div>
