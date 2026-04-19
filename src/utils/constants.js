@@ -63,14 +63,14 @@ export const NAV_ITEMS = [
     path: '/facilities',
     icon: Building2,
     description: 'Catalogue and resource discovery',
-    roles: [ROLES.USER, ROLES.ADMIN, ROLES.TECHNICIAN],
+    roles: [ROLES.USER, ROLES.ADMIN],
   },
   {
     label: 'Bookings',
     path: '/bookings',
     icon: CalendarRange,
     description: 'Booking requests and approvals',
-    roles: [ROLES.USER, ROLES.ADMIN, ROLES.TECHNICIAN],
+    roles: [ROLES.USER, ROLES.ADMIN],
   },
   {
     label: 'Tickets',
@@ -87,10 +87,17 @@ export const NAV_ITEMS = [
     roles: [ROLES.USER, ROLES.ADMIN, ROLES.TECHNICIAN],
   },
   {
-    label: 'Admin',
+    label: 'User Role',
     path: '/admin',
     icon: ShieldCheck,
-    description: 'Roles, approvals, assignments',
+    description: 'User roles, approvals, assignments',
+    roles: [ROLES.ADMIN],
+  },
+  {
+    label: 'Notify Admin',
+    path: '/admin/notifications',
+    icon: Bell,
+    description: 'Send and manage targeted alerts',
     roles: [ROLES.ADMIN],
   },
   {

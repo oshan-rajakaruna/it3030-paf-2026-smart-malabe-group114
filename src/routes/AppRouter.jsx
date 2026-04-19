@@ -1,30 +1,33 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
+import CreateNotification from '../pages/admin/CreateNotification';
+import AdminNotificationsPage from '../pages/admin/NotificationsPage';
 import AdminPage from '../pages/AdminPage';
 import BookingsPage from '../pages/BookingsPage';
 import DashboardPage from '../pages/DashboardPage';
 import FacilitiesPage from '../pages/FacilitiesPage';
+import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import NotificationsPage from '../pages/NotificationsPage';
+import OAuthSuccess from '../pages/OAuthSuccess';
 import SettingsPage from '../pages/SettingsPage';
+import SignupPage from '../pages/SignupPage';
+import SignupPendingPage from '../pages/SignupPendingPage';
 import TicketsPage from '../pages/TicketsPage';
-import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../utils/constants';
 import { ROUTE_PATHS } from './routeConfig';
-
-function HomeRedirect() {
-  const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? ROUTE_PATHS.DASHBOARD : ROUTE_PATHS.LOGIN} replace />;
-}
 
 export default function AppRouter() {
   return (
     <Routes>
-      <Route index element={<HomeRedirect />} />
+      <Route index element={<LandingPage />} />
       <Route path={ROUTE_PATHS.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTE_PATHS.SIGNUP} element={<SignupPage />} />
+      <Route path={ROUTE_PATHS.SIGNUP_PENDING} element={<SignupPendingPage />} />
+      <Route path={ROUTE_PATHS.OAUTH_SUCCESS} element={<OAuthSuccess />} />
 
       <Route
         element={
@@ -44,6 +47,22 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTE_PATHS.ADMIN_NOTIFICATIONS}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <AdminNotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTE_PATHS.ADMIN_NOTIFICATIONS_CREATE}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <CreateNotification />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,142 @@
+.page {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.headerActions {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.toolbar {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.activeTab {
+  color: var(--text);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 0.7fr;
+  gap: 0.7rem;
+}
+
+.filters select {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 0 0.85rem;
+}
+
+.subjectCell {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.subjectCell strong {
+  font-size: 0.94rem;
+}
+
+.subjectCell span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 0.83rem;
+}
+
+.sentAtColumn {
+  min-width: 11rem;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.deleteIconButton {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  border-radius: 0.7rem;
+  background: rgba(220, 38, 38, 0.14);
+  color: #ff7b7b;
+}
+
+.deleteIconButton:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.editFormGrid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.control {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 0 0.85rem;
+}
+
+.editError {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1080px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+}

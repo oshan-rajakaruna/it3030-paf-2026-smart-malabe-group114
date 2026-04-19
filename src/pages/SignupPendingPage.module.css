@@ -1,0 +1,100 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(82, 147, 255, 0.18), transparent 46%),
+    radial-gradient(circle at 85% 12%, rgba(35, 192, 161, 0.16), transparent 44%),
+    linear-gradient(160deg, #070f1e 0%, #0c1f38 55%, #08152a 100%);
+}
+
+.card {
+  width: min(760px, 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(120, 154, 205, 0.3);
+  background: rgba(8, 19, 39, 0.92);
+  box-shadow: 0 26px 50px rgba(2, 9, 22, 0.45);
+  padding: clamp(1.5rem, 4vw, 2.2rem);
+  color: #eff5ff;
+}
+
+.eyebrow {
+  display: inline-flex;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7ee6cf;
+  background: rgba(49, 181, 157, 0.14);
+  border: 1px solid rgba(99, 231, 205, 0.35);
+}
+
+.title {
+  margin: 0.9rem 0 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin: 0.9rem 0 1.2rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(230, 240, 255, 0.78);
+}
+
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.3rem;
+}
+
+.profileItem {
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  background: rgba(15, 34, 64, 0.7);
+  border: 1px solid rgba(128, 169, 221, 0.2);
+}
+
+.profileItem span {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(182, 204, 236, 0.78);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.45rem;
+}
+
+.profileItem strong {
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  border-radius: 12px;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #26c29f 0%, #2a9ccf 100%);
+  color: #031323;
+}
+
+.secondaryBtn {
+  background: rgba(22, 40, 70, 0.82);
+  color: #dbe8ff;
+  border: 1px solid rgba(138, 173, 223, 0.35);
+}

@@ -1,10 +1,16 @@
 export const ROUTE_PATHS = {
+  LANDING: '/',
   LOGIN: '/login',
+  SIGNUP: '/signup',
+  SIGNUP_PENDING: '/signup/pending',
+  OAUTH_SUCCESS: '/oauth2/success',
   DASHBOARD: '/dashboard',
   FACILITIES: '/facilities',
   BOOKINGS: '/bookings',
   TICKETS: '/tickets',
   NOTIFICATIONS: '/notifications',
   ADMIN: '/admin',
+  ADMIN_NOTIFICATIONS: '/admin/notifications',
+  ADMIN_NOTIFICATIONS_CREATE: '/admin/notifications/create',
   SETTINGS: '/settings',
 };

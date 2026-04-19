@@ -1,24 +1,119 @@
 package com.smartcampus.config;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.util.UriUtils;
 
 @Configuration
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/test").permitAll()
-                .anyRequest().authenticated()
-            )
-            .httpBasic(Customizer.withDefaults());
+  @Bean
+  public SecurityFilterChain securityFilterChain(
+    HttpSecurity http,
+    OAuth2AuthorizationRequestResolver authorizationRequestResolver
+  ) throws Exception {
+    http
+      .csrf(csrf -> csrf.disable())
+      .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+        // Keep API access open for the current frontend-driven auth/demo flow.
+        .requestMatchers("/api/**").permitAll()
+        .anyRequest().authenticated()
+      )
+      .oauth2Login(oauth -> oauth
+        .authorizationEndpoint(endpoint -> endpoint.authorizationRequestResolver(authorizationRequestResolver))
+        .successHandler(oauth2SuccessHandler())
+      )
+      .logout(logout -> logout.logoutSuccessUrl("/"));
 
-        return http.build();
-    }
+    return http.build();
+  }
+
+  @Bean
+  public AuthenticationSuccessHandler oauth2SuccessHandler() {
+    return (request, response, authentication) -> {
+      if (!(authentication instanceof OAuth2AuthenticationToken token)) {
+        response.sendRedirect("http://localhost:5173/login");
+        return;
+      }
+
+      OAuth2User oauthUser = token.getPrincipal();
+      String provider = token.getAuthorizedClientRegistrationId();
+      if (provider == null || provider.isBlank()) {
+        provider = "oauth";
+      }
+
+      String email = oauthUser.getAttribute("email");
+      if (email == null || email.isBlank()) {
+        response.sendRedirect("http://localhost:5173/login");
+        return;
+      }
+
+      String name = oauthUser.getAttribute("name");
+      if (name == null || name.isBlank()) {
+        int at = email.indexOf('@');
+        name = at > 0 ? email.substring(0, at) : "Google User";
+      }
+
+      String encodedEmail = UriUtils.encode(email, StandardCharsets.UTF_8);
+      String encodedName = UriUtils.encode(name, StandardCharsets.UTF_8);
+      response.sendRedirect(
+        "http://localhost:5173/login?oauth=" + provider + "&email=" + encodedEmail + "&name=" + encodedName
+      );
+    };
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
+    ClientRegistrationRepository clientRegistrationRepository
+  ) {
+    DefaultOAuth2AuthorizationRequestResolver resolver =
+      new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
+    resolver.setAuthorizationRequestCustomizer(customizer ->
+      customizer.additionalParameters(params -> params.put("prompt", "select_account"))
+    );
+    return resolver;
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of(
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173"
+    ));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }

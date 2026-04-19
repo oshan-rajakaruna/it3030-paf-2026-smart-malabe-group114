@@ -1,0 +1,77 @@
+package com.smartcampus.controller.rolemanagement;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.smartcampus.dto.rolemanagement.NotificationRequest;
+import com.smartcampus.dto.rolemanagement.NotificationResponse;
+import com.smartcampus.dto.rolemanagement.NotificationUpdateRequest;
+import com.smartcampus.service.rolemanagement.NotificationService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/notifications")
+@Validated
+@RequiredArgsConstructor
+public class NotificationController {
+
+  private final NotificationService notificationService;
+
+  @PostMapping
+  public ResponseEntity<NotificationResponse> create(@Valid @RequestBody NotificationRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(notificationService.create(request));
+  }
+
+  @GetMapping
+  public ResponseEntity<List<NotificationResponse>> getAll() {
+    return ResponseEntity.ok(notificationService.getAll());
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<NotificationResponse> getById(@PathVariable String id) {
+    return ResponseEntity.ok(notificationService.getById(id));
+  }
+
+  @GetMapping("/role/{role}")
+  public ResponseEntity<List<NotificationResponse>> getByRole(@PathVariable String role) {
+    return ResponseEntity.ok(notificationService.getByRole(role));
+  }
+
+  @GetMapping("/user/{userId}")
+  public ResponseEntity<List<NotificationResponse>> getByUserId(@PathVariable String userId) {
+    return ResponseEntity.ok(notificationService.getByUserId(userId));
+  }
+
+  @PutMapping("/{id}/read")
+  public ResponseEntity<NotificationResponse> markAsRead(@PathVariable String id) {
+    return ResponseEntity.ok(notificationService.markAsRead(id));
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<NotificationResponse> update(
+    @PathVariable String id,
+    @Valid @RequestBody NotificationUpdateRequest request
+  ) {
+    return ResponseEntity.ok(notificationService.update(id, request));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable String id) {
+    notificationService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
+}
+
