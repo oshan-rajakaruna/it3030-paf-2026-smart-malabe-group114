@@ -80,6 +80,11 @@ public class TicketService {
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         ticket.setStatus(request.getStatus());
+        if (request.getStatus() == TicketStatus.REJECTED) {
+            ticket.setRejectionReason(request.getRejectionReason());
+        } else {
+            ticket.setRejectionReason(null);
+        }
         ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
@@ -214,6 +219,7 @@ public class TicketService {
             .preferredContact(ticket.getPreferredContact())
             .assignedTechnician(ticket.getAssignedTechnician())
             .resolutionNotes(ticket.getResolutionNotes())
+            .rejectionReason(ticket.getRejectionReason())
             .createdAt(ticket.getCreatedAt())
             .updatedAt(ticket.getUpdatedAt())
             .build();

@@ -31,13 +31,13 @@ export async function getTicketById(id) {
   return handleResponse(response);
 }
 
-export async function updateTicketStatus(id, status) {
+export async function updateTicketStatus(id, status, rejectionReason = '') {
   const response = await fetch(`${BASE_URL}/${id}/status`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, rejectionReason }),
   });
 
   return handleResponse(response);

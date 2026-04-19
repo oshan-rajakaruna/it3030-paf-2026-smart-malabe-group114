@@ -43,6 +43,8 @@ public class Ticket {
 
     private String resolutionNotes;
 
+    private String rejectionReason;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

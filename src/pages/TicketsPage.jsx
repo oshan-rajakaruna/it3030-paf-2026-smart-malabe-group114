@@ -97,6 +97,7 @@ function mapTicketToUi(ticket, technicianLookup = {}) {
     updatedAt: ticket.updatedAt ?? '',
     preferredContact: 'Not provided',
     resolution: ticket.resolutionNotes ?? 'No resolution note yet.',
+    rejectionReason: ticket.rejectionReason ?? '',
     comments: [],
   };
 }
@@ -212,6 +213,7 @@ export default function TicketsPage() {
   const [modalStatus, setModalStatus] = useState('');
   const [modalTechnician, setModalTechnician] = useState('');
   const [modalResolution, setModalResolution] = useState('');
+  const [modalRejectionReason, setModalRejectionReason] = useState('');
   const [modalActionMessage, setModalActionMessage] = useState('');
   const [modalActionError, setModalActionError] = useState('');
   const [comments, setComments] = useState([]);
@@ -303,6 +305,7 @@ export default function TicketsPage() {
       setModalStatus('');
       setModalTechnician('');
       setModalResolution('');
+      setModalRejectionReason('');
       setModalActionMessage('');
       setModalActionError('');
       setComments([]);
@@ -342,6 +345,7 @@ export default function TicketsPage() {
     setModalStatus(selectedTicket.status || 'OPEN');
     setModalTechnician(selectedTicket.technicianId || selectedTicket.assigned || '');
     setModalResolution(selectedTicket.resolution === 'No resolution note yet.' ? '' : selectedTicket.resolution || '');
+    setModalRejectionReason(selectedTicket.rejectionReason || '');
     setModalActionMessage('');
     setModalActionError('');
     loadComments();
@@ -508,7 +512,16 @@ export default function TicketsPage() {
     setModalActionError('');
 
     try {
-      await updateTicketStatus(selectedTicket.id, modalStatus);
+      if (modalStatus === 'REJECTED' && !modalRejectionReason.trim()) {
+        setModalActionError('Please provide a rejection reason before marking this ticket as rejected.');
+        return;
+      }
+
+      await updateTicketStatus(
+        selectedTicket.id,
+        modalStatus,
+        modalStatus === 'REJECTED' ? modalRejectionReason.trim() : '',
+      );
       if (!isTechnician) {
         await assignTechnician(selectedTicket.id, modalTechnician);
       }
@@ -1185,6 +1198,24 @@ export default function TicketsPage() {
                   <span>Category</span>
                   <strong>{selectedTicket.category || 'Not provided'}</strong>
                 </div>
+                {selectedTicket.status === 'REJECTED' || modalStatus === 'REJECTED' ? (
+                  <div className={styles.modalBlock}>
+                    <span>Rejection reason</span>
+                    {isUser ? (
+                      <strong>{selectedTicket.rejectionReason || 'Not provided'}</strong>
+                    ) : (
+                      <TextAreaField
+                        id="modalRejectionReason"
+                        label="Rejection reason"
+                        name="modalRejectionReason"
+                        rows={4}
+                        value={modalRejectionReason}
+                        onChange={(event) => setModalRejectionReason(event.target.value)}
+                        hint="Explain clearly why this ticket is being rejected."
+                      />
+                    )}
+                  </div>
+                ) : null}
                 {modalActionMessage ? (
                   <div className={styles.inlineNotice} data-type="success">
                     <CheckCircle2 size={18} />
