@@ -11,6 +11,7 @@ import com.smartcampus.model.rolemanagement.NotificationChannel;
 import com.smartcampus.model.rolemanagement.NotificationModule;
 import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
+import com.smartcampus.model.rolemanagement.UserRole;
 import com.smartcampus.model.rolemanagement.UserStatus;
 import com.smartcampus.repository.rolemanagement.UserRepository;
 
@@ -99,11 +100,15 @@ public class UserService {
       .name(user.getName())
       .email(user.getEmail())
       .idNumber(user.getIdNumber())
-      .role(user.getRole())
+      .role(normalizeRole(user.getRole()))
       .status(user.getStatus())
       .createdAt(user.getCreatedAt())
       .lastLoginAt(user.getLastLoginAt())
       .build();
+  }
+
+  private UserRole normalizeRole(UserRole role) {
+    return role == UserRole.Student ? UserRole.USER : role;
   }
 }
 
