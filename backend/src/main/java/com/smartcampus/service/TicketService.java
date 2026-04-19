@@ -16,6 +16,7 @@ import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketCommentResponse;
 import com.smartcampus.dto.ticket.TicketResponse;
+import com.smartcampus.dto.ticket.UpdateTicketCommentRequest;
 import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.model.Ticket;
@@ -121,6 +122,11 @@ public class TicketService {
         TicketStatus previousStatus = ticket.getStatus();
 
         ticket.setStatus(request.getStatus());
+        if (request.getStatus() == TicketStatus.REJECTED) {
+            ticket.setRejectionReason(request.getRejectionReason());
+        } else {
+            ticket.setRejectionReason(null);
+        }
         ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
@@ -205,11 +211,13 @@ public class TicketService {
         String commenterId = resolveUserId(request.getUserId());
         UserRole commenterRole = resolveRoleForActor(commenterId, request.getUserRole(), ticket);
 
+        LocalDateTime now = LocalDateTime.now();
         TicketComment ticketComment = TicketComment.builder()
             .ticketId(ticketId)
             .userId(commenterId)
             .commentText(request.getCommentText())
-            .createdAt(LocalDateTime.now())
+            .createdAt(now)
+            .updatedAt(now)
             .build();
 
         TicketComment savedComment = ticketCommentRepository.save(ticketComment);
@@ -225,6 +233,41 @@ public class TicketService {
             .stream()
             .map(this::mapToCommentResponse)
             .toList();
+    }
+
+    public TicketCommentResponse updateComment(String ticketId, String commentId, UpdateTicketCommentRequest request) {
+        ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        TicketComment comment = ticketCommentRepository.findById(commentId)
+            .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
+
+        if (!ticketId.equals(comment.getTicketId())) {
+            throw new RuntimeException("Comment does not belong to the selected ticket.");
+        }
+
+        validateCommentOwnership(comment, request.getUserId(), request.isAdmin());
+
+        comment.setCommentText(request.getCommentText());
+        comment.setUpdatedAt(LocalDateTime.now());
+
+        TicketComment updatedComment = ticketCommentRepository.save(comment);
+        return mapToCommentResponse(updatedComment);
+    }
+
+    public void deleteComment(String ticketId, String commentId, String userId, boolean admin) {
+        ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        TicketComment comment = ticketCommentRepository.findById(commentId)
+            .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
+
+        if (!ticketId.equals(comment.getTicketId())) {
+            throw new RuntimeException("Comment does not belong to the selected ticket.");
+        }
+
+        validateCommentOwnership(comment, userId, admin);
+        ticketCommentRepository.delete(comment);
     }
 
     public TicketAttachment uploadAttachment(String ticketId, MultipartFile file) {
@@ -484,6 +527,27 @@ public class TicketService {
         return userRepository.findById(resolvedId)
             .map(user -> user.getName() != null && !user.getName().isBlank() ? user.getName() : user.getEmail())
             .orElse(resolvedId);
+    public void deleteTicket(String ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        List<TicketAttachment> attachments = ticketAttachmentRepository.findByTicketId(ticketId);
+        attachments.forEach((attachment) -> {
+            String rawFilePath = attachment.getFilePath();
+            if (rawFilePath == null || rawFilePath.isBlank()) {
+                return;
+            }
+
+            try {
+                Files.deleteIfExists(Paths.get(rawFilePath));
+            } catch (IOException ignored) {
+                // Preserve ticket deletion even if a local file was already removed manually.
+            }
+        });
+
+        ticketAttachmentRepository.deleteByTicketId(ticketId);
+        ticketCommentRepository.deleteByTicketId(ticketId);
+        ticketRepository.delete(ticket);
     }
 
     private TicketResponse mapToResponse(Ticket ticket) {
@@ -499,6 +563,7 @@ public class TicketService {
             .preferredContact(ticket.getPreferredContact())
             .assignedTechnician(ticket.getAssignedTechnician())
             .resolutionNotes(ticket.getResolutionNotes())
+            .rejectionReason(ticket.getRejectionReason())
             .createdAt(ticket.getCreatedAt())
             .updatedAt(ticket.getUpdatedAt())
             .build();
@@ -511,6 +576,17 @@ public class TicketService {
             .userId(ticketComment.getUserId())
             .commentText(ticketComment.getCommentText())
             .createdAt(ticketComment.getCreatedAt())
+            .updatedAt(ticketComment.getUpdatedAt())
             .build();
+    }
+
+    private void validateCommentOwnership(TicketComment comment, String userId, boolean admin) {
+        if (admin) {
+            return;
+        }
+
+        if (userId == null || userId.isBlank() || !userId.equals(comment.getUserId())) {
+            throw new RuntimeException("You can only edit or delete your own comments.");
+        }
     }
 }

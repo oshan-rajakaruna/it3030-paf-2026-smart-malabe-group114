@@ -1,7 +1,5 @@
 package com.smartcampus.dto.ticket;
 
-import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,17 +9,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TicketCommentResponse {
-
-    private String id;
-
-    private String ticketId;
+public class UpdateTicketCommentRequest {
 
     private String userId;
 
     private String commentText;
 
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private boolean admin = false;
 }

@@ -1,4 +1,15 @@
-import { MessageSquareText, UserRoundCog, Wrench } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  CircleDashed,
+  ClipboardList,
+  Clock3,
+  MessageSquareText,
+  ShieldAlert,
+  Trash2,
+  UserRoundCog,
+  Wrench,
+} from 'lucide-react';
 import { useDeferredValue, useEffect, useState } from 'react';
 
 import styles from './TicketsPage.module.css';
@@ -12,6 +23,7 @@ import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import SearchBar from '../components/ui/SearchBar';
 import SelectField from '../components/ui/SelectField';
+import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
 import TextAreaField from '../components/ui/TextAreaField';
 import { useAuth } from '../hooks/useAuth';
@@ -19,9 +31,12 @@ import {
   addComment,
   assignTechnician,
   createTicket,
+  deleteComment,
+  deleteTicket,
   getAllTickets,
   getAttachments,
   getComments,
+  updateComment,
   updateTicketResolution,
   updateTicketStatus,
   uploadAttachment,
@@ -43,19 +58,23 @@ const initialForm = {
   attachments: [],
 };
 
-const CATEGORY_MAP = {
-  electrical: 'ELECTRICAL',
-  network: 'NETWORK',
-  equipment: 'EQUIPMENT',
-  facility: 'FACILITY',
-  other: 'OTHER',
-};
+const CATEGORY_OPTIONS = [
+  { value: 'ELECTRICAL', label: 'Electrical' },
+  { value: 'NETWORK', label: 'Network' },
+  { value: 'EQUIPMENT', label: 'Equipment' },
+  { value: 'FACILITY', label: 'Facility' },
+  { value: 'OTHER', label: 'Other' },
+];
 
 const PRIORITY_MAP = {
   low: 'LOW',
   medium: 'MEDIUM',
   high: 'HIGH',
 };
+
+const MAX_ATTACHMENTS = 3;
+const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 function mapTicketToUi(ticket, technicianLookup = {}) {
   const assignedTechnician = ticket.assignedTechnician ?? '';
@@ -80,8 +99,106 @@ function mapTicketToUi(ticket, technicianLookup = {}) {
     updatedAt: ticket.updatedAt ?? '',
     preferredContact: 'Not provided',
     resolution: ticket.resolutionNotes ?? 'No resolution note yet.',
+    rejectionReason: ticket.rejectionReason ?? '',
     comments: [],
   };
+}
+
+function formatStatusLabel(status) {
+  return String(status || 'OPEN')
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatPriorityLabel(priority) {
+  return String(priority || 'MEDIUM')
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function isWhitespaceOnly(value) {
+  return !String(value || '').trim();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value) {
+  return /^[+\d][\d\s\-()]{6,}$/.test(value);
+}
+
+function validateAttachmentFiles(files = []) {
+  if (files.length > MAX_ATTACHMENTS) {
+    return `You can upload up to ${MAX_ATTACHMENTS} images only.`;
+  }
+
+  for (const file of files) {
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+      return 'Only JPG, PNG, or WEBP images are allowed.';
+    }
+
+    if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      return 'Each image must be smaller than 5 MB.';
+    }
+  }
+
+  return '';
+}
+
+function validateCreateTicketForm(form, { isAdmin }) {
+  const errors = {};
+  const trimmedTitle = String(form.title || '').trim();
+  const trimmedContact = String(form.preferredContact || '').trim();
+  const trimmedDescription = String(form.description || '').trim();
+
+  if (isWhitespaceOnly(form.title)) {
+    errors.title = 'Please enter a ticket title.';
+  } else if (trimmedTitle.length < 5) {
+    errors.title = 'Title must be at least 5 characters long.';
+  } else if (trimmedTitle.length > 120) {
+    errors.title = 'Title must be 120 characters or fewer.';
+  }
+
+  if (!form.resourceName) {
+    errors.resourceName = 'Please select a resource or location.';
+  }
+
+  if (!form.category) {
+    errors.category = 'Please choose a category.';
+  }
+
+  if (!form.priority) {
+    errors.priority = 'Please choose a priority.';
+  }
+
+  if (!trimmedContact && !isAdmin) {
+    errors.preferredContact = 'Please enter an email address or phone number for updates.';
+  } else if (trimmedContact && !isValidEmail(trimmedContact) && !isValidPhone(trimmedContact)) {
+    errors.preferredContact = 'Please enter a valid email address or phone number.';
+  }
+
+  if (isWhitespaceOnly(form.description)) {
+    errors.description = 'Please describe the incident.';
+  } else if (trimmedDescription.length > 1500) {
+    errors.description = 'Description must be 1500 characters or fewer.';
+  }
+
+  if (
+    trimmedTitle
+    && trimmedDescription
+    && trimmedTitle.toLowerCase() === trimmedDescription.toLowerCase()
+  ) {
+    errors.description = 'Description should add more detail instead of repeating the title.';
+  }
+
+  const attachmentError = validateAttachmentFiles(form.attachments);
+  if (attachmentError) {
+    errors.attachments = attachmentError;
+  }
+
+  return errors;
 }
 
 export default function TicketsPage() {
@@ -93,18 +210,23 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
+  const [formErrors, setFormErrors] = useState({});
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modalStatus, setModalStatus] = useState('');
   const [modalTechnician, setModalTechnician] = useState('');
   const [modalResolution, setModalResolution] = useState('');
+  const [modalRejectionReason, setModalRejectionReason] = useState('');
   const [modalActionMessage, setModalActionMessage] = useState('');
   const [modalActionError, setModalActionError] = useState('');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState('');
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [deletingTicketId, setDeletingTicketId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
@@ -187,10 +309,13 @@ export default function TicketsPage() {
       setModalStatus('');
       setModalTechnician('');
       setModalResolution('');
+      setModalRejectionReason('');
       setModalActionMessage('');
       setModalActionError('');
       setComments([]);
       setNewComment('');
+      setEditingCommentId('');
+      setEditingCommentText('');
       setCommentsLoading(false);
       setCommentsError('');
       setAttachments([]);
@@ -226,6 +351,7 @@ export default function TicketsPage() {
     setModalStatus(selectedTicket.status || 'OPEN');
     setModalTechnician(selectedTicket.technicianId || selectedTicket.assigned || '');
     setModalResolution(selectedTicket.resolution === 'No resolution note yet.' ? '' : selectedTicket.resolution || '');
+    setModalRejectionReason(selectedTicket.rejectionReason || '');
     setModalActionMessage('');
     setModalActionError('');
     loadComments();
@@ -253,25 +379,80 @@ export default function TicketsPage() {
   });
 
   const assignedCount = visibleTickets.length;
+  const openCount = visibleTickets.filter((ticket) => ticket.status === 'OPEN').length;
   const inProgressCount = visibleTickets.filter((ticket) => ticket.status === 'IN_PROGRESS').length;
   const closedCount = visibleTickets.filter((ticket) => ticket.status === 'CLOSED').length;
+  const unassignedCount = visibleTickets.filter((ticket) => !ticket.technicianId && ticket.technicianName === 'Unassigned').length;
+  const activeFilterLabel = statusFilter === 'ALL' ? 'All statuses' : formatStatusLabel(statusFilter);
+  const roleQueueSummary = isAdmin
+    ? 'Full incident queue across the campus.'
+    : isTechnician
+      ? 'Only incidents assigned to you are shown here.'
+      : 'Only tickets you reported are shown here.';
+
+  const stats = [
+    {
+      label: isAdmin ? 'Queue volume' : isTechnician ? 'Assigned queue' : 'My incidents',
+      value: assignedCount,
+      meta: roleQueueSummary,
+      icon: ClipboardList,
+      tone: 'primary',
+    },
+    {
+      label: 'Open tickets',
+      value: openCount,
+      meta: 'New issues waiting for action',
+      icon: ShieldAlert,
+      tone: 'warning',
+    },
+    {
+      label: 'In progress',
+      value: inProgressCount,
+      meta: 'Work currently moving through resolution',
+      icon: Clock3,
+      tone: 'secondary',
+    },
+    {
+      label: isAdmin ? 'Unassigned' : 'Closed tickets',
+      value: isAdmin ? unassignedCount : closedCount,
+      meta: isAdmin ? 'Tickets that still need an owner' : 'Completed incidents in this view',
+      icon: isAdmin ? CircleDashed : CheckCircle2,
+      tone: isAdmin ? 'warning' : 'success',
+    },
+  ];
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+    setFormErrors((current) => {
+      if (!current[name]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[name];
+      return nextErrors;
+    });
   };
 
   const handleAttachmentChange = (event) => {
     const selectedAttachments = Array.from(event.target.files || []);
-
-    if (selectedAttachments.length > 3) {
-      alert('You can upload a maximum of 3 images.');
-    }
+    const trimmedAttachments = selectedAttachments.slice(0, MAX_ATTACHMENTS);
+    const attachmentError = validateAttachmentFiles(trimmedAttachments);
 
     setForm((current) => ({
       ...current,
-      attachments: selectedAttachments.slice(0, 3),
+      attachments: trimmedAttachments,
     }));
+    setFormErrors((current) => {
+      const nextErrors = { ...current };
+      if (attachmentError) {
+        nextErrors.attachments = attachmentError;
+      } else {
+        delete nextErrors.attachments;
+      }
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -279,8 +460,14 @@ export default function TicketsPage() {
 
     setError('');
     setSubmitMessage('');
+    const nextFormErrors = validateCreateTicketForm(form, { isAdmin });
+    setFormErrors(nextFormErrors);
 
-    const normalizedCategory = CATEGORY_MAP[form.category.trim().toLowerCase()] ?? 'OTHER';
+    if (Object.keys(nextFormErrors).length) {
+      return;
+    }
+
+    const normalizedCategory = form.category || 'OTHER';
     const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
     const selectedResource = resources.find((resource) => resource.id === form.resourceName);
     const location =
@@ -314,6 +501,7 @@ export default function TicketsPage() {
 
       await loadTickets();
       setForm(initialForm);
+      setFormErrors({});
       setSubmitMessage('Ticket created successfully.');
     } catch (submitError) {
       console.error('Failed to create ticket:', submitError);
@@ -330,19 +518,18 @@ export default function TicketsPage() {
     setModalActionError('');
 
     try {
+      if (modalStatus === 'REJECTED' && !modalRejectionReason.trim()) {
+        setModalActionError('Please provide a rejection reason before marking this ticket as rejected.');
+        return;
+      }
+
       await updateTicketStatus(
         selectedTicket.id,
         modalStatus,
-        currentUser?.id || currentUser?.name || '',
-        currentUser?.role || '',
+        modalStatus === 'REJECTED' ? modalRejectionReason.trim() : '',
       );
       if (!isTechnician) {
-        await assignTechnician(
-          selectedTicket.id,
-          modalTechnician,
-          currentUser?.id || currentUser?.name || '',
-          currentUser?.role || '',
-        );
+        await assignTechnician(selectedTicket.id, modalTechnician);
       }
       await updateTicketResolution(selectedTicket.id, modalResolution);
 
@@ -371,7 +558,6 @@ export default function TicketsPage() {
     try {
       await addComment(selectedTicket.id, {
         userId: currentUser?.id || currentUser?.name || 'admin1',
-        userRole: currentUser?.role || '',
         commentText: newComment,
       });
 
@@ -381,6 +567,77 @@ export default function TicketsPage() {
     } catch (commentError) {
       console.error('Failed to add comment:', commentError);
       setCommentsError(commentError.message || 'Failed to add comment.');
+    }
+  };
+
+  const canManageComment = (comment) =>
+    isAdmin
+    || comment?.userId === currentUser?.id
+    || comment?.userId === currentUser?.name;
+
+  const handleStartEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.commentText || '');
+    setCommentsError('');
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId('');
+    setEditingCommentText('');
+  };
+
+  const handleSaveEditedComment = async (comment) => {
+    if (!selectedTicket || !comment?.id || !editingCommentText.trim()) {
+      setCommentsError('Comment text cannot be empty.');
+      return;
+    }
+
+    setCommentsError('');
+
+    try {
+      await updateComment(selectedTicket.id, comment.id, {
+        userId: currentUser?.id || currentUser?.name || '',
+        commentText: editingCommentText.trim(),
+        admin: isAdmin,
+      });
+
+      const response = await getComments(selectedTicket.id);
+      setComments(response);
+      setEditingCommentId('');
+      setEditingCommentText('');
+    } catch (commentError) {
+      console.error('Failed to update comment:', commentError);
+      setCommentsError(commentError.message || 'Failed to update comment.');
+    }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    if (!selectedTicket || !comment?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this comment?');
+    if (!confirmed) {
+      return;
+    }
+
+    setCommentsError('');
+
+    try {
+      await deleteComment(selectedTicket.id, comment.id, {
+        userId: currentUser?.id || currentUser?.name || '',
+        admin: isAdmin,
+      });
+
+      const response = await getComments(selectedTicket.id);
+      setComments(response);
+      if (editingCommentId === comment.id) {
+        setEditingCommentId('');
+        setEditingCommentText('');
+      }
+    } catch (commentError) {
+      console.error('Failed to delete comment:', commentError);
+      setCommentsError(commentError.message || 'Failed to delete comment.');
     }
   };
 
@@ -398,6 +655,37 @@ export default function TicketsPage() {
       console.error('Failed to upload attachment:', attachmentError);
     }
   };
+
+  const handleDeleteTicket = async (ticket) => {
+    if (!isAdmin || !ticket?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete ticket "${ticket.title || ticket.id}"? This will also remove its comments and attachments.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingTicketId(ticket.id);
+    setError('');
+    setSubmitMessage('');
+
+    try {
+      await deleteTicket(ticket.id);
+      await loadTickets();
+      if (selectedTicket?.id === ticket.id) {
+        setSelectedTicket(null);
+      }
+      setSubmitMessage('Ticket deleted successfully.');
+    } catch (deleteError) {
+      console.error('Failed to delete ticket:', deleteError);
+      setError(deleteError.message || 'Failed to delete ticket.');
+    } finally {
+      setDeletingTicketId('');
+    }
+  };
+
+  const formErrorMessages = Object.values(formErrors);
 
   const ticketColumns = [
     {
@@ -427,22 +715,43 @@ export default function TicketsPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (ticket) => <StatusBadge status={ticket.status} />,
+      render: (ticket) => (
+        <div className={styles.statusCell}>
+          <StatusBadge status={ticket.status} />
+          {ticket.status === 'REJECTED' && ticket.rejectionReason ? (
+            <span className={styles.rejectionReasonText}>Reason: {ticket.rejectionReason}</span>
+          ) : null}
+        </div>
+      ),
     },
     {
       key: 'actions',
       header: 'Details',
       align: 'right',
       render: (ticket) => (
-        <Button variant="secondary" size="sm" onClick={() => setSelectedTicket(ticket)}>
-          View ticket
-        </Button>
+        <div className={styles.tableActions}>
+          <Button variant="secondary" size="sm" onClick={() => setSelectedTicket(ticket)}>
+            View ticket
+          </Button>
+          {isAdmin ? (
+            <Button
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              onClick={() => void handleDeleteTicket(ticket)}
+              disabled={deletingTicketId === ticket.id}
+            >
+              {deletingTicketId === ticket.id ? 'Deleting...' : 'Delete'}
+            </Button>
+          ) : null}
+        </div>
       ),
     },
   ];
 
   const createTicketSection = (
     <Card
+      className={styles.featureCard}
       title="Create incident ticket"
       subtitle={
         isAdmin
@@ -450,55 +759,71 @@ export default function TicketsPage() {
           : 'Keep the form realistic so mapping to the API stays straightforward.'
       }
     >
+      <div className={styles.cardHero}>
+        <span className={styles.cardEyebrow}>Incident intake</span>
+        <p className={styles.cardLead}>
+          Capture the issue clearly so comments, attachments, technician updates, and status changes all stay attached to one clean ticket flow.
+        </p>
+      </div>
       <form className={styles.formGrid} onSubmit={handleSubmit}>
-        <FormField id="title" label="Incident title">
-          <input
-            id="title"
-            type="text"
-            name="title"
-            className={fieldStyles.control}
-            value={form.title}
+        <div className={styles.formSplit}>
+          <FormField id="title" label="Incident title">
+            <input
+              id="title"
+              type="text"
+              name="title"
+              className={fieldStyles.control}
+              value={form.title}
+              onChange={handleInputChange}
+              placeholder="e.g. WiFi not working"
+              aria-invalid={Boolean(formErrors.title)}
+            />
+          </FormField>
+          <SelectField
+            id="resourceName"
+            label="Resource or location"
+            name="resourceName"
+            value={form.resourceName}
             onChange={handleInputChange}
-            placeholder="e.g. WiFi not working"
+            options={resourceOptions}
+            placeholder="Select a resource"
+            aria-invalid={Boolean(formErrors.resourceName)}
           />
-        </FormField>
-        <SelectField
-          id="resourceName"
-          label="Resource or location"
-          name="resourceName"
-          value={form.resourceName}
-          onChange={handleInputChange}
-          options={resourceOptions}
-          placeholder="Select a resource"
-        />
-        <FormField id="category" label="Category">
-          <input
+          <SelectField
             id="category"
+            label="Category"
             name="category"
-            className={fieldStyles.control}
             value={form.category}
             onChange={handleInputChange}
-            placeholder="e.g. HVAC, AV Equipment, Access Control"
+            options={CATEGORY_OPTIONS}
+            placeholder="Select a category"
+            aria-invalid={Boolean(formErrors.category)}
           />
-        </FormField>
-        <SelectField
-          id="priority"
-          label="Priority"
-          name="priority"
-          value={form.priority}
-          onChange={handleInputChange}
-          options={PRIORITY_OPTIONS}
-        />
-        <FormField id="preferredContact" label="Preferred contact">
-          <input
-            id="preferredContact"
-            name="preferredContact"
-            className={fieldStyles.control}
-            value={form.preferredContact}
+          <SelectField
+            id="priority"
+            label="Priority"
+            name="priority"
+            value={form.priority}
             onChange={handleInputChange}
-            placeholder="Phone or email for updates"
+            options={PRIORITY_OPTIONS}
+            aria-invalid={Boolean(formErrors.priority)}
           />
-        </FormField>
+          <FormField id="preferredContact" label="Preferred contact">
+            <input
+              id="preferredContact"
+              name="preferredContact"
+              className={fieldStyles.control}
+              value={form.preferredContact}
+              onChange={handleInputChange}
+              placeholder="Phone or email for updates"
+              aria-invalid={Boolean(formErrors.preferredContact)}
+            />
+          </FormField>
+          <div className={styles.formHintCard}>
+            <strong>Submission checklist</strong>
+            <span>Give a clear title, choose the right resource, set the urgency, and add enough detail for faster technician triage.</span>
+          </div>
+        </div>
         <TextAreaField
           id="description"
           label="Incident description"
@@ -506,6 +831,7 @@ export default function TicketsPage() {
           value={form.description}
           onChange={handleInputChange}
           hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
+          aria-invalid={Boolean(formErrors.description)}
         />
         <FormField id="attachments" label="Image attachments" hint="You can select up to 3 images for this incident.">
           <input
@@ -515,86 +841,140 @@ export default function TicketsPage() {
             multiple
             className={fieldStyles.control}
             onChange={handleAttachmentChange}
+            aria-invalid={Boolean(formErrors.attachments)}
           />
         </FormField>
+        {formErrorMessages.length ? (
+          <div className={styles.validationSummary} role="alert">
+            <strong>Please fix the following before submitting:</strong>
+            {formErrorMessages.map((message) => (
+              <span key={message}>{message}</span>
+            ))}
+          </div>
+        ) : null}
         {form.attachments.length ? (
-          <div className={styles.sidePanelList}>
+          <div className={styles.attachmentPreviewList}>
             {form.attachments.slice(0, 3).map((file) => (
-              <div key={`${file.name}-${file.lastModified}`} className={styles.sidePanelItem}>
+              <div key={`${file.name}-${file.lastModified}`} className={styles.attachmentPreviewItem}>
                 <strong>{file.name}</strong>
+                <span>Ready to upload after ticket creation</span>
               </div>
             ))}
           </div>
         ) : null}
-        <Button type="submit" icon={Wrench}>
-          Submit ticket
-        </Button>
-        {submitMessage ? <p className={styles.submitMessage}>{submitMessage}</p> : null}
+        <div className={styles.formActions}>
+          <Button type="submit" icon={Wrench}>
+            Submit ticket
+          </Button>
+          {submitMessage ? (
+            <div className={styles.inlineNotice} data-type="success">
+              <CheckCircle2 size={18} />
+              <span>{submitMessage}</span>
+            </div>
+          ) : null}
+        </div>
       </form>
     </Card>
   );
 
   const workflowPanelSection = (
     <Card
-      title={isTechnician ? 'Assigned work focus' : 'Technician assignment placeholder'}
+      className={styles.featureCard}
+      title={isTechnician ? 'Assigned work focus' : 'Workflow guide'}
       subtitle={
         isAdmin
-          ? 'Management actions, status flow, and technician assignment stay visible beside the queue.'
+          ? 'Admin workflow helper and queue management tools.'
           : isTechnician
-            ? 'This panel keeps current technician workflow priorities visible while backend actions grow over time.'
-            : 'The UI already reserves a clean space for assignment and SLA workflows.'
+            ? 'Track your assigned incidents and progress updates.'
+            : 'Understanding ticket lifecycle and status progression.'
       }
     >
+      <div className={styles.cardHero}>
+        <span className={styles.cardEyebrow}>{isTechnician ? 'Execution view' : 'Shared workflow'}</span>
+        <p className={styles.cardLead}>
+          Streamlined incident management with clear status tracking and technician coordination.
+        </p>
+      </div>
       <div className={styles.sidePanelList}>
-        {isTechnician ? (
+        <div className={styles.sidePanelItem}>
+          <strong>Workflow guide</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--primary)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>OPEN</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--warning)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>IN_PROGRESS</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--success)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>RESOLVED</span>
+            <span style={{ fontSize: '14px' }}>→</span>
+            <span style={{ 
+              padding: '2px 8px', 
+              backgroundColor: 'var(--text-muted)', 
+              color: 'white', 
+              borderRadius: '4px', 
+              fontSize: '12px',
+              fontWeight: '500'
+            }}>CLOSED</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-soft)', marginTop: '4px' }}>
+            REJECTED is available for admin-only exception handling.
+          </div>
+        </div>
+        
+        {isAdmin ? (
           <>
             <div className={styles.sidePanelItem}>
-              <strong>Assigned tickets</strong>
-              <span>{assignedCount}</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>In progress</strong>
-              <span>{inProgressCount}</span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>Closed</strong>
-              <span>{closedCount}</span>
+              <strong>Admin responsibilities</strong>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Review new incidents</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Assign technician</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Monitor progress</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Confirm resolution</span>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Close or reject when needed</span>
+              </div>
             </div>
           </>
-        ) : (
-          <>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Assignment' : 'Ticket workflow'}</strong>
-              <span>
-                {isAdmin
-                  ? 'Admin can assign technicians based on issue type, urgency, and availability.'
-                  : 'OPEN - IN_PROGRESS - RESOLVED - CLOSED. Admin may also mark a ticket as REJECTED when required.'}
-              </span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Status progression' : 'What happens after submission'}</strong>
-              <span>
-                {isAdmin
-                  ? 'OPEN - IN_PROGRESS - RESOLVED - CLOSED, with REJECTED available when necessary.'
-                  : 'Your ticket will be reviewed and may be assigned to a technician. You can track progress from your ticket list and ticket details.'}
-              </span>
-            </div>
-            <div className={styles.sidePanelItem}>
-              <strong>{isAdmin ? 'Queue oversight' : 'Evidence and comments'}</strong>
-              <span>
-                {isAdmin
-                  ? 'Review ticket priority, ownership, and progress from the management queue.'
-                  : 'You can upload up to 3 images when reporting an issue. Comments and attachments can be viewed from ticket details.'}
-              </span>
-            </div>
-          </>
-        )}
+        ) : null}
+        
+        <div className={styles.sidePanelItem}>
+          <strong>Queue focus</strong>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Prioritize high-priority tickets</span>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Review unassigned tickets first</span>
+            <span style={{ fontSize: '13px', color: 'var(--text)' }}>• Use comments and attachments as evidence</span>
+          </div>
+        </div>
       </div>
     </Card>
   );
 
   const queueSection = (
     <>
+      <section className={styles.statsGrid}>
+        {stats.map((stat) => (
+          <StatCard key={stat.label} {...stat} />
+        ))}
+      </section>
+
       <FilterPanel
         title={isAdmin ? 'Management queue' : isTechnician ? 'Assigned ticket queue' : 'Incident queue'}
         description={
@@ -622,17 +1002,38 @@ export default function TicketsPage() {
       </FilterPanel>
 
       <Card
+        className={styles.queueCard}
         title={isAdmin ? 'Ticket management table' : isTechnician ? 'Assigned tickets' : 'Ticket list'}
         subtitle={
           isAdmin
             ? 'This table is the primary workspace for reviewing ticket status, technician ownership, and operational flow.'
             : isTechnician
               ? 'Your assigned incidents stay at the center of the page so progress is easier to track.'
-              : 'Comments, assignment, and future evidence previews can all branch from this shared table row.'
+            : 'Comments, assignment, and future evidence previews can all branch from this shared table row.'
         }
       >
-        {loading ? <p>Loading tickets...</p> : null}
-        {error ? <p>{error}</p> : null}
+        <div className={styles.resultsHeader}>
+          <div className={styles.resultsSummary}>
+            <strong>{loading ? 'Loading incidents...' : `${visibleTickets.length} tickets visible`}</strong>
+            <span>
+              {loading
+                ? 'Syncing the latest ticket data from the backend.'
+                : `${roleQueueSummary} Active filter: ${activeFilterLabel}.`}
+            </span>
+          </div>
+          <div className={styles.resultsChips}>
+            <span className={styles.resultChip}>Open {openCount}</span>
+            <span className={styles.resultChip}>In progress {inProgressCount}</span>
+            <span className={styles.resultChip}>Closed {closedCount}</span>
+          </div>
+        </div>
+        {loading ? <p className={styles.infoText}>Loading tickets...</p> : null}
+        {error ? (
+          <div className={styles.inlineNotice} data-type="error">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        ) : null}
         {!loading && !error ? (
           <DataTable
             columns={ticketColumns}
@@ -668,6 +1069,20 @@ export default function TicketsPage() {
         }
       />
 
+      {submitMessage && !isUser ? (
+        <div className={styles.feedbackBanner} data-type="success" role="status" aria-live="polite">
+          <CheckCircle2 size={18} />
+          <span>{submitMessage}</span>
+        </div>
+      ) : null}
+
+      {error && !loading ? (
+        <div className={styles.feedbackBanner} data-type="error" role="alert">
+          <AlertCircle size={18} />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
       {isAdmin || isTechnician ? queueSection : null}
 
       <section className={styles.topGrid}>
@@ -688,151 +1103,255 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={() => setSelectedTicket(null)}>
                 Close
               </Button>
+              {isAdmin ? (
+                <Button
+                  variant="danger"
+                  icon={Trash2}
+                  onClick={() => void handleDeleteTicket(selectedTicket)}
+                  disabled={deletingTicketId === selectedTicket.id}
+                >
+                  {deletingTicketId === selectedTicket.id ? 'Deleting...' : 'Delete ticket'}
+                </Button>
+              ) : null}
               {!isUser ? <Button onClick={handleModalWorkflowUpdate}>Update workflow</Button> : null}
             </>
           ) : null
         }
       >
         {selectedTicket ? (
-          <div className={styles.modalGrid}>
-            <div className={styles.modalBlock}>
-              <span>Title</span>
-              <strong>{selectedTicket.title || 'Not provided'}</strong>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Description</span>
-              <p>{selectedTicket.description || 'Not provided'}</p>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Location</span>
-              <strong>{selectedTicket.location || 'Not provided'}</strong>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Priority</span>
-              <strong>{selectedTicket.priority || 'Not provided'}</strong>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Status</span>
-              {isUser ? (
+          <div className={styles.modalStack}>
+            <section className={styles.modalHero}>
+              <div className={styles.modalHeroCopy}>
+                <span className={styles.cardEyebrow}>Ticket overview</span>
+                <strong>{selectedTicket.title || 'Untitled ticket'}</strong>
+                <p>{selectedTicket.description || 'No description provided.'}</p>
+              </div>
+              <div className={styles.modalHeroMeta}>
                 <StatusBadge status={selectedTicket.status || 'OPEN'} />
-              ) : (
-                <select className={styles.select} value={modalStatus} onChange={(event) => setModalStatus(event.target.value)}>
-                  {TICKET_STATUS_OPTIONS.filter((status) => status !== 'ALL').map((status) => (
-                    <option key={status} value={status}>
-                      {status.replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Assigned technician</span>
-              {isUser || isTechnician ? (
-                <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
-              ) : (
-                <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
-                  <option value="">Unassigned</option>
-                  {technicianOptions.map((technician) => (
-                    <option key={technician.value} value={technician.value}>
-                      {technician.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Created by</span>
-              <strong>{selectedTicket.reporterName || selectedTicket.reporterId || 'Not provided'}</strong>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Created at</span>
-              <strong>{selectedTicket.createdAt ? formatDateTime(selectedTicket.createdAt) : 'Not provided'}</strong>
-            </div>
-            <div className={styles.modalBlock}>
-              <span>Updated at</span>
-              <strong>{selectedTicket.updatedAt ? formatDateTime(selectedTicket.updatedAt) : 'Not provided'}</strong>
-            </div>
-            <div className={styles.commentsPanel}>
-              <div className={styles.commentsHeader}>
-                <strong>Resolution</strong>
-                <UserRoundCog size={18} />
+                <span className={styles.priorityChip}>{formatPriorityLabel(selectedTicket.priority)}</span>
               </div>
-              {isUser ? (
-                <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
-              ) : (
-                <TextAreaField
-                  id="modalResolution"
-                  label="Resolution note"
-                  name="modalResolution"
-                  rows={4}
-                  value={modalResolution}
-                  onChange={(event) => setModalResolution(event.target.value)}
-                  hint="Add or update the current resolution note for this ticket."
-                />
-              )}
-            </div>
-            <div className={styles.commentsPanel}>
-              <div className={styles.commentsHeader}>
-                <strong>Comments and evidence</strong>
-                <UserRoundCog size={18} />
+            </section>
+
+            <div className={styles.modalFactsGrid}>
+              <div className={styles.modalBlock}>
+                <span>Location</span>
+                <strong>{selectedTicket.location || 'Not provided'}</strong>
               </div>
-              {commentsLoading ? <p>Loading comments...</p> : null}
-              {commentsError ? <p>{commentsError}</p> : null}
-              {!commentsLoading && !commentsError ? (
-                comments.length ? (
-                  comments.map((comment) => (
-                    <article key={comment.id} className={styles.comment}>
-                      <strong>{comment.userId || 'Unknown user'}</strong>
-                      <span>{comment.createdAt ? formatDateTime(comment.createdAt) : 'Not provided'}</span>
-                      <p>{comment.commentText || 'Not provided'}</p>
-                    </article>
-                  ))
-                ) : (
-                  <p className={styles.emptyComment}>No comments yet for this ticket.</p>
-                )
-              ) : null}
-              <TextAreaField
-                id="newComment"
-                label="Add comment"
-                name="newComment"
-                rows={3}
-                value={newComment}
-                onChange={(event) => setNewComment(event.target.value)}
-                hint="Add a short update or note for this ticket."
-              />
-              <Button variant="secondary" onClick={handleAddComment}>
-                Add Comment
-              </Button>
-              {!isUser ? (
-                <>
-                  <FormField id="attachmentUpload" label="Upload attachment">
-                    <input
-                      id="attachmentUpload"
-                      type="file"
-                      className={fieldStyles.control}
-                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+              <div className={styles.modalBlock}>
+                <span>Created by</span>
+                <strong>{selectedTicket.reporterName || selectedTicket.reporterId || 'Not provided'}</strong>
+              </div>
+              <div className={styles.modalBlock}>
+                <span>Created at</span>
+                <strong>{selectedTicket.createdAt ? formatDateTime(selectedTicket.createdAt) : 'Not provided'}</strong>
+              </div>
+              <div className={styles.modalBlock}>
+                <span>Updated at</span>
+                <strong>{selectedTicket.updatedAt ? formatDateTime(selectedTicket.updatedAt) : 'Not provided'}</strong>
+              </div>
+            </div>
+
+            <div className={styles.modalLayout}>
+              <div className={styles.modalMainColumn}>
+                <div className={styles.commentsPanel}>
+                  <div className={styles.commentsHeader}>
+                    <strong>Resolution</strong>
+                    <UserRoundCog size={18} />
+                  </div>
+                  {isUser ? (
+                    <p>{selectedTicket.resolution || 'No resolution note yet.'}</p>
+                  ) : (
+                    <TextAreaField
+                      id="modalResolution"
+                      label="Resolution note"
+                      name="modalResolution"
+                      rows={4}
+                      value={modalResolution}
+                      onChange={(event) => setModalResolution(event.target.value)}
+                      hint="Add or update the current resolution note for this ticket."
                     />
-                  </FormField>
-                  <Button variant="secondary" onClick={handleUploadAttachment}>
-                    Upload
-                  </Button>
-                </>
-              ) : null}
-              {attachments.length ? (
-                attachments.map((attachment) => (
-                  <article key={attachment.id} className={styles.comment}>
-                    <strong>{attachment.fileName || 'Unnamed file'}</strong>
-                    <a href={`http://localhost:8080/${attachment.filePath}`} target="_blank" rel="noreferrer">
-                      View attachment
-                    </a>
-                  </article>
-                ))
-              ) : (
-                <p className={styles.emptyComment}>No attachments yet for this ticket.</p>
-              )}
+                  )}
+                </div>
+
+                <div className={styles.commentsPanel}>
+                  <div className={styles.commentsHeader}>
+                    <strong>Comments and evidence</strong>
+                    <UserRoundCog size={18} />
+                  </div>
+                  {commentsLoading ? <p className={styles.infoText}>Loading comments...</p> : null}
+                  {commentsError ? (
+                    <div className={styles.inlineNotice} data-type="error">
+                      <AlertCircle size={18} />
+                      <span>{commentsError}</span>
+                    </div>
+                  ) : null}
+                  {!commentsLoading && !commentsError ? (
+                    comments.length ? (
+                      comments.map((comment) => (
+                        <article key={comment.id} className={styles.comment}>
+                          <div className={styles.commentHeaderRow}>
+                            <div className={styles.commentMeta}>
+                              <strong>{comment.userId || 'Unknown user'}</strong>
+                              <span>
+                                {comment.createdAt ? formatDateTime(comment.createdAt) : 'Not provided'}
+                                {comment.updatedAt ? ' · Edited' : ''}
+                              </span>
+                            </div>
+                            {canManageComment(comment) ? (
+                              <div className={styles.commentActions}>
+                                <Button variant="ghost" size="sm" onClick={() => handleStartEditComment(comment)}>
+                                  Edit
+                                </Button>
+                                <Button variant="danger" size="sm" onClick={() => void handleDeleteComment(comment)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                          {editingCommentId === comment.id ? (
+                            <>
+                              <TextAreaField
+                                id={`edit-comment-${comment.id}`}
+                                label="Edit comment"
+                                name={`edit-comment-${comment.id}`}
+                                rows={3}
+                                value={editingCommentText}
+                                onChange={(event) => setEditingCommentText(event.target.value)}
+                              />
+                              <div className={styles.commentEditActions}>
+                                <Button variant="secondary" size="sm" onClick={() => void handleSaveEditedComment(comment)}>
+                                  Save
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={handleCancelEditComment}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <p>{comment.commentText || 'Not provided'}</p>
+                          )}
+                        </article>
+                      ))
+                    ) : (
+                      <p className={styles.emptyComment}>No comments yet for this ticket.</p>
+                    )
+                  ) : null}
+                  <TextAreaField
+                    id="newComment"
+                    label="Add comment"
+                    name="newComment"
+                    rows={3}
+                    value={newComment}
+                    onChange={(event) => setNewComment(event.target.value)}
+                    hint="Add a short update or note for this ticket."
+                  />
+                  <div className={styles.formActions}>
+                    <Button variant="secondary" onClick={handleAddComment}>
+                      Add Comment
+                    </Button>
+                  </div>
+                  {!isUser ? (
+                    <div className={styles.uploadPanel}>
+                      <FormField id="attachmentUpload" label="Upload attachment">
+                        <input
+                          id="attachmentUpload"
+                          type="file"
+                          className={fieldStyles.control}
+                          onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                        />
+                      </FormField>
+                      <Button variant="secondary" onClick={handleUploadAttachment}>
+                        Upload
+                      </Button>
+                    </div>
+                  ) : null}
+                  <div className={styles.attachmentList}>
+                    {attachments.length ? (
+                      attachments.map((attachment) => (
+                        <article key={attachment.id} className={styles.attachmentItem}>
+                          <strong>{attachment.fileName || 'Unnamed file'}</strong>
+                          <a href={`http://localhost:8080/${attachment.filePath}`} target="_blank" rel="noreferrer">
+                            View attachment
+                          </a>
+                        </article>
+                      ))
+                    ) : (
+                      <p className={styles.emptyComment}>No attachments yet for this ticket.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <aside className={styles.modalSideColumn}>
+                <div className={styles.modalBlock}>
+                  <span>Status</span>
+                  {isUser ? (
+                    <StatusBadge status={selectedTicket.status || 'OPEN'} />
+                  ) : (
+                    <select className={styles.select} value={modalStatus} onChange={(event) => setModalStatus(event.target.value)}>
+                      {TICKET_STATUS_OPTIONS.filter((status) => status !== 'ALL').map((status) => (
+                        <option key={status} value={status}>
+                          {status.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className={styles.modalBlock}>
+                  <span>Assigned technician</span>
+                  {isUser || isTechnician ? (
+                    <strong>{selectedTicket.technicianName || selectedTicket.assigned || 'Unassigned'}</strong>
+                  ) : (
+                    <select className={styles.select} value={modalTechnician} onChange={(event) => setModalTechnician(event.target.value)}>
+                      <option value="">Unassigned</option>
+                      {technicianOptions.map((technician) => (
+                        <option key={technician.value} value={technician.value}>
+                          {technician.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className={styles.modalBlock}>
+                  <span>Priority</span>
+                  <strong>{formatPriorityLabel(selectedTicket.priority)}</strong>
+                </div>
+                <div className={styles.modalBlock}>
+                  <span>Category</span>
+                  <strong>{selectedTicket.category || 'Not provided'}</strong>
+                </div>
+                {selectedTicket.status === 'REJECTED' || modalStatus === 'REJECTED' ? (
+                  <div className={styles.modalBlock}>
+                    <span>Rejection reason</span>
+                    {isUser ? (
+                      <strong>{selectedTicket.rejectionReason || 'Not provided'}</strong>
+                    ) : (
+                      <TextAreaField
+                        id="modalRejectionReason"
+                        label="Rejection reason"
+                        name="modalRejectionReason"
+                        rows={4}
+                        value={modalRejectionReason}
+                        onChange={(event) => setModalRejectionReason(event.target.value)}
+                        hint="Explain clearly why this ticket is being rejected."
+                      />
+                    )}
+                  </div>
+                ) : null}
+                {modalActionMessage ? (
+                  <div className={styles.inlineNotice} data-type="success">
+                    <CheckCircle2 size={18} />
+                    <span>{modalActionMessage}</span>
+                  </div>
+                ) : null}
+                {modalActionError ? (
+                  <div className={styles.inlineNotice} data-type="error">
+                    <AlertCircle size={18} />
+                    <span>{modalActionError}</span>
+                  </div>
+                ) : null}
+              </aside>
             </div>
-            {modalActionMessage ? <p className={styles.submitMessage}>{modalActionMessage}</p> : null}
-            {modalActionError ? <p>{modalActionError}</p> : null}
           </div>
         ) : null}
       </Modal>

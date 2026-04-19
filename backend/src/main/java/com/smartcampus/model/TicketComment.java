@@ -26,4 +26,6 @@ public class TicketComment {
     private String commentText;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }
