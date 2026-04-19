@@ -180,6 +180,18 @@
   flex-wrap: wrap;
 }
 
+.statusCell {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.rejectionReasonText {
+  color: var(--danger);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  max-width: 16rem;
+}
+
 .resultChip,
 .priorityChip {
   display: inline-flex;

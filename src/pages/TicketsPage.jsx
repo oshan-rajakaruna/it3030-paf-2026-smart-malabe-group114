@@ -638,7 +638,14 @@ export default function TicketsPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (ticket) => <StatusBadge status={ticket.status} />,
+      render: (ticket) => (
+        <div className={styles.statusCell}>
+          <StatusBadge status={ticket.status} />
+          {ticket.status === 'REJECTED' && ticket.rejectionReason ? (
+            <span className={styles.rejectionReasonText}>Reason: {ticket.rejectionReason}</span>
+          ) : null}
+        </div>
+      ),
     },
     {
       key: 'actions',
