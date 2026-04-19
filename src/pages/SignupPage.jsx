@@ -278,7 +278,7 @@ export default function SignupPage() {
 
           <div className={styles.formGroup}>
             <label className={styles.formLabel} htmlFor="signup-id">
-              ID (ADxxxx = Admin, TExxxx = Technician, ITxxxx = User)
+              ID (ADxxxx = Admin, TExxxx = Technician, ITxxxx = Student)
             </label>
             <input
               id="signup-id"
