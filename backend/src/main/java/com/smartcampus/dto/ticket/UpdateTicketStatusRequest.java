@@ -15,4 +15,8 @@ public class UpdateTicketStatusRequest {
     private TicketStatus status;
 
     private String rejectionReason;
+
+    private String updatedBy;
+
+    private String updatedByRole;
 }

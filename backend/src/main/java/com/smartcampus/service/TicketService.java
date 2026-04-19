@@ -527,6 +527,8 @@ public class TicketService {
         return userRepository.findById(resolvedId)
             .map(user -> user.getName() != null && !user.getName().isBlank() ? user.getName() : user.getEmail())
             .orElse(resolvedId);
+    }
+
     public void deleteTicket(String ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
