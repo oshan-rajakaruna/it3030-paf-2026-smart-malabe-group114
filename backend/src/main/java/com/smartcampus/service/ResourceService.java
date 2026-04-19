@@ -41,6 +41,8 @@ public class ResourceService {
     private final NotificationService notificationService;
 
     private static final LocalTime DAY_END = LocalTime.of(19, 0);
+    private static final LocalTime RESOURCE_AVAILABLE_FROM_MIN = LocalTime.of(8, 0);
+    private static final LocalTime RESOURCE_AVAILABLE_TO_MAX = LocalTime.of(20, 0);
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public List<AvailableNowSlot> getAvailableNowSlots() {
@@ -171,7 +173,8 @@ private boolean isActiveBooking(Booking booking) {
 
 
     public ResourceResponseDto createResource(CreateResourceRequestDto requestDto) {
-        validateCapacity(requestDto.getCapacity());
+        validateResourceCapacity(requestDto.getCapacity());
+        validateAvailabilityWindow(requestDto.getAvailableFrom(), requestDto.getAvailableTo());
         validateUniqueResourceCode(requestDto.getResourceCode(), null);
 
         Resource resource = new Resource();
@@ -226,6 +229,7 @@ private boolean isActiveBooking(Booking booking) {
         ResourceType type,
         String location,
         ResourceStatus status,
+        Boolean isActive,
         Integer minCapacity,
         String search
     ) {
@@ -233,7 +237,7 @@ private boolean isActiveBooking(Booking booking) {
 
         return resourceRepository.findAll()
             .stream()
-            .filter(resource -> matchesFilters(resource, type, location, status, minCapacity, search))
+            .filter(resource -> matchesFilters(resource, type, location, status, isActive, minCapacity, search))
             .map(this::mapToResponseDto)
             .toList();
     }
@@ -243,7 +247,8 @@ private boolean isActiveBooking(Booking booking) {
     }
 
     public ResourceResponseDto updateResource(String id, UpdateResourceRequestDto requestDto) {
-        validateCapacity(requestDto.getCapacity());
+        validateResourceCapacity(requestDto.getCapacity());
+        validateAvailabilityWindow(requestDto.getAvailableFrom(), requestDto.getAvailableTo());
 
         Resource existingResource = findResourceById(id);
         validateUniqueResourceCode(requestDto.getResourceCode(), existingResource.getId());
@@ -280,6 +285,26 @@ private boolean isActiveBooking(Booking booking) {
         }
     }
 
+    private void validateResourceCapacity(Integer capacity) {
+        if (capacity == null || capacity < 1 || capacity > 500) {
+            throw new IllegalArgumentException("Capacity must be between 1 and 500");
+        }
+    }
+
+    private void validateAvailabilityWindow(LocalTime availableFrom, LocalTime availableTo) {
+        if (availableFrom != null && availableFrom.isBefore(RESOURCE_AVAILABLE_FROM_MIN)) {
+            throw new IllegalArgumentException("Available from time cannot be earlier than 08:00");
+        }
+
+        if (availableTo != null && availableTo.isAfter(RESOURCE_AVAILABLE_TO_MAX)) {
+            throw new IllegalArgumentException("Available to time cannot be later than 20:00");
+        }
+
+        if (availableFrom != null && availableTo != null && !availableFrom.isBefore(availableTo)) {
+            throw new IllegalArgumentException("Available from time must be earlier than available to time");
+        }
+    }
+
     private void validateUniqueResourceCode(String resourceCode, String currentResourceId) {
         resourceRepository.findByResourceCode(resourceCode)
             .ifPresent(existingResource -> {
@@ -299,19 +324,22 @@ private boolean isActiveBooking(Booking booking) {
         ResourceType type,
         String location,
         ResourceStatus status,
+        Boolean isActive,
         Integer minCapacity,
         String search
     ) {
+        boolean resourceIsActive = resource.getIsActive() == null || resource.getIsActive();
         boolean matchesType = type == null || resource.getType() == type;
         boolean matchesLocation = location == null || location.isBlank()
             || safeValue(resource.getLocation()).toLowerCase().contains(location.toLowerCase());
         boolean matchesStatus = status == null || resource.getStatus() == status;
+        boolean matchesActiveState = isActive == null || isActive.equals(resourceIsActive);
         boolean matchesCapacity = minCapacity == null
             || (resource.getCapacity() != null && resource.getCapacity() >= minCapacity);
         boolean matchesSearch = search == null || search.isBlank()
             || buildSearchableText(resource).contains(search.toLowerCase());
 
-        return matchesType && matchesLocation && matchesStatus && matchesCapacity && matchesSearch;
+        return matchesType && matchesLocation && matchesStatus && matchesActiveState && matchesCapacity && matchesSearch;
     }
 
     private String buildSearchableText(Resource resource) {

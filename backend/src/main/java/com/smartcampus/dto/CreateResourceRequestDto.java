@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.smartcampus.model.enums.ResourceStatus;
 import com.smartcampus.model.enums.ResourceType;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -42,12 +43,14 @@ public class CreateResourceRequestDto {
     private String location;
 
     @JsonProperty("floor")
+    @NotBlank(message = "Floor is required")
     @Size(max = 50, message = "Floor must not exceed 50 characters")
     private String floor;
 
     @JsonProperty("capacity")
     @NotNull(message = "Capacity is required")
-    @Min(value = 0, message = "Capacity must be 0 or greater")
+    @Min(value = 1, message = "Capacity must be between 1 and 500")
+    @Max(value = 500, message = "Capacity must be between 1 and 500")
     private Integer capacity;
 
     @JsonProperty("status")
