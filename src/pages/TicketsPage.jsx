@@ -70,6 +70,10 @@ const PRIORITY_MAP = {
   high: 'HIGH',
 };
 
+const MAX_ATTACHMENTS = 3;
+const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 function mapTicketToUi(ticket, technicianLookup = {}) {
   const assignedTechnician = ticket.assignedTechnician ?? '';
   const technicianName = technicianLookup[assignedTechnician]?.name ?? assignedTechnician ?? 'Unassigned';
@@ -110,6 +114,92 @@ function formatPriorityLabel(priority) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function isWhitespaceOnly(value) {
+  return !String(value || '').trim();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value) {
+  return /^[+\d][\d\s\-()]{6,}$/.test(value);
+}
+
+function validateAttachmentFiles(files = []) {
+  if (files.length > MAX_ATTACHMENTS) {
+    return `You can upload up to ${MAX_ATTACHMENTS} images only.`;
+  }
+
+  for (const file of files) {
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+      return 'Only JPG, PNG, or WEBP images are allowed.';
+    }
+
+    if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      return 'Each image must be smaller than 5 MB.';
+    }
+  }
+
+  return '';
+}
+
+function validateCreateTicketForm(form, { isAdmin }) {
+  const errors = {};
+  const trimmedTitle = String(form.title || '').trim();
+  const trimmedContact = String(form.preferredContact || '').trim();
+  const trimmedDescription = String(form.description || '').trim();
+
+  if (isWhitespaceOnly(form.title)) {
+    errors.title = 'Please enter a ticket title.';
+  } else if (trimmedTitle.length < 5) {
+    errors.title = 'Title must be at least 5 characters long.';
+  } else if (trimmedTitle.length > 120) {
+    errors.title = 'Title must be 120 characters or fewer.';
+  }
+
+  if (!form.resourceName) {
+    errors.resourceName = 'Please select a resource or location.';
+  }
+
+  if (!form.category) {
+    errors.category = 'Please choose a category.';
+  }
+
+  if (!form.priority) {
+    errors.priority = 'Please choose a priority.';
+  }
+
+  if (!trimmedContact && !isAdmin) {
+    errors.preferredContact = 'Please enter an email address or phone number for updates.';
+  } else if (trimmedContact && !isValidEmail(trimmedContact) && !isValidPhone(trimmedContact)) {
+    errors.preferredContact = 'Please enter a valid email address or phone number.';
+  }
+
+  if (isWhitespaceOnly(form.description)) {
+    errors.description = 'Please describe the incident.';
+  } else if (trimmedDescription.length < 20) {
+    errors.description = 'Description must be at least 20 characters so technicians can understand the issue.';
+  } else if (trimmedDescription.length > 1500) {
+    errors.description = 'Description must be 1500 characters or fewer.';
+  }
+
+  if (
+    trimmedTitle
+    && trimmedDescription
+    && trimmedTitle.toLowerCase() === trimmedDescription.toLowerCase()
+  ) {
+    errors.description = 'Description should add more detail instead of repeating the title.';
+  }
+
+  const attachmentError = validateAttachmentFiles(form.attachments);
+  if (attachmentError) {
+    errors.attachments = attachmentError;
+  }
+
+  return errors;
+}
+
 export default function TicketsPage() {
   const { currentUser } = useAuth();
   const isAdmin = currentUser.role === ROLES.ADMIN;
@@ -119,6 +209,7 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(initialForm);
+  const [formErrors, setFormErrors] = useState({});
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modalStatus, setModalStatus] = useState('');
   const [modalTechnician, setModalTechnician] = useState('');
@@ -325,19 +416,35 @@ export default function TicketsPage() {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+    setFormErrors((current) => {
+      if (!current[name]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[name];
+      return nextErrors;
+    });
   };
 
   const handleAttachmentChange = (event) => {
     const selectedAttachments = Array.from(event.target.files || []);
-
-    if (selectedAttachments.length > 3) {
-      alert('You can upload a maximum of 3 images.');
-    }
+    const trimmedAttachments = selectedAttachments.slice(0, MAX_ATTACHMENTS);
+    const attachmentError = validateAttachmentFiles(trimmedAttachments);
 
     setForm((current) => ({
       ...current,
-      attachments: selectedAttachments.slice(0, 3),
+      attachments: trimmedAttachments,
     }));
+    setFormErrors((current) => {
+      const nextErrors = { ...current };
+      if (attachmentError) {
+        nextErrors.attachments = attachmentError;
+      } else {
+        delete nextErrors.attachments;
+      }
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -345,6 +452,12 @@ export default function TicketsPage() {
 
     setError('');
     setSubmitMessage('');
+    const nextFormErrors = validateCreateTicketForm(form, { isAdmin });
+    setFormErrors(nextFormErrors);
+
+    if (Object.keys(nextFormErrors).length) {
+      return;
+    }
 
     const normalizedCategory = form.category || 'OTHER';
     const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
@@ -380,6 +493,7 @@ export default function TicketsPage() {
 
       await loadTickets();
       setForm(initialForm);
+      setFormErrors({});
       setSubmitMessage('Ticket created successfully.');
     } catch (submitError) {
       console.error('Failed to create ticket:', submitError);
@@ -483,6 +597,8 @@ export default function TicketsPage() {
     }
   };
 
+  const formErrorMessages = Object.values(formErrors);
+
   const ticketColumns = [
     {
       key: 'title',
@@ -565,6 +681,7 @@ export default function TicketsPage() {
               value={form.title}
               onChange={handleInputChange}
               placeholder="e.g. WiFi not working"
+              aria-invalid={Boolean(formErrors.title)}
             />
           </FormField>
           <SelectField
@@ -575,6 +692,7 @@ export default function TicketsPage() {
             onChange={handleInputChange}
             options={resourceOptions}
             placeholder="Select a resource"
+            aria-invalid={Boolean(formErrors.resourceName)}
           />
           <SelectField
             id="category"
@@ -584,6 +702,7 @@ export default function TicketsPage() {
             onChange={handleInputChange}
             options={CATEGORY_OPTIONS}
             placeholder="Select a category"
+            aria-invalid={Boolean(formErrors.category)}
           />
           <SelectField
             id="priority"
@@ -592,6 +711,7 @@ export default function TicketsPage() {
             value={form.priority}
             onChange={handleInputChange}
             options={PRIORITY_OPTIONS}
+            aria-invalid={Boolean(formErrors.priority)}
           />
           <FormField id="preferredContact" label="Preferred contact">
             <input
@@ -601,6 +721,7 @@ export default function TicketsPage() {
               value={form.preferredContact}
               onChange={handleInputChange}
               placeholder="Phone or email for updates"
+              aria-invalid={Boolean(formErrors.preferredContact)}
             />
           </FormField>
           <div className={styles.formHintCard}>
@@ -615,6 +736,7 @@ export default function TicketsPage() {
           value={form.description}
           onChange={handleInputChange}
           hint="Future enhancement: attach up to 3 evidence images after backend storage is ready."
+          aria-invalid={Boolean(formErrors.description)}
         />
         <FormField id="attachments" label="Image attachments" hint="You can select up to 3 images for this incident.">
           <input
@@ -624,8 +746,17 @@ export default function TicketsPage() {
             multiple
             className={fieldStyles.control}
             onChange={handleAttachmentChange}
+            aria-invalid={Boolean(formErrors.attachments)}
           />
         </FormField>
+        {formErrorMessages.length ? (
+          <div className={styles.validationSummary} role="alert">
+            <strong>Please fix the following before submitting:</strong>
+            {formErrorMessages.map((message) => (
+              <span key={message}>{message}</span>
+            ))}
+          </div>
+        ) : null}
         {form.attachments.length ? (
           <div className={styles.attachmentPreviewList}>
             {form.attachments.slice(0, 3).map((file) => (

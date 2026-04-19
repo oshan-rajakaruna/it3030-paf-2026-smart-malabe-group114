@@ -129,6 +129,25 @@
   flex-wrap: wrap;
 }
 
+.validationSummary {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.validationSummary strong {
+  font-size: 0.92rem;
+}
+
+.validationSummary span {
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .resultsHeader {
   display: flex;
   align-items: flex-start;
