@@ -7,11 +7,18 @@ import com.smartcampus.dto.CheckedInBookingRow;
 import com.smartcampus.model.Booking;
 import com.smartcampus.model.Checkin;
 import com.smartcampus.model.Resource;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.CheckinRepository;
 import com.smartcampus.repository.ResourceRepository;
 import com.smartcampus.repository.rolemanagement.UserRepository;
+import com.smartcampus.service.rolemanagement.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +36,8 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @Service
 public class BookingService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookingService.class);
+
     @Autowired
     private BookingRepository repo;
 
@@ -41,11 +50,15 @@ public class BookingService {
     @Autowired
     private CheckinRepository checkinRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
     private static final DateTimeFormatter CHECKIN_TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
     private static final DateTimeFormatter SLOT_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter CHECKIN_AT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private static final long CANCELLATION_NOTICE_HOURS = 12;
 
     public Booking createBooking(Booking booking) {
         LocalDateTime now = LocalDateTime.now();
@@ -79,7 +92,23 @@ public class BookingService {
         booking.setCreatedAt(now);
         booking.setUpdatedAt(now);
 
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        try {
+            notificationService.notifyRole(
+                NotificationAudienceRole.ADMIN,
+                "New Booking Request",
+                "A new booking request was created" + (saved.getId() != null ? " (Booking " + saved.getId() + ")." : "."),
+                NotificationModule.BOOKING,
+                NotificationPriority.HIGH,
+                NotificationChannel.WEB,
+                saved.getUserId()
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Booking created but admin notification failed for bookingId={}", saved.getId(), notificationError);
+        }
+
+        return saved;
     }
 
     public List<Booking> getAllBookings() {
@@ -174,11 +203,14 @@ public class BookingService {
     }
 
     public void deleteBooking(String id) {
+        Booking booking = repo.findById(id).orElseThrow();
+        validateCancellationWindow(booking);
         repo.deleteById(id);
     }
 
     public Booking updateBooking(String id, Booking incomingBooking) {
         Booking booking = repo.findById(id).orElseThrow();
+        boolean wasDateChangeApproved = Boolean.TRUE.equals(booking.getDateChangeApproved());
 
         validateBookingWindow(
             incomingBooking.getResourceId(),
@@ -195,9 +227,6 @@ public class BookingService {
         booking.setEndTime(incomingBooking.getEndTime());
         booking.setDescription(incomingBooking.getDescription());
         booking.setAttendeesCount(incomingBooking.getAttendeesCount());
-        if (incomingBooking.getStatus() != null && !incomingBooking.getStatus().isBlank()) {
-            booking.setStatus(incomingBooking.getStatus());
-        }
         booking.setUrgentApproval(incomingBooking.getUrgentApproval() != null ? incomingBooking.getUrgentApproval() : booking.getUrgentApproval());
         booking.setCheckedIn(incomingBooking.getCheckedIn() != null ? incomingBooking.getCheckedIn() : booking.getCheckedIn());
         booking.setCheckedInAt(incomingBooking.getCheckedInAt() != null ? incomingBooking.getCheckedInAt() : booking.getCheckedInAt());
@@ -210,9 +239,34 @@ public class BookingService {
         booking.setPreviousDate(incomingBooking.getPreviousDate());
         booking.setPreviousStartTime(incomingBooking.getPreviousStartTime());
         booking.setPreviousEndTime(incomingBooking.getPreviousEndTime());
+
+        // Date-change workflow status:
+        // - request sent -> PENDING
+        // - request approved -> APPROVED
+        if (Boolean.TRUE.equals(booking.getDateChangeRequested())) {
+            booking.setStatus("PENDING");
+        } else if (Boolean.TRUE.equals(booking.getDateChangeApproved())) {
+            booking.setStatus("APPROVED");
+        } else if (incomingBooking.getStatus() != null && !incomingBooking.getStatus().isBlank()) {
+            booking.setStatus(incomingBooking.getStatus());
+        }
+
         booking.setUpdatedAt(LocalDateTime.now());
 
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        boolean isDateChangeApprovedNow = Boolean.TRUE.equals(saved.getDateChangeApproved());
+        if (!wasDateChangeApproved && isDateChangeApprovedNow) {
+            notifyBookingUser(
+                saved,
+                "Date Change Approved",
+                buildDateChangeApprovedMessage(saved),
+                NotificationPriority.NORMAL,
+                "ADMIN"
+            );
+        }
+
+        return saved;
     }
 
     private void validateBookingWindow(
@@ -388,7 +442,25 @@ public class BookingService {
         Booking booking = repo.findById(id).orElseThrow();
         booking.setStatus("APPROVED");
         booking.setUpdatedAt(LocalDateTime.now());
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        if (saved.getUserId() != null && !saved.getUserId().isBlank()) {
+            try {
+                notificationService.notifyUser(
+                    saved.getUserId(),
+                    "Booking Approved",
+                    "Your booking request has been approved.",
+                    NotificationModule.BOOKING,
+                    NotificationPriority.NORMAL,
+                    NotificationChannel.WEB,
+                    "ADMIN"
+                );
+            } catch (Exception notificationError) {
+                LOGGER.warn("Booking approved but user notification failed for bookingId={}", saved.getId(), notificationError);
+            }
+        }
+
+        return saved;
     }
 
     public Booking rejectBooking(String id, String reason) {
@@ -396,11 +468,53 @@ public class BookingService {
         booking.setStatus("REJECTED");
         booking.setRejectionReason(reason);
         booking.setUpdatedAt(LocalDateTime.now());
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+
+        String safeReason = (reason == null || reason.isBlank())
+            ? "Rejected by admin."
+            : reason.trim();
+        notifyBookingUser(
+            saved,
+            "Booking Rejected",
+            "Your booking request was rejected. Reason: " + safeReason,
+            NotificationPriority.HIGH,
+            "ADMIN"
+        );
+
+        return saved;
+    }
+
+    public Booking rejectDateChangeRequest(String id, String reason) {
+        Booking booking = repo.findById(id).orElseThrow();
+
+        String safeReason = (reason == null || reason.isBlank())
+            ? "Date change request rejected by admin."
+            : reason.trim();
+
+        booking.setDateChangeRequested(false);
+        booking.setDateChangeApproved(false);
+        booking.setRequestedDate(null);
+        booking.setRequestedStartTime(null);
+        booking.setRequestedEndTime(null);
+        booking.setStatus("APPROVED");
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        Booking saved = repo.save(booking);
+
+        notifyBookingUser(
+            saved,
+            "Date Change Rejected",
+            "Your date change request was rejected. Reason: " + safeReason,
+            NotificationPriority.NORMAL,
+            "ADMIN"
+        );
+
+        return saved;
     }
 
     public Booking cancelBooking(String id) {
         Booking booking = repo.findById(id).orElseThrow();
+        validateCancellationWindow(booking);
         booking.setStatus("CANCELLED");
         booking.setUpdatedAt(LocalDateTime.now());
         return repo.save(booking);
@@ -417,7 +531,14 @@ public class BookingService {
             .forEach(booking -> {
                 booking.setStatus("NO_SHOW");
                 booking.setUpdatedAt(now);
-                repo.save(booking);
+                Booking saved = repo.save(booking);
+                notifyBookingUser(
+                    saved,
+                    "Booking Marked as No Show",
+                    "Your booking was marked as NO_SHOW because check-in was not completed within 15 minutes of start time.",
+                    NotificationPriority.NORMAL,
+                    "SYSTEM"
+                );
             });
     }
 
@@ -469,7 +590,14 @@ public class BookingService {
             booking.setStatus("NO_SHOW");
             booking.setCheckedIn(false);
             booking.setUpdatedAt(now);
-            repo.save(booking);
+            Booking saved = repo.save(booking);
+            notifyBookingUser(
+                saved,
+                "Booking Marked as No Show",
+                "Your booking was marked as NO_SHOW because check-in was not completed within 15 minutes of start time.",
+                NotificationPriority.NORMAL,
+                "SYSTEM"
+            );
 
             response.setMessage("Check-in window closed \u274C You had until " + latestCheckinTime.format(CHECKIN_TIME_FORMATTER) + ".");
             response.setStartTime(booking.getStartTime() != null ? booking.getStartTime().format(SLOT_TIME_FORMATTER) : null);
@@ -507,5 +635,71 @@ public class BookingService {
         LocalTime bookingStartMinute = bookingStartTime.truncatedTo(ChronoUnit.MINUTES);
 
         return checkedInMinute.isAfter(bookingStartMinute);
+    }
+
+    private void notifyBookingUser(
+        Booking booking,
+        String title,
+        String message,
+        NotificationPriority priority,
+        String createdBy
+    ) {
+        if (booking.getUserId() == null || booking.getUserId().isBlank()) {
+            return;
+        }
+        try {
+            notificationService.notifyUser(
+                booking.getUserId(),
+                title,
+                message,
+                NotificationModule.BOOKING,
+                priority,
+                NotificationChannel.WEB,
+                createdBy
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn(
+                "Booking state changed but user notification failed for bookingId={}",
+                booking.getId(),
+                notificationError
+            );
+        }
+    }
+
+    private String buildDateChangeApprovedMessage(Booking booking) {
+        if (booking.getBookingDate() == null || booking.getStartTime() == null || booking.getEndTime() == null) {
+            return "Your date change request has been approved.";
+        }
+        return "Your date change request has been approved. New slot: "
+            + booking.getBookingDate().format(DATE_FORMATTER)
+            + " "
+            + booking.getStartTime().format(TIME_FORMATTER)
+            + " - "
+            + booking.getEndTime().format(TIME_FORMATTER)
+            + ".";
+    }
+
+    private void validateCancellationWindow(Booking booking) {
+        if (booking == null) {
+            return;
+        }
+
+        if ("REJECTED".equalsIgnoreCase(booking.getStatus())) {
+            return;
+        }
+
+        if (booking.getBookingDate() == null || booking.getStartTime() == null) {
+            return;
+        }
+
+        LocalDateTime bookingStartTime = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+        LocalDateTime cancellationDeadline = bookingStartTime.minusHours(CANCELLATION_NOTICE_HOURS);
+
+        if (LocalDateTime.now().isAfter(cancellationDeadline)) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Cannot cancel this booking. Cancellations must be made at least 12 hours before the booking start time."
+            );
+        }
     }
 }

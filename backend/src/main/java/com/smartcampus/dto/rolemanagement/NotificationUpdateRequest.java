@@ -1,10 +1,10 @@
 package com.smartcampus.dto.rolemanagement;
 
-import com.smartcampus.model.rolemanagement.NotificationStatus;
 import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
 import com.smartcampus.model.rolemanagement.NotificationChannel;
 import com.smartcampus.model.rolemanagement.NotificationModule;
 import com.smartcampus.model.rolemanagement.NotificationPriority;
+import com.smartcampus.model.rolemanagement.NotificationStatus;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class NotificationRequest {
+public class NotificationUpdateRequest {
   @NotBlank(message = "Title is required")
   @Size(max = 120, message = "Title must be at most 120 characters")
   private String title;
@@ -34,12 +34,10 @@ public class NotificationRequest {
   @NotNull(message = "Channel is required")
   private NotificationChannel channel;
 
+  @NotNull(message = "Priority is required")
   private NotificationPriority priority;
 
+  @NotNull(message = "Status is required")
   private NotificationStatus status;
-
-  private String createdBy;
 }
-
-
 

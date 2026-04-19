@@ -2,6 +2,8 @@ import { Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
+import CreateNotification from '../pages/admin/CreateNotification';
+import AdminNotificationsPage from '../pages/admin/NotificationsPage';
 import AdminPage from '../pages/AdminPage';
 import BookingsPage from '../pages/BookingsPage';
 import DashboardPage from '../pages/DashboardPage';
@@ -45,6 +47,22 @@ export default function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTE_PATHS.ADMIN_NOTIFICATIONS}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <AdminNotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTE_PATHS.ADMIN_NOTIFICATIONS_CREATE}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <CreateNotification />
             </ProtectedRoute>
           }
         />

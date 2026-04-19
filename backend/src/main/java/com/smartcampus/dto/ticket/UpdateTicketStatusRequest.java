@@ -13,4 +13,8 @@ import lombok.NoArgsConstructor;
 public class UpdateTicketStatusRequest {
 
     private TicketStatus status;
+
+    private String updatedBy;
+
+    private String updatedByRole;
 }

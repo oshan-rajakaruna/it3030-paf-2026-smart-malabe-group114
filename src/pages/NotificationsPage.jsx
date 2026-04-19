@@ -1,5 +1,6 @@
 import { BellRing, CheckCheck, Filter } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import styles from './NotificationsPage.module.css';
 import Button from '../components/ui/Button';
@@ -10,102 +11,85 @@ import PageHeader from '../components/ui/PageHeader';
 import SearchBar from '../components/ui/SearchBar';
 import StatCard from '../components/ui/StatCard';
 import { useAuth } from '../hooks/useAuth';
+import {
+  deleteNotification,
+  getNotificationContext,
+  getRoleNotifications,
+  getUserNotifications,
+  mapNotificationToUi,
+  markNotificationAsRead,
+} from '../services/notificationApi';
 
-const NOTIFICATION_API_BASE = 'http://localhost:8080/api/notifications';
-const AUTO_REFRESH_MS = 7000;
-
-const TYPE_BUCKETS = ['BOOKING', 'USER', 'SYSTEM'];
-
-function normalizeType(rawType) {
-  const normalized = String(rawType || '').toUpperCase();
-  if (normalized.includes('BOOKING')) {
-    return 'BOOKING';
-  }
-  if (normalized.includes('SIGNUP') || normalized.includes('ACCOUNT') || normalized.includes('USER')) {
-    return 'USER';
-  }
-  return 'SYSTEM';
-}
-
-function isReadNotification(notification) {
-  if (typeof notification?.read === 'boolean') {
-    return notification.read;
-  }
-  return String(notification?.status || '').toUpperCase() === 'READ';
-}
-
-function mapBackendNotification(notification) {
-  const type = normalizeType(notification?.type);
-  const read = isReadNotification(notification);
-  return {
-    id: notification?.id,
-    title: type === 'BOOKING' ? 'Booking update' : type === 'USER' ? 'User management update' : 'System update',
-    message: notification?.message || 'No message available.',
-    type,
-    createdAt: notification?.createdAt || new Date().toISOString(),
-    read,
-    actionPath: '/notifications',
-    actionLabel: read ? 'View details' : 'Mark as read',
-    status: String(notification?.status || (read ? 'READ' : 'UNREAD')).toUpperCase(),
-  };
-}
+const TYPE_FILTERS = ['ALL', 'AUTH', 'BOOKING', 'RESOURCE', 'TICKET'];
+const AUTO_REFRESH_MS = 5000;
 
 export default function NotificationsPage() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [moduleFilter, setModuleFilter] = useState('ALL');
   const deferredQuery = useDeferredValue(searchQuery.toLowerCase());
-  const roleFromLocalStorage = localStorage.getItem('role');
-
-  const loadNotifications = async () => {
-    try {
-      const role = String(roleFromLocalStorage || currentUser?.role || '').toUpperCase();
-      const userId = String(localStorage.getItem('userId') || currentUser?.id || '');
-
-      // Admin gets all system notifications from DB.
-      const endpoint =
-        role === 'ADMIN'
-          ? NOTIFICATION_API_BASE
-          : `${NOTIFICATION_API_BASE}/user/${encodeURIComponent(userId)}`;
-
-      const response = await fetch(endpoint, { method: 'GET' });
-      if (!response.ok) {
-        throw new Error(`Failed to load notifications (${response.status})`);
-      }
-
-      const payload = await response.json();
-      const mapped = (Array.isArray(payload) ? payload : [])
-        .map(mapBackendNotification)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      setNotifications(mapped);
-      setLoadError('');
-    } catch (error) {
-      console.error('Failed to fetch notifications', error);
-      setLoadError('Could not load notifications from the database.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
-    void loadNotifications();
+    let isMounted = true;
 
+    const loadNotifications = async () => {
+      try {
+        const context = getNotificationContext();
+        const role = context.role || String(currentUser?.role || '').toUpperCase();
+        const userId = context.userId || currentUser?.id;
+
+        let payload = [];
+        if (role === 'ADMIN') {
+          payload = await getRoleNotifications('ADMIN');
+        } else if (userId) {
+          payload = await getUserNotifications(userId);
+        }
+
+        const mapped = (Array.isArray(payload) ? payload : [])
+          .map((notification) => mapNotificationToUi(notification, { role }))
+          .filter((notification) => {
+            if (role === 'ADMIN') {
+              return true;
+            }
+
+            if (!userId) {
+              return !notification.userId;
+            }
+
+            return !notification.userId || String(notification.userId) === String(userId);
+          })
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        if (isMounted) {
+          setNotifications(mapped);
+          setLoadError('');
+          setIsLoading(false);
+        }
+      } catch (requestError) {
+        if (isMounted) {
+          console.error('Failed to fetch role-based notifications', requestError);
+          setLoadError(requestError?.message || 'Could not load notifications.');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadNotifications();
     const timer = window.setInterval(() => {
       void loadNotifications();
     }, AUTO_REFRESH_MS);
 
-    return () => window.clearInterval(timer);
-  }, [currentUser?.id, currentUser?.role, roleFromLocalStorage]);
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, [currentUser?.id, currentUser?.role]);
 
   const markSingleAsRead = async (notificationId) => {
-    if (!notificationId) {
-      return;
-    }
-
     setNotifications((current) =>
       current.map((notification) =>
         notification.id === notificationId ? { ...notification, read: true, status: 'READ' } : notification,
@@ -113,45 +97,22 @@ export default function NotificationsPage() {
     );
 
     try {
-      // Preferred endpoint in your requirement.
-      let response = await fetch(`${NOTIFICATION_API_BASE}/${encodeURIComponent(notificationId)}/read`, {
-        method: 'PUT',
-      });
-
-      // Backward-compatible fallback for current backend.
-      if (response.status === 404) {
-        response = await fetch(`${NOTIFICATION_API_BASE}/${encodeURIComponent(notificationId)}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'READ' }),
-        });
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to mark as read (${response.status})`);
-      }
-    } catch (error) {
-      console.error('Failed to mark notification as read', error);
-      setLoadError('Failed to update notification status.');
-      await loadNotifications();
+      await markNotificationAsRead(notificationId);
+    } catch (requestError) {
+      console.error('Failed to mark notification as read', requestError);
+      setLoadError(requestError?.message || 'Failed to update notification.');
     }
   };
 
-  const filteredNotifications = useMemo(() => notifications.filter((notification) => {
-    const matchesType = typeFilter === 'ALL' || notification.type === typeFilter;
-    const matchesQuery =
-      !deferredQuery ||
-      [notification.title, notification.message, notification.type].join(' ').toLowerCase().includes(deferredQuery);
-
-    return matchesType && matchesQuery;
-  }), [deferredQuery, notifications, typeFilter]);
-
-  const unreadCount = notifications.filter((notification) => !notification.read).length;
-  const filters = ['ALL', ...TYPE_BUCKETS];
-  const readProgress =
-    notifications.length === 0 ? '0%' : `${Math.round(((notifications.length - unreadCount) / notifications.length) * 100)}%`;
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await deleteNotification(notificationId);
+      setNotifications((current) => current.filter((notification) => notification.id !== notificationId));
+    } catch (requestError) {
+      console.error('Failed to delete notification', requestError);
+      setLoadError(requestError?.message || 'Failed to delete notification.');
+    }
+  };
 
   const handleMarkAllAsRead = async () => {
     const unreadIds = notifications.filter((notification) => !notification.read).map((notification) => notification.id);
@@ -161,20 +122,32 @@ export default function NotificationsPage() {
 
     setNotifications((current) => current.map((notification) => ({ ...notification, read: true, status: 'READ' })));
 
-    try {
-      await Promise.all(unreadIds.map((id) => markSingleAsRead(id)));
-      setLoadError('');
-    } catch (error) {
-      console.error('Failed to mark all as read', error);
-    }
+    await Promise.all(unreadIds.map((id) => markSingleAsRead(id)));
   };
+
+  const filteredNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => {
+        const matchesModule = moduleFilter === 'ALL' || notification.module === moduleFilter;
+        const haystack = [notification.title, notification.message, notification.module, notification.priority]
+          .join(' ')
+          .toLowerCase();
+        const matchesQuery = !deferredQuery || haystack.includes(deferredQuery);
+        return matchesModule && matchesQuery;
+      }),
+    [deferredQuery, moduleFilter, notifications],
+  );
+ 
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const readProgress =
+    notifications.length === 0 ? '0%' : `${Math.round(((notifications.length - unreadCount) / notifications.length) * 100)}%`;
 
   return (
     <div className={styles.page}>
       <PageHeader
         eyebrow="Notifications"
         title="Notification center"
-        description="Live notifications are loaded from the backend database for the current signed-in role."
+        description="Strict role-based notifications: admins see admin alerts, technicians see technician alerts, and students see personal alerts."
         actions={
           <Button icon={CheckCheck} onClick={handleMarkAllAsRead}>
             Mark all as read
@@ -189,29 +162,23 @@ export default function NotificationsPage() {
           icon={BellRing}
           label="Total alerts"
           value={notifications.length}
-          meta={isLoading ? 'Loading live notifications...' : 'All live notifications in the panel'}
+          meta={isLoading ? 'Loading targeted notifications...' : 'Live data from MongoDB'}
         />
-        <StatCard icon={Filter} label="Unread" value={unreadCount} meta="Unseen booking and ticket activity" tone="secondary" />
-        <StatCard
-          icon={CheckCheck}
-          label="Read progress"
-          value={readProgress}
-          meta="Useful for future user engagement metrics"
-          tone="success"
-        />
+        <StatCard icon={Filter} label="Unread" value={unreadCount} meta="Notifications requiring attention" tone="secondary" />
+        <StatCard icon={CheckCheck} label="Read progress" value={readProgress} meta="Overall notification hygiene" tone="success" />
       </section>
 
-      <FilterPanel title="Filter notifications" description="Search by title or narrow the list by event type.">
+      <FilterPanel title="Filter notifications" description="Search by keyword and narrow by module.">
         <div className={styles.filterGrid}>
           <SearchBar
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search notifications..."
           />
-          <select className={styles.select} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            {filters.map((type) => (
-              <option key={type} value={type}>
-                {type === 'ALL' ? 'All Types' : type}
+          <select className={styles.select} value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)}>
+            {TYPE_FILTERS.map((module) => (
+              <option key={module} value={module}>
+                {module === 'ALL' ? 'All Modules' : module}
               </option>
             ))}
           </select>
@@ -224,9 +191,13 @@ export default function NotificationsPage() {
             <NotificationItem
               key={notification.id}
               notification={notification}
+              onDelete={(id) => void handleDeleteNotification(id)}
               onClick={() => {
                 if (!notification.read) {
                   void markSingleAsRead(notification.id);
+                }
+                if (notification.actionPath) {
+                  navigate(notification.actionPath);
                 }
               }}
             />
@@ -234,11 +205,11 @@ export default function NotificationsPage() {
         ) : (
           <EmptyState
             icon={BellRing}
-            title={isLoading ? 'Loading notifications...' : 'No notifications match this view'}
+            title={isLoading ? 'Loading notifications...' : 'No notifications for this filter'}
             description={
               isLoading
-                ? 'Please wait while we load notifications from the database.'
-                : 'Try another keyword or switch the notification type filter.'
+                ? 'Fetching notifications from the backend.'
+                : 'Try a different module filter or search keyword.'
             }
           />
         )}

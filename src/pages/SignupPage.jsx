@@ -14,6 +14,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 const SIGNUP_API_URL = `${BACKEND_URL}/api/auth/signup`;
 const GOOGLE_AUTH_URL =
   import.meta.env.VITE_GOOGLE_AUTH_URL || `${BACKEND_URL}/oauth2/authorization/google?prompt=select_account`;
+const CAMPUS_ID_PATTERN = /^(IT|AD|TE)\d{4}$/i;
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export default function SignupPage() {
   };
 
   const validateEmail = (value) => /\S+@\S+\.\S+/.test(value);
+  const validateCampusId = (value) => CAMPUS_ID_PATTERN.test(value);
   const resolveRoleFromId = (value) => {
     const upper = value.toUpperCase();
     if (upper.startsWith('AD')) {
@@ -92,6 +94,10 @@ export default function SignupPage() {
     }
     if (!validateEmail(normalizedEmail)) {
       setFormError('Please enter a valid email address.');
+      return;
+    }
+    if (!validateCampusId(normalizedId)) {
+      setFormError('ID must be exactly in this format: IT1234, AD1234, or TE1234.');
       return;
     }
     if (!normalizedEmail.endsWith('@sliit.lk')) {
@@ -162,6 +168,10 @@ export default function SignupPage() {
 
     if (!normalizedName || !normalizedId) {
       setFormError('Name and ID are required before Google signup.');
+      return;
+    }
+    if (!validateCampusId(normalizedId)) {
+      setFormError('ID must be exactly in this format: IT1234, AD1234, or TE1234.');
       return;
     }
 
@@ -275,7 +285,8 @@ export default function SignupPage() {
               className={styles.formInput}
               type="text"
               value={userId}
-              onChange={(event) => setUserId(event.target.value)}
+              onChange={(event) => setUserId(event.target.value.toUpperCase())}
+              maxLength={6}
               placeholder="Student or staff ID"
             />
           </div>

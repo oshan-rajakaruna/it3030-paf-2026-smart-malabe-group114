@@ -12,4 +12,8 @@ import lombok.NoArgsConstructor;
 public class AssignTechnicianRequest {
 
     private String assignedTechnician;
+
+    private String assignedBy;
+
+    private String assignedByRole;
 }

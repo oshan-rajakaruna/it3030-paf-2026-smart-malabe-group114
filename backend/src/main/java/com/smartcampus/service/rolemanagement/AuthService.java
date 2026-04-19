@@ -22,14 +22,14 @@ import com.smartcampus.dto.rolemanagement.SignupResponse;
 import com.smartcampus.dto.rolemanagement.TwoFactorQrResponse;
 import com.smartcampus.exception.rolemanagement.BadRequestException;
 import com.smartcampus.exception.rolemanagement.UnauthorizedException;
-import com.smartcampus.model.rolemanagement.AppNotification;
-import com.smartcampus.model.rolemanagement.NotificationStatus;
-import com.smartcampus.model.rolemanagement.NotificationType;
+import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.model.rolemanagement.UserRole;
 import com.smartcampus.model.rolemanagement.UserStatus;
 import com.smartcampus.repository.rolemanagement.ExistingIdRepository;
-import com.smartcampus.repository.rolemanagement.NotificationRepository;
 import com.smartcampus.repository.rolemanagement.UserRepository;
 import com.smartcampus.util.QrCodeUtil;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
@@ -44,10 +44,11 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthService {
   private static final String GOOGLE_PROVIDER = "google";
   private static final String MFA_ISSUER = "SmartCampusHub";
+  private static final String CAMPUS_ID_REGEX = "^(IT|AD|TE)\\d{4}$";
 
   private final UserRepository userRepository;
   private final ExistingIdRepository existingIdRepository;
-  private final NotificationRepository notificationRepository;
+  private final NotificationService notificationService;
   private final PasswordEncoder passwordEncoder;
   private final QrCodeUtil qrCodeUtil;
   private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
@@ -57,6 +58,7 @@ public class AuthService {
     log.info("Processing signup for email={}, idNumber={}", request.getEmail(), request.getIdNumber());
     String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
     String normalizedIdNumber = request.getIdNumber().trim().toUpperCase(Locale.ROOT);
+    validateCampusIdNumber(normalizedIdNumber);
     validateCampusEmail(normalizedEmail, normalizedIdNumber);
     UserRole resolvedRole = resolveRoleFromIdNumber(normalizedIdNumber);
 
@@ -118,7 +120,16 @@ public class AuthService {
     if (normalizedIdNumber.startsWith("TE")) {
       return UserRole.TECHNICIAN;
     }
-    return UserRole.USER;
+    if (normalizedIdNumber.startsWith("IT")) {
+      return UserRole.USER;
+    }
+    throw new BadRequestException("ID number must start with IT, AD, or TE");
+  }
+
+  private void validateCampusIdNumber(String normalizedIdNumber) {
+    if (!normalizedIdNumber.matches(CAMPUS_ID_REGEX)) {
+      throw new BadRequestException("ID number must be in format IT1234, AD1234, or TE1234");
+    }
   }
 
   private void validateGoogleEmail(String normalizedEmail) {
@@ -137,6 +148,7 @@ public class AuthService {
 
     String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
     String normalizedIdNumber = request.getIdNumber().trim().toUpperCase(Locale.ROOT);
+    validateCampusIdNumber(normalizedIdNumber);
     validateGoogleEmail(normalizedEmail);
 
     UserRole derivedRole = resolveRoleFromIdNumber(normalizedIdNumber);
@@ -531,32 +543,15 @@ public class AuthService {
       ? "NO-ID"
       : pendingUser.getIdNumber();
     String message = "New signup pending approval: " + pendingUser.getName() + " (" + safeIdNumber + ")";
-    List<User> admins = userRepository.findByRole(UserRole.ADMIN);
-
-    if (admins.isEmpty()) {
-      notificationRepository.save(
-        AppNotification.builder()
-          .userId(null)
-          .message(message)
-          .type(NotificationType.SIGNUP_REVIEW)
-          .status(NotificationStatus.UNREAD)
-          .createdAt(LocalDateTime.now())
-          .build()
-      );
-      return;
-    }
-
-    List<AppNotification> notifications = admins.stream()
-      .map(admin -> AppNotification.builder()
-        .userId(admin.getId())
-        .message(message)
-        .type(NotificationType.SIGNUP_REVIEW)
-        .status(NotificationStatus.UNREAD)
-        .createdAt(LocalDateTime.now())
-        .build())
-      .toList();
-
-    notificationRepository.saveAll(notifications);
+    notificationService.notifyRole(
+      NotificationAudienceRole.ADMIN,
+      "New Signup Request",
+      message,
+      NotificationModule.AUTH,
+      NotificationPriority.HIGH,
+      NotificationChannel.WEB,
+      "SYSTEM"
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,6 +31,10 @@ public class SignupRequest {
   @JsonAlias({ "id_number", "idnumber", "id", "studentId", "staffId" })
   @NotBlank(message = "ID number is required")
   @Size(max = 80, message = "ID number must be at most 80 characters")
+  @Pattern(
+    regexp = "^(?i)(IT|AD|TE)\\d{4}$",
+    message = "ID number must be in format IT1234, AD1234, or TE1234"
+  )
   private String idNumber;
 }
 

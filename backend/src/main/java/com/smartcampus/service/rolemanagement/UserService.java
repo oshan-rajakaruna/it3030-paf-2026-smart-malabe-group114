@@ -1,6 +1,5 @@
 package com.smartcampus.service.rolemanagement;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -8,12 +7,11 @@ import org.springframework.stereotype.Service;
 
 import com.smartcampus.dto.rolemanagement.UserResponse;
 import com.smartcampus.exception.rolemanagement.ResourceNotFoundException;
-import com.smartcampus.model.rolemanagement.AppNotification;
-import com.smartcampus.model.rolemanagement.NotificationStatus;
-import com.smartcampus.model.rolemanagement.NotificationType;
+import com.smartcampus.model.rolemanagement.NotificationChannel;
+import com.smartcampus.model.rolemanagement.NotificationModule;
+import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
 import com.smartcampus.model.rolemanagement.UserStatus;
-import com.smartcampus.repository.rolemanagement.NotificationRepository;
 import com.smartcampus.repository.rolemanagement.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
   private final UserRepository userRepository;
-  private final NotificationRepository notificationRepository;
+  private final NotificationService notificationService;
 
   public List<UserResponse> getAllUsers() {
     return userRepository.findAll()
@@ -44,37 +42,55 @@ public class UserService {
   public UserResponse approveUser(String id) {
     User user = userRepository.findById(id)
       .orElseThrow(() -> new ResourceNotFoundException("User not found for id " + id));
+    UserStatus previousStatus = user.getStatus();
     user.setStatus(UserStatus.APPROVED);
     User saved = userRepository.save(user);
-
-    notificationRepository.save(
-      AppNotification.builder()
-        .userId(saved.getId())
-        .message("Your account has been approved. You can now log in.")
-        .type(NotificationType.ACCOUNT_APPROVED)
-        .status(NotificationStatus.UNREAD)
-        .createdAt(LocalDateTime.now())
-        .build()
-    );
+    if (previousStatus != UserStatus.APPROVED) {
+      try {
+        notificationService.notifyUser(
+          saved.getId(),
+          "Account Approved",
+          "Your account has been approved. You can now log in.",
+          NotificationModule.AUTH,
+          NotificationPriority.HIGH,
+          NotificationChannel.WEB,
+          "ADMIN"
+        );
+      } catch (Exception ignored) {
+        // Avoid breaking approval flow when notification persistence fails.
+      }
+    }
     return toResponse(saved);
   }
 
   public UserResponse rejectUser(String id) {
     User user = userRepository.findById(id)
       .orElseThrow(() -> new ResourceNotFoundException("User not found for id " + id));
+    UserStatus previousStatus = user.getStatus();
     user.setStatus(UserStatus.REJECTED);
     User saved = userRepository.save(user);
-
-    notificationRepository.save(
-      AppNotification.builder()
-        .userId(saved.getId())
-        .message("Your account request was rejected by admin.")
-        .type(NotificationType.ACCOUNT_REJECTED)
-        .status(NotificationStatus.UNREAD)
-        .createdAt(LocalDateTime.now())
-        .build()
-    );
+    if (previousStatus != UserStatus.REJECTED) {
+      try {
+        notificationService.notifyUser(
+          saved.getId(),
+          "Account Rejected",
+          "Your account request was rejected by admin.",
+          NotificationModule.AUTH,
+          NotificationPriority.HIGH,
+          NotificationChannel.WEB,
+          "ADMIN"
+        );
+      } catch (Exception ignored) {
+        // Avoid breaking rejection flow when notification persistence fails.
+      }
+    }
     return toResponse(saved);
+  }
+
+  public void deleteUser(String id) {
+    User user = userRepository.findById(id)
+      .orElseThrow(() -> new ResourceNotFoundException("User not found for id " + id));
+    userRepository.deleteById(user.getId());
   }
 
   private UserResponse toResponse(User user) {

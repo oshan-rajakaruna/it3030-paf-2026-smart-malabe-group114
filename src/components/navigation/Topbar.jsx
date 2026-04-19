@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { Bell, ChevronDown, LogOut, Menu, Settings } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import styles from './Topbar.module.css';
 import ThemeToggle from './ThemeToggle';
 import SearchBar from '../ui/SearchBar';
-import { mockNotifications } from '../../data/notifications';
+import NotificationBell from '../NotificationBell';
 import { useAuth } from '../../hooks/useAuth';
 import { formatRoleLabel, getInitials } from '../../utils/formatters';
 
 export default function Topbar({ onMenuToggle }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentUser, logout } = useAuth();
-  const unreadCount = mockNotifications.filter((notification) => !notification.read).length;
 
   return (
     <header className={styles.topbar}>
@@ -26,10 +25,7 @@ export default function Topbar({ onMenuToggle }) {
       </div>
 
       <div className={styles.actions}>
-        <Link to="/notifications" className={styles.iconButton} aria-label="Open notifications">
-          <Bell size={18} />
-          {unreadCount ? <span className={styles.badge}>{unreadCount}</span> : null}
-        </Link>
+        <NotificationBell />
 
         <ThemeToggle />
 

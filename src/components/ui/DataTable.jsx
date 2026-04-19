@@ -1,6 +1,7 @@
 import styles from './DataTable.module.css';
 import EmptyState from './EmptyState';
 import SkeletonBlock from './SkeletonBlock';
+import { joinClassNames } from '../../utils/formatters';
 
 export default function DataTable({ columns, rows, loading = false, emptyState }) {
   if (loading) {
@@ -27,22 +28,39 @@ export default function DataTable({ columns, rows, loading = false, emptyState }
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.align === 'right' ? styles.alignRight : undefined}>
+              <th
+                key={column.key}
+                className={joinClassNames(
+                  column.align === 'right' ? styles.alignRight : '',
+                  column.headerClassName,
+                )}
+                style={column.headerStyle}
+              >
                 {column.header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              {columns.map((column) => (
-                <td key={`${row.id}-${column.key}`} className={column.align === 'right' ? styles.alignRight : undefined}>
-                  {column.render ? column.render(row) : row[column.key]}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {rows.map((row, index) => {
+            const rowId = row.id ?? row._id ?? index;
+            return (
+              <tr key={rowId}>
+                {columns.map((column) => (
+                  <td
+                    key={`${rowId}-${column.key}`}
+                    className={joinClassNames(
+                      column.align === 'right' ? styles.alignRight : '',
+                      column.cellClassName,
+                    )}
+                    style={column.cellStyle}
+                  >
+                    {column.render ? column.render(row) : row[column.key]}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

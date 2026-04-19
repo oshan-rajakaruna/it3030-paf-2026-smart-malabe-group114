@@ -13,5 +13,7 @@ public class AddTicketCommentRequest {
 
     private String userId;
 
+    private String userRole;
+
     private String commentText;
 }

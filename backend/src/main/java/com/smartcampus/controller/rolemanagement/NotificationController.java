@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smartcampus.dto.rolemanagement.NotificationRequest;
 import com.smartcampus.dto.rolemanagement.NotificationResponse;
-import com.smartcampus.dto.rolemanagement.NotificationStatusUpdateRequest;
+import com.smartcampus.dto.rolemanagement.NotificationUpdateRequest;
 import com.smartcampus.service.rolemanagement.NotificationService;
 
 import jakarta.validation.Valid;
@@ -45,17 +45,27 @@ public class NotificationController {
     return ResponseEntity.ok(notificationService.getById(id));
   }
 
+  @GetMapping("/role/{role}")
+  public ResponseEntity<List<NotificationResponse>> getByRole(@PathVariable String role) {
+    return ResponseEntity.ok(notificationService.getByRole(role));
+  }
+
   @GetMapping("/user/{userId}")
   public ResponseEntity<List<NotificationResponse>> getByUserId(@PathVariable String userId) {
     return ResponseEntity.ok(notificationService.getByUserId(userId));
   }
 
+  @PutMapping("/{id}/read")
+  public ResponseEntity<NotificationResponse> markAsRead(@PathVariable String id) {
+    return ResponseEntity.ok(notificationService.markAsRead(id));
+  }
+
   @PutMapping("/{id}")
-  public ResponseEntity<NotificationResponse> updateStatus(
+  public ResponseEntity<NotificationResponse> update(
     @PathVariable String id,
-    @Valid @RequestBody NotificationStatusUpdateRequest request
+    @Valid @RequestBody NotificationUpdateRequest request
   ) {
-    return ResponseEntity.ok(notificationService.updateStatus(id, request.getStatus()));
+    return ResponseEntity.ok(notificationService.update(id, request));
   }
 
   @DeleteMapping("/{id}")
@@ -64,6 +74,4 @@ public class NotificationController {
     return ResponseEntity.noContent().build();
   }
 }
-
-
 
