@@ -57,23 +57,35 @@ public class NotificationService {
 
     return notificationRepository.findByRoleInOrderByCreatedAtDesc(allowedRoles)
       .stream()
+      .filter(notification -> notification.getUserId() == null || notification.getUserId().isBlank())
       .map(this::toResponse)
       .toList();
   }
 
   public List<NotificationResponse> getByUserId(String userId) {
-    User targetUser = userRepository.findById(userId).orElse(null);
+    if (userId == null || userId.isBlank()) {
+      throw new BadRequestException("User id is required");
+    }
+
+    String resolvedUserId = resolveUserId(userId);
+    User targetUser = userRepository.findById(resolvedUserId).orElse(null);
     NotificationAudienceRole userAudienceRole = targetUser == null
       ? NotificationAudienceRole.STUDENT
       : mapUserRoleToAudience(targetUser.getRole());
-    List<AppNotification> roleTargeted = notificationRepository.findByRoleInOrderByCreatedAtDesc(
+    List<AppNotification> broadcastRoleNotifications = notificationRepository.findByRoleInOrderByCreatedAtDesc(
       List.of(userAudienceRole, NotificationAudienceRole.ALL)
-    );
-    List<AppNotification> userTargeted = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    ).stream()
+      .filter(notification -> notification.getUserId() == null || notification.getUserId().isBlank())
+      .toList();
+    List<AppNotification> userTargeted = notificationRepository.findByUserIdOrderByCreatedAtDesc(resolvedUserId);
+    List<AppNotification> rawUserTargeted = resolvedUserId.equals(userId)
+      ? List.of()
+      : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
     Map<String, AppNotification> deduped = new LinkedHashMap<>();
-    roleTargeted.forEach(notification -> deduped.put(notification.getId(), notification));
+    broadcastRoleNotifications.forEach(notification -> deduped.put(notification.getId(), notification));
     userTargeted.forEach(notification -> deduped.put(notification.getId(), notification));
+    rawUserTargeted.forEach(notification -> deduped.put(notification.getId(), notification));
 
     return deduped.values()
       .stream()
@@ -220,6 +232,17 @@ public class NotificationService {
     }
     String trimmed = value.trim();
     return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  private String resolveUserId(String value) {
+    String normalized = value.trim();
+    if (userRepository.existsById(normalized)) {
+      return normalized;
+    }
+
+    return userRepository.findByEmailIgnoreCase(normalized)
+      .map(User::getId)
+      .orElse(normalized);
   }
 
   private NotificationAudienceRole parseAudienceRole(String role) {

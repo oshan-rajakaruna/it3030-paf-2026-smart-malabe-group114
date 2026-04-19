@@ -330,9 +330,19 @@ export default function TicketsPage() {
     setModalActionError('');
 
     try {
-      await updateTicketStatus(selectedTicket.id, modalStatus);
+      await updateTicketStatus(
+        selectedTicket.id,
+        modalStatus,
+        currentUser?.id || currentUser?.name || '',
+        currentUser?.role || '',
+      );
       if (!isTechnician) {
-        await assignTechnician(selectedTicket.id, modalTechnician);
+        await assignTechnician(
+          selectedTicket.id,
+          modalTechnician,
+          currentUser?.id || currentUser?.name || '',
+          currentUser?.role || '',
+        );
       }
       await updateTicketResolution(selectedTicket.id, modalResolution);
 
@@ -361,6 +371,7 @@ export default function TicketsPage() {
     try {
       await addComment(selectedTicket.id, {
         userId: currentUser?.id || currentUser?.name || 'admin1',
+        userRole: currentUser?.role || '',
         commentText: newComment,
       });
 

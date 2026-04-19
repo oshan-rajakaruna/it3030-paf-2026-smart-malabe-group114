@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import styles from './NotificationBell.module.css';
 import { useAuth } from '../hooks/useAuth';
@@ -18,6 +18,7 @@ const PREVIEW_LIMIT = 6;
 
 export default function NotificationBell() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [error, setError] = useState('');
@@ -39,14 +40,23 @@ export default function NotificationBell() {
         let payload = [];
         if (role === 'ADMIN') {
           payload = await getRoleNotifications('ADMIN');
-        } else if (role === 'TECHNICIAN') {
-          payload = await getRoleNotifications('TECHNICIAN');
         } else if (userId) {
           payload = await getUserNotifications(userId);
         }
 
         const normalized = (Array.isArray(payload) ? payload : [])
-          .map(mapNotificationToUi)
+          .map((notification) => mapNotificationToUi(notification, { role }))
+          .filter((notification) => {
+            if (role === 'ADMIN') {
+              return true;
+            }
+
+            if (!userId) {
+              return !notification.userId;
+            }
+
+            return !notification.userId || String(notification.userId) === String(userId);
+          })
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         if (isMounted) {
@@ -72,17 +82,24 @@ export default function NotificationBell() {
     };
   }, [currentUser?.id, currentUser?.role]);
 
-  const handleNotificationClick = async (notificationId) => {
+  const handleNotificationClick = async (clickedNotification) => {
     setNotifications((current) =>
       current.map((notification) =>
-        notification.id === notificationId ? { ...notification, read: true, status: 'READ' } : notification,
+        notification.id === clickedNotification.id ? { ...notification, read: true, status: 'READ' } : notification,
       ),
     );
 
     try {
-      await markNotificationAsRead(notificationId);
+      if (!clickedNotification.read) {
+        await markNotificationAsRead(clickedNotification.id);
+      }
     } catch (requestError) {
       console.error('Failed to mark notification as read from bell', requestError);
+    }
+
+    if (clickedNotification.actionPath) {
+      setIsOpen(false);
+      navigate(clickedNotification.actionPath);
     }
   };
 
@@ -111,10 +128,13 @@ export default function NotificationBell() {
                 key={notification.id}
                 type="button"
                 className={`${styles.item} ${!notification.read ? styles.unread : ''}`}
-                onClick={() => void handleNotificationClick(notification.id)}
+                onClick={() => void handleNotificationClick(notification)}
               >
                 <div className={styles.itemHeader}>
-                  <span className={styles.module}>{notification.module}</span>
+                  <div className={styles.itemTags}>
+                    <span className={styles.module}>{notification.moduleTag || notification.module}</span>
+                    <span className={styles.priority}>{notification.priorityTag || notification.priority}</span>
+                  </div>
                   {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
                 </div>
                 <p className={styles.itemTitle}>{notification.title}</p>
@@ -128,4 +148,3 @@ export default function NotificationBell() {
     </div>
   );
 }
-

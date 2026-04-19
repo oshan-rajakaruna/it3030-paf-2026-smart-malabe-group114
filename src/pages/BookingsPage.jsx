@@ -986,14 +986,23 @@ export default function BookingsPage() {
         let payload = [];
         if (role === 'ADMIN') {
           payload = await getRoleNotifications('ADMIN');
-        } else if (role === 'TECHNICIAN') {
-          payload = await getRoleNotifications('TECHNICIAN');
         } else if (userId) {
           payload = await getUserNotifications(userId);
         }
 
         const mapped = (Array.isArray(payload) ? payload : [])
-          .map(mapNotificationToUi)
+          .map((notification) => mapNotificationToUi(notification, { role }))
+          .filter((notification) => {
+            if (role === 'ADMIN') {
+              return true;
+            }
+
+            if (!userId) {
+              return !notification.userId;
+            }
+
+            return !notification.userId || String(notification.userId) === String(userId);
+          })
           .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
 
         if (isMounted) {

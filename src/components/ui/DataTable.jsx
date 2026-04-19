@@ -1,6 +1,7 @@
 import styles from './DataTable.module.css';
 import EmptyState from './EmptyState';
 import SkeletonBlock from './SkeletonBlock';
+import { joinClassNames } from '../../utils/formatters';
 
 export default function DataTable({ columns, rows, loading = false, emptyState }) {
   if (loading) {
@@ -27,7 +28,14 @@ export default function DataTable({ columns, rows, loading = false, emptyState }
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.align === 'right' ? styles.alignRight : undefined}>
+              <th
+                key={column.key}
+                className={joinClassNames(
+                  column.align === 'right' ? styles.alignRight : '',
+                  column.headerClassName,
+                )}
+                style={column.headerStyle}
+              >
                 {column.header}
               </th>
             ))}
@@ -37,7 +45,14 @@ export default function DataTable({ columns, rows, loading = false, emptyState }
           {rows.map((row) => (
             <tr key={row.id}>
               {columns.map((column) => (
-                <td key={`${row.id}-${column.key}`} className={column.align === 'right' ? styles.alignRight : undefined}>
+                <td
+                  key={`${row.id}-${column.key}`}
+                  className={joinClassNames(
+                    column.align === 'right' ? styles.alignRight : '',
+                    column.cellClassName,
+                  )}
+                  style={column.cellStyle}
+                >
                   {column.render ? column.render(row) : row[column.key]}
                 </td>
               ))}

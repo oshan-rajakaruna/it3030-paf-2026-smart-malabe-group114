@@ -5,7 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import com.smartcampus.dto.ticket.AddTicketCommentRequest;
@@ -22,10 +25,13 @@ import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
 import com.smartcampus.model.rolemanagement.NotificationChannel;
 import com.smartcampus.model.rolemanagement.NotificationModule;
 import com.smartcampus.model.rolemanagement.NotificationPriority;
+import com.smartcampus.model.rolemanagement.User;
+import com.smartcampus.model.rolemanagement.UserRole;
 import com.smartcampus.model.enums.TicketStatus;
 import com.smartcampus.repository.TicketAttachmentRepository;
 import com.smartcampus.repository.TicketCommentRepository;
 import com.smartcampus.repository.TicketRepository;
+import com.smartcampus.repository.rolemanagement.UserRepository;
 import com.smartcampus.service.rolemanagement.NotificationService;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
@@ -40,22 +46,26 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final TicketCommentRepository ticketCommentRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
 
     public TicketService(
         TicketRepository ticketRepository,
         TicketAttachmentRepository ticketAttachmentRepository,
         TicketCommentRepository ticketCommentRepository,
+        UserRepository userRepository,
         NotificationService notificationService
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketAttachmentRepository = ticketAttachmentRepository;
         this.ticketCommentRepository = ticketCommentRepository;
+        this.userRepository = userRepository;
         this.notificationService = notificationService;
     }
 
     public TicketResponse createTicket(CreateTicketRequest request) {
         LocalDateTime now = LocalDateTime.now();
+        String creatorId = resolveUserId(request.getCreatedBy());
         Ticket ticket = Ticket.builder()
             .title(request.getTitle())
             .description(request.getDescription())
@@ -63,7 +73,7 @@ public class TicketService {
             .category(request.getCategory())
             .priority(request.getPriority())
             .status(TicketStatus.OPEN)
-            .createdBy(request.getCreatedBy())
+            .createdBy(creatorId)
             .preferredContact(request.getPreferredContact())
             .createdAt(now)
             .updatedAt(now)
@@ -73,16 +83,16 @@ public class TicketService {
 
         try {
             notificationService.notifyRole(
-                NotificationAudienceRole.TECHNICIAN,
+                NotificationAudienceRole.ADMIN,
                 "New Ticket Created",
-                "A new support ticket was created: " + savedTicket.getTitle(),
+                "A user created a new support ticket: " + savedTicket.getTitle(),
                 NotificationModule.TICKET,
                 NotificationPriority.HIGH,
                 NotificationChannel.WEB,
-                savedTicket.getCreatedBy()
+                creatorId
             );
         } catch (Exception notificationError) {
-            LOGGER.warn("Ticket created but technician notification failed for ticketId={}", savedTicket.getId(), notificationError);
+            LOGGER.warn("Ticket created but admin notification failed for ticketId={}", savedTicket.getId(), notificationError);
         }
 
         return mapToResponse(savedTicket);
@@ -106,27 +116,35 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
+        String updaterId = resolveUserId(request.getUpdatedBy());
+        UserRole updaterRole = resolveRoleForActor(updaterId, request.getUpdatedByRole(), ticket);
+        TicketStatus previousStatus = ticket.getStatus();
+
         ticket.setStatus(request.getStatus());
         ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
-        if (updatedTicket.getStatus() == TicketStatus.RESOLVED
+
+        boolean changed = previousStatus != request.getStatus();
+        if (changed
+            && (updaterRole == UserRole.ADMIN || updaterRole == UserRole.TECHNICIAN)
             && updatedTicket.getCreatedBy() != null
             && !updatedTicket.getCreatedBy().isBlank()) {
-            try {
-                notificationService.notifyUser(
-                    updatedTicket.getCreatedBy(),
-                    "Ticket Resolved",
-                    "Your ticket has been resolved: " + updatedTicket.getTitle(),
-                    NotificationModule.TICKET,
-                    NotificationPriority.NORMAL,
-                    NotificationChannel.WEB,
-                    updatedTicket.getAssignedTechnician()
-                );
-            } catch (Exception notificationError) {
-                LOGGER.warn("Ticket resolved but user notification failed for ticketId={}", updatedTicket.getId(), notificationError);
-            }
+            String actorDisplay = updaterRole == UserRole.TECHNICIAN
+                ? "Technician"
+                : updaterRole == UserRole.ADMIN
+                    ? "Admin"
+                    : "System";
+            String statusLabel = request.getStatus() == null ? "UPDATED" : request.getStatus().name();
+
+            sendUserTicketNotification(
+                updatedTicket.getCreatedBy(),
+                "Ticket Status Updated",
+                actorDisplay + " updated your ticket status to " + statusLabel + ": " + updatedTicket.getTitle(),
+                updaterId
+            );
         }
+
         return mapToResponse(updatedTicket);
     }
 
@@ -134,10 +152,38 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
-        ticket.setAssignedTechnician(request.getAssignedTechnician());
+        String assignedTechnicianId = resolveUserId(request.getAssignedTechnician());
+        String assignedBy = resolveUserId(request.getAssignedBy());
+        UserRole assignedByRole = resolveRoleForActor(assignedBy, request.getAssignedByRole(), ticket);
+
+        ticket.setAssignedTechnician(assignedTechnicianId);
         ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+
+        if (assignedByRole == UserRole.ADMIN && assignedTechnicianId != null && !assignedTechnicianId.isBlank()) {
+            sendUserTicketNotification(
+                assignedTechnicianId,
+                "Ticket Assigned",
+                "A ticket has been assigned to you: " + updatedTicket.getTitle(),
+                assignedBy
+            );
+        }
+
+        if (assignedByRole == UserRole.ADMIN
+            && updatedTicket.getCreatedBy() != null
+            && !updatedTicket.getCreatedBy().isBlank()
+            && assignedTechnicianId != null
+            && !assignedTechnicianId.isBlank()) {
+            String technicianName = findUserDisplayName(assignedTechnicianId);
+            sendUserTicketNotification(
+                updatedTicket.getCreatedBy(),
+                "Technician Assigned",
+                "Admin assigned " + technicianName + " to your ticket: " + updatedTicket.getTitle(),
+                assignedBy
+            );
+        }
+
         return mapToResponse(updatedTicket);
     }
 
@@ -153,17 +199,21 @@ public class TicketService {
     }
 
     public TicketCommentResponse addComment(String ticketId, AddTicketCommentRequest request) {
-        ticketRepository.findById(ticketId)
+        Ticket ticket = ticketRepository.findById(ticketId)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        String commenterId = resolveUserId(request.getUserId());
+        UserRole commenterRole = resolveRoleForActor(commenterId, request.getUserRole(), ticket);
 
         TicketComment ticketComment = TicketComment.builder()
             .ticketId(ticketId)
-            .userId(request.getUserId())
+            .userId(commenterId)
             .commentText(request.getCommentText())
             .createdAt(LocalDateTime.now())
             .build();
 
         TicketComment savedComment = ticketCommentRepository.save(ticketComment);
+        dispatchCommentNotifications(ticket, savedComment, commenterRole);
         return mapToCommentResponse(savedComment);
     }
 
@@ -220,6 +270,220 @@ public class TicketService {
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
         return ticketAttachmentRepository.findByTicketId(ticketId);
+    }
+
+    private void dispatchCommentNotifications(Ticket ticket, TicketComment comment, UserRole commenterRole) {
+        String commentAuthorId = comment.getUserId();
+        String commentAuthorName = findUserDisplayName(commentAuthorId);
+        String commentText = comment.getCommentText() == null ? "" : comment.getCommentText().trim();
+        String commentPreview = commentText.length() > 120 ? commentText.substring(0, 120) + "..." : commentText;
+        String ticketTitle = ticket.getTitle() == null ? "Untitled ticket" : ticket.getTitle();
+
+        Set<String> notifiedUsers = new HashSet<>();
+        if (commentAuthorId != null && !commentAuthorId.isBlank()) {
+            notifiedUsers.add(commentAuthorId);
+        }
+
+        if (commenterRole == UserRole.ADMIN) {
+            notifyUserIfEligible(
+                ticket.getCreatedBy(),
+                notifiedUsers,
+                "Ticket Comment Added",
+                "Admin added a comment on your ticket \"" + ticketTitle + "\": " + commentPreview,
+                commentAuthorId
+            );
+            notifyUserIfEligible(
+                ticket.getAssignedTechnician(),
+                notifiedUsers,
+                "Ticket Comment Added",
+                "Admin added a comment on ticket \"" + ticketTitle + "\": " + commentPreview,
+                commentAuthorId
+            );
+            return;
+        }
+
+        if (commenterRole == UserRole.TECHNICIAN) {
+            notifyUserIfEligible(
+                ticket.getCreatedBy(),
+                notifiedUsers,
+                "Ticket Comment Added",
+                "Technician " + commentAuthorName + " added a comment on your ticket \"" + ticketTitle + "\": " + commentPreview,
+                commentAuthorId
+            );
+            sendRoleTicketNotification(
+                NotificationAudienceRole.ADMIN,
+                "Ticket Comment Added",
+                "Technician " + commentAuthorName + " commented on ticket \"" + ticketTitle + "\".",
+                commentAuthorId
+            );
+            return;
+        }
+
+        if (commenterRole == UserRole.USER) {
+            notifyUserIfEligible(
+                ticket.getAssignedTechnician(),
+                notifiedUsers,
+                "User Comment Added",
+                "User added a comment on assigned ticket \"" + ticketTitle + "\": " + commentPreview,
+                commentAuthorId
+            );
+            sendRoleTicketNotification(
+                NotificationAudienceRole.ADMIN,
+                "User Comment Added",
+                "User " + commentAuthorName + " commented on ticket \"" + ticketTitle + "\".",
+                commentAuthorId
+            );
+            return;
+        }
+
+        notifyUserIfEligible(
+            ticket.getCreatedBy(),
+            notifiedUsers,
+            "Ticket Comment Added",
+            commentAuthorName + " added a comment on ticket \"" + ticketTitle + "\": " + commentPreview,
+            commentAuthorId
+        );
+    }
+
+    private void notifyUserIfEligible(
+        String recipientId,
+        Set<String> notifiedUsers,
+        String title,
+        String message,
+        String actorId
+    ) {
+        if (recipientId == null || recipientId.isBlank()) {
+            return;
+        }
+
+        String resolvedRecipientId = resolveUserId(recipientId);
+        if (resolvedRecipientId == null || resolvedRecipientId.isBlank() || notifiedUsers.contains(resolvedRecipientId)) {
+            return;
+        }
+
+        sendUserTicketNotification(resolvedRecipientId, title, message, actorId);
+        notifiedUsers.add(resolvedRecipientId);
+    }
+
+    private void sendUserTicketNotification(String userId, String title, String message, String actorId) {
+        if (userId == null || userId.isBlank()) {
+            return;
+        }
+
+        String resolvedUserId = resolveUserId(userId);
+        if (resolvedUserId == null || resolvedUserId.isBlank()) {
+            return;
+        }
+
+        try {
+            notificationService.notifyUser(
+                resolvedUserId,
+                title,
+                message,
+                NotificationModule.TICKET,
+                NotificationPriority.NORMAL,
+                NotificationChannel.WEB,
+                actorId
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Ticket notification dispatch failed for userId={} title={}", resolvedUserId, title, notificationError);
+        }
+    }
+
+    private void sendRoleTicketNotification(
+        NotificationAudienceRole audienceRole,
+        String title,
+        String message,
+        String actorId
+    ) {
+        try {
+            notificationService.notifyRole(
+                audienceRole,
+                title,
+                message,
+                NotificationModule.TICKET,
+                NotificationPriority.NORMAL,
+                NotificationChannel.WEB,
+                actorId
+            );
+        } catch (Exception notificationError) {
+            LOGGER.warn("Ticket role notification dispatch failed for audience={} title={}", audienceRole, title, notificationError);
+        }
+    }
+
+    private String resolveUserId(String userIdentifier) {
+        if (userIdentifier == null || userIdentifier.isBlank()) {
+            return userIdentifier;
+        }
+
+        String normalized = userIdentifier.trim();
+
+        if (userRepository.existsById(normalized)) {
+            return normalized;
+        }
+
+        return userRepository.findByEmailIgnoreCase(normalized)
+            .map(User::getId)
+            .orElseGet(() ->
+                userRepository.findAll().stream()
+                    .filter(user -> normalized.equalsIgnoreCase(user.getName()))
+                    .findFirst()
+                    .map(User::getId)
+                    .orElse(normalized)
+            );
+    }
+
+    private UserRole resolveRoleForActor(String actorId, String roleHint, Ticket ticket) {
+        if (actorId != null && !actorId.isBlank()) {
+            UserRole storedRole = userRepository.findById(actorId).map(User::getRole).orElse(null);
+            if (storedRole != null) {
+                return storedRole;
+            }
+        }
+
+        UserRole parsedHint = parseRoleHint(roleHint);
+        if (parsedHint != null) {
+            return parsedHint;
+        }
+
+        if (ticket != null && actorId != null && !actorId.isBlank()) {
+            if (actorId.equals(ticket.getAssignedTechnician())) {
+                return UserRole.TECHNICIAN;
+            }
+            if (actorId.equals(ticket.getCreatedBy())) {
+                return UserRole.USER;
+            }
+        }
+
+        return UserRole.ADMIN;
+    }
+
+    private UserRole parseRoleHint(String roleHint) {
+        if (roleHint == null || roleHint.isBlank()) {
+            return null;
+        }
+
+        String normalized = roleHint.trim().toUpperCase(Locale.ROOT);
+        if ("STUDENT".equals(normalized)) {
+            normalized = "USER";
+        }
+
+        try {
+            return UserRole.valueOf(normalized);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private String findUserDisplayName(String userIdentifier) {
+        if (userIdentifier == null || userIdentifier.isBlank()) {
+            return "Unknown user";
+        }
+
+        String resolvedId = resolveUserId(userIdentifier);
+        return userRepository.findById(resolvedId)
+            .map(user -> user.getName() != null && !user.getName().isBlank() ? user.getName() : user.getEmail())
+            .orElse(resolvedId);
     }
 
     private TicketResponse mapToResponse(Ticket ticket) {

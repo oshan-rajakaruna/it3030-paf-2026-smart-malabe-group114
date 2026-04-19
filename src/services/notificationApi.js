@@ -1,4 +1,29 @@
 const NOTIFICATION_API_BASE = 'http://localhost:8080/api/notifications';
+const MODULE_ACTION_PATHS = {
+  AUTH: '/admin',
+  BOOKING: '/bookings',
+  RESOURCE: '/facilities',
+  TICKET: '/tickets',
+  SYSTEM: '/dashboard',
+};
+
+function getNotificationActionPath(module, viewerRole = '') {
+  const normalizedModule = String(module || 'SYSTEM').toUpperCase();
+  const normalizedViewerRole = String(viewerRole || '').toUpperCase();
+  if (normalizedModule === 'AUTH' && normalizedViewerRole && normalizedViewerRole !== 'ADMIN') {
+    return '/settings';
+  }
+  return MODULE_ACTION_PATHS[normalizedModule] || MODULE_ACTION_PATHS.SYSTEM;
+}
+
+function getNotificationActionLabel(module) {
+  const normalizedModule = String(module || 'SYSTEM').toUpperCase();
+  if (normalizedModule === 'BOOKING') return 'Open bookings';
+  if (normalizedModule === 'TICKET') return 'Open tickets';
+  if (normalizedModule === 'RESOURCE') return 'Open facilities';
+  if (normalizedModule === 'AUTH') return 'Open user approvals';
+  return 'Open dashboard';
+}
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -113,9 +138,11 @@ export function getNotificationContext() {
   };
 }
 
-export function mapNotificationToUi(notification) {
+export function mapNotificationToUi(notification, context = {}) {
   const module = String(notification?.module || 'AUTH').toUpperCase();
   const read = String(notification?.status || 'UNREAD').toUpperCase() === 'READ';
+  const priority = String(notification?.priority || 'NORMAL').toUpperCase();
+  const role = String(context?.role || '').toUpperCase();
 
   return {
     id: notification?.id,
@@ -125,10 +152,14 @@ export function mapNotificationToUi(notification) {
     userId: notification?.userId || null,
     module,
     channel: String(notification?.channel || 'WEB').toUpperCase(),
-    priority: String(notification?.priority || 'NORMAL').toUpperCase(),
+    priority,
     status: read ? 'READ' : 'UNREAD',
     read,
     createdAt: notification?.createdAt || new Date().toISOString(),
     createdBy: notification?.createdBy || 'SYSTEM',
+    moduleTag: module,
+    priorityTag: priority,
+    actionPath: getNotificationActionPath(module, role),
+    actionLabel: getNotificationActionLabel(module),
   };
 }

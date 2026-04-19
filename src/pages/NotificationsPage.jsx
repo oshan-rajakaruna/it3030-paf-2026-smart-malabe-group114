@@ -1,5 +1,6 @@
 import { BellRing, CheckCheck, Filter } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import styles from './NotificationsPage.module.css';
 import Button from '../components/ui/Button';
@@ -23,6 +24,7 @@ const AUTO_REFRESH_MS = 5000;
 
 export default function NotificationsPage() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -42,14 +44,23 @@ export default function NotificationsPage() {
         let payload = [];
         if (role === 'ADMIN') {
           payload = await getRoleNotifications('ADMIN');
-        } else if (role === 'TECHNICIAN') {
-          payload = await getRoleNotifications('TECHNICIAN');
         } else if (userId) {
           payload = await getUserNotifications(userId);
         }
 
         const mapped = (Array.isArray(payload) ? payload : [])
-          .map(mapNotificationToUi)
+          .map((notification) => mapNotificationToUi(notification, { role }))
+          .filter((notification) => {
+            if (role === 'ADMIN') {
+              return true;
+            }
+
+            if (!userId) {
+              return !notification.userId;
+            }
+
+            return !notification.userId || String(notification.userId) === String(userId);
+          })
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         if (isMounted) {
@@ -173,6 +184,9 @@ export default function NotificationsPage() {
                 if (!notification.read) {
                   void markSingleAsRead(notification.id);
                 }
+                if (notification.actionPath) {
+                  navigate(notification.actionPath);
+                }
               }}
             />
           ))
@@ -191,4 +205,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-

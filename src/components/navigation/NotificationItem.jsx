@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Trash2 } from 'lucide-react';
 
 import styles from './NotificationItem.module.css';
 import StatusBadge from '../ui/StatusBadge';
 import { formatDateTime } from '../../utils/formatters';
 
-export default function NotificationItem({ notification, onClick }) {
-  const badgeValue = notification.module || notification.type || 'SYSTEM';
+export default function NotificationItem({ notification, onClick, onDelete }) {
+  const badgeValue = notification.moduleTag || notification.module || notification.type || 'SYSTEM';
+  const secondaryBadgeValue = notification.priorityTag || notification.priority || '';
   const hasActionLink = notification.actionPath && notification.actionLabel;
 
   return (
@@ -29,8 +30,27 @@ export default function NotificationItem({ notification, onClick }) {
     >
       <div className={styles.main}>
         <div className={styles.header}>
-          <StatusBadge status={badgeValue} />
-          {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
+          <div className={styles.badges}>
+            <StatusBadge status={badgeValue} />
+            {secondaryBadgeValue ? <StatusBadge status={secondaryBadgeValue} /> : null}
+          </div>
+          <div className={styles.headerActions}>
+            {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
+            {onDelete ? (
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete(notification.id);
+                }}
+                aria-label="Delete notification"
+                title="Delete notification"
+              >
+                <Trash2 size={14} />
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className={styles.copy}>
           <h3>{notification.title || 'Notification'}</h3>
