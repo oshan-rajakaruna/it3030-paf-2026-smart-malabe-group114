@@ -17,7 +17,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 
@@ -78,6 +78,7 @@ const TODAY_EXTRA_TEST_SLOT = '15:20';
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
 const DAY_MINUTES_START = 8 * 60;
 const DAY_MINUTES_END = 19 * 60;
+const CANCELLATION_NOTICE_HOURS = 12;
 const weeklyTimeSlots = Array.from({ length: 12 }, (_, index) => `${(8 + index).toString().padStart(2, '0')}:00`);
 const bookingStartTimeSlots = Array.from({ length: 6 }, (_, index) => `${String(8 + index * 2).padStart(2, '0')}:00`);
 
@@ -316,6 +317,33 @@ function getDurationHours(startTime, endTime) {
 
 function getBookingEndTimestamp(booking) {
   return new Date(`${booking.date}T${booking.endTime}`).getTime();
+}
+
+function getBookingStartTimestamp(booking) {
+  if (!booking?.date || !booking?.startTime) {
+    return null;
+  }
+
+  const startTimestamp = new Date(`${booking.date}T${booking.startTime}`).getTime();
+  return Number.isNaN(startTimestamp) ? null : startTimestamp;
+}
+
+function getCancellationRestrictionMessage(booking) {
+  if (!booking || booking.status === 'REJECTED') {
+    return '';
+  }
+
+  const startTimestamp = getBookingStartTimestamp(booking);
+  if (startTimestamp === null) {
+    return '';
+  }
+
+  const cancellationDeadline = startTimestamp - CANCELLATION_NOTICE_HOURS * 60 * 60 * 1000;
+  if (Date.now() > cancellationDeadline) {
+    return `Cannot cancel this booking. Cancellations must be made at least ${CANCELLATION_NOTICE_HOURS} hours before the booking start time.`;
+  }
+
+  return '';
 }
 
 function formatRemainingDuration(milliseconds) {
@@ -596,6 +624,24 @@ function getVisibleBookingsForUser(mappedBookings, student, isAdmin) {
   return mappedBookings;
 }
 
+function mergeAvailabilityBookings(allBookings, visibleBookings) {
+  if (!Array.isArray(allBookings) || !allBookings.length) {
+    return Array.isArray(visibleBookings) ? visibleBookings : [];
+  }
+
+  const merged = [...allBookings];
+  const seenIds = new Set(allBookings.map((booking) => booking.id));
+
+  (visibleBookings ?? []).forEach((booking) => {
+    if (!seenIds.has(booking.id)) {
+      merged.push(booking);
+      seenIds.add(booking.id);
+    }
+  });
+
+  return merged;
+}
+
 function extractNumericId(value, fallback = 1) {
   const digits = String(value ?? '').match(/\d+/)?.[0];
   return digits ? Number(digits) : fallback;
@@ -656,6 +702,7 @@ export default function BookingsPage() {
   const isAdmin = student.role === ROLES.ADMIN;
   const dismissedStorageKey = `${DATE_CHANGE_DISMISS_KEY}.${student.id}`;
 
+  const [allBookings, setAllBookings] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [activeSection, setActiveSection] = useState(PAGE_SECTIONS.OVERVIEW);
   const [calendarMode, setCalendarMode] = useState('Weekly');
@@ -701,8 +748,14 @@ export default function BookingsPage() {
   const [processingAction, setProcessingAction] = useState('');
   const [reviewMode, setReviewMode] = useState('approve');
   const [rejectReason, setRejectReason] = useState('');
+  const [dateChangeRejectBooking, setDateChangeRejectBooking] = useState(null);
+  const [dateChangeRejectReason, setDateChangeRejectReason] = useState('');
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
+  const availabilityBookings = useMemo(
+    () => mergeAvailabilityBookings(allBookings, bookings),
+    [allBookings, bookings],
+  );
   const fetchCheckedInAdminRows = async () => {
     if (!isAdmin) {
       setCheckedInAdminRows([]);
@@ -757,9 +810,11 @@ export default function BookingsPage() {
       );
       const visibleBookings = getVisibleBookingsForUser(mappedBookings, student, isAdmin);
 
+      setAllBookings(mappedBookings);
       setBookings(visibleBookings);
     } catch (error) {
       console.error('Failed to load backend bookings:', error);
+      setAllBookings([]);
       setBookings([]);
     }
   };
@@ -884,9 +939,9 @@ export default function BookingsPage() {
     const facility =
       backendResources.find((item) => item.id === form.facilityId) ??
       mockFacilities.find((item) => item.id === form.facilityId);
-    const bookingWindowValidationMessage = getBookingWindowValidationMessage(bookings, facility, form);
+    const bookingWindowValidationMessage = getBookingWindowValidationMessage(availabilityBookings, facility, form);
 
-    const slots = buildAvailability(bookings, form.facilityId, form.date).slice(0, 3);
+    const slots = buildAvailability(availabilityBookings, form.facilityId, form.date).slice(0, 3);
 
     if (bookingWindowValidationMessage) {
       setConflictMessage(
@@ -900,7 +955,7 @@ export default function BookingsPage() {
     }
 
     if (isEquipmentResource(facility) && facility?.capacity) {
-      const reservedUnits = getOverlappingBookedQuantity(bookings, form.facilityId, form.date, form.startTime, form.endTime);
+      const reservedUnits = getOverlappingBookedQuantity(availabilityBookings, form.facilityId, form.date, form.startTime, form.endTime);
       const availableUnits = Math.max(0, Number(facility.capacity) - reservedUnits);
       setConflictMessage(`${availableUnits} of ${facility.capacity} units are available in this time window.`);
       return;
@@ -912,7 +967,7 @@ export default function BookingsPage() {
     }
 
     setConflictMessage('Selected resource is available within the current operating window.');
-  }, [backendResources, bookings, form]);
+  }, [availabilityBookings, backendResources, form]);
 
   useEffect(() => {
     const facility =
@@ -934,7 +989,7 @@ export default function BookingsPage() {
       return;
     }
 
-    const availableSlots = getCreateBookingStartTimeSlots(bookings, facility, form.date, form.attendees);
+    const availableSlots = getCreateBookingStartTimeSlots(availabilityBookings, facility, form.date, form.attendees);
     if (!availableSlots.length || availableSlots.includes(form.startTime)) {
       return;
     }
@@ -945,7 +1000,7 @@ export default function BookingsPage() {
       startTime: nextStartTime,
       endTime: fromMinutes(Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
     }));
-  }, [backendResources, bookings, form.attendees, form.date, form.endTime, form.facilityId, form.startTime, releasedSlotPrefill]);
+  }, [availabilityBookings, backendResources, form.attendees, form.date, form.endTime, form.facilityId, form.startTime, releasedSlotPrefill]);
 
   useEffect(() => {
     if (!editingBooking) return;
@@ -955,7 +1010,7 @@ export default function BookingsPage() {
       mockFacilities.find((item) => item.id === editForm.facilityId);
 
     const availableSlots = getAvailableStartTimeSlots(
-      bookings,
+      availabilityBookings,
       facility,
       editForm.date,
       editForm.attendees,
@@ -972,7 +1027,7 @@ export default function BookingsPage() {
       startTime: nextStartTime,
       endTime: fromMinutes(Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
     }));
-  }, [backendResources, bookings, editForm.attendees, editForm.date, editForm.facilityId, editForm.startTime, editingBooking]);
+  }, [availabilityBookings, backendResources, editForm.attendees, editForm.date, editForm.facilityId, editForm.startTime, editingBooking]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1089,7 +1144,7 @@ export default function BookingsPage() {
       const targetDate = toDateKey(addDays(new Date(), dayOffset));
 
       for (const resource of availableSuggestionResources) {
-        const slots = getAvailableStartTimeSlots(bookings, resource, targetDate, 1);
+        const slots = getAvailableStartTimeSlots(availabilityBookings, resource, targetDate, 1);
         if (slots.length) {
           return {
             resource,
@@ -1378,26 +1433,26 @@ export default function BookingsPage() {
         backendResources.find((item) => String(item.id) === String(slot.resourceId)) ??
         mockFacilities.find((item) => String(item.id) === String(slot.resourceId));
 
-      setBookings((current) => [
-        {
-          backendId: savedBooking.id ? String(savedBooking.id) : '',
-          id: savedBooking.id ? `bk-${savedBooking.id}` : `bk-${Date.now()}`,
-          facilityId: String(slot.resourceId),
-          facilityName: resource?.name ?? slot.resourceName,
-          requesterId: student.id,
-          requesterName: student.name,
-          date: savedBooking.bookingDate ?? slot.bookingDate,
-          startTime: savedBooking.startTime?.slice?.(0, 5) ?? slot.availableFrom,
-          endTime: savedBooking.endTime?.slice?.(0, 5) ?? slot.availableTo,
-          purpose: savedBooking.description ?? bookingPayload.description,
-          attendees: Number(savedBooking.attendeesCount ?? 1),
-          status: savedBooking.status ?? 'PENDING',
-          adminNote: '',
-          checkedIn: false,
-          checkedInAt: '',
-        },
-        ...current,
-      ]);
+      const nextBooking = {
+        backendId: savedBooking.id ? String(savedBooking.id) : '',
+        id: savedBooking.id ? `bk-${savedBooking.id}` : `bk-${Date.now()}`,
+        facilityId: String(slot.resourceId),
+        facilityName: resource?.name ?? slot.resourceName,
+        requesterId: student.id,
+        requesterName: student.name,
+        date: savedBooking.bookingDate ?? slot.bookingDate,
+        startTime: savedBooking.startTime?.slice?.(0, 5) ?? slot.availableFrom,
+        endTime: savedBooking.endTime?.slice?.(0, 5) ?? slot.availableTo,
+        purpose: savedBooking.description ?? bookingPayload.description,
+        attendees: Number(savedBooking.attendeesCount ?? 1),
+        status: savedBooking.status ?? 'PENDING',
+        adminNote: '',
+        checkedIn: false,
+        checkedInAt: '',
+      };
+
+      setBookings((current) => [nextBooking, ...current]);
+      setAllBookings((current) => [nextBooking, ...current]);
       setSubmitMessage('Live slot booked successfully and reserved immediately.');
       setActiveSection(PAGE_SECTIONS.CREATE);
       setCreateViewMode(CREATE_VIEW_MODES.LIST);
@@ -1424,6 +1479,13 @@ export default function BookingsPage() {
     const bookingToDelete = bookings.find((booking) => booking.id === bookingId);
     if (!bookingToDelete) return;
 
+    const cancellationRestrictionMessage = getCancellationRestrictionMessage(bookingToDelete);
+    if (cancellationRestrictionMessage) {
+      setSubmitMessage(cancellationRestrictionMessage);
+      window.alert(cancellationRestrictionMessage);
+      return;
+    }
+
     const backendId = bookingToDelete.backendId || bookingToDelete.id.replace(/^bk-/, '');
 
     try {
@@ -1441,6 +1503,7 @@ export default function BookingsPage() {
       }
 
       setBookings((current) => current.filter((booking) => booking.id !== bookingId));
+      setAllBookings((current) => current.filter((booking) => booking.id !== bookingId));
       if (selectedBooking?.id === bookingId) {
         setSelectedBooking(null);
       }
@@ -1474,7 +1537,7 @@ export default function BookingsPage() {
       return;
     }
 
-    const bookingWindowValidationMessage = getBookingWindowValidationMessage(bookings, facility, form);
+    const bookingWindowValidationMessage = getBookingWindowValidationMessage(availabilityBookings, facility, form);
     if (bookingWindowValidationMessage) {
       setSubmitMessage(bookingWindowValidationMessage);
       return;
@@ -1537,6 +1600,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       };
 
       setBookings((current) => [nextBooking, ...current]);
+      setAllBookings((current) => [nextBooking, ...current]);
       if (releasedSlotPrefill) {
         setAvailableNowSlots((current) =>
           current.filter(
@@ -1633,6 +1697,19 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             : booking,
         ),
       );
+      setAllBookings((current) =>
+        current.map((booking) =>
+          booking.id === bookingId
+            ? {
+                ...booking,
+                date: nextDate,
+                dateChangeRequested: false,
+                dateChangeApproved: false,
+                requestedDate: '',
+              }
+            : booking,
+        ),
+      );
 
       setSelectedBooking((current) =>
         current?.id === bookingId
@@ -1679,7 +1756,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     if (!dateChangeRequestBooking || !requestedDate || !requestedTimeWindow) return;
 
     const availableWindows = buildDateChangeSlots(
-      bookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
+      availabilityBookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
       dateChangeRequestBooking,
       requestedDate,
     );
@@ -1712,7 +1789,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           endTime: dateChangeRequestBooking.endTime,
           description: dateChangeRequestBooking.purpose,
           attendeesCount: Number(dateChangeRequestBooking.attendees),
-          status: dateChangeRequestBooking.status,
+          status: 'PENDING',
           rejectionReason: dateChangeRequestBooking.adminNote || '',
           dateChangeRequested: true,
           dateChangeApproved: false,
@@ -1738,6 +1815,22 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           booking.id === dateChangeRequestBooking.id
             ? {
                 ...booking,
+                status: savedBooking.status ?? 'PENDING',
+                dateChangeRequested: true,
+                dateChangeApproved: false,
+                requestedDate: savedBooking.requestedDate ?? requestedDate,
+                requestedStartTime: savedBooking.requestedStartTime?.slice(0, 5) ?? selectedWindow.startTime,
+                requestedEndTime: savedBooking.requestedEndTime?.slice(0, 5) ?? selectedWindow.endTime,
+              }
+            : booking,
+        ),
+      );
+      setAllBookings((current) =>
+        current.map((booking) =>
+          booking.id === dateChangeRequestBooking.id
+            ? {
+                ...booking,
+                status: savedBooking.status ?? 'PENDING',
                 dateChangeRequested: true,
                 dateChangeApproved: false,
                 requestedDate: savedBooking.requestedDate ?? requestedDate,
@@ -1752,6 +1845,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
         current?.id === dateChangeRequestBooking.id
           ? {
               ...current,
+              status: savedBooking.status ?? 'PENDING',
               dateChangeRequested: true,
               dateChangeApproved: false,
               requestedDate: savedBooking.requestedDate ?? requestedDate,
@@ -1764,7 +1858,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       setDateChangeRequestBooking(null);
       setRequestedDate('');
       setRequestedTimeWindow('');
-      setSubmitMessage('Date change request sent. Admin can now review the requested day and available windows.');
+      setSubmitMessage('Date change request sent. Booking status is now pending until admin review.');
     } catch (error) {
       console.error('Date change request failed:', error);
       setSubmitMessage(error.message || 'Could not submit the date change request.');
@@ -1777,7 +1871,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     const backendId = booking.backendId || booking.id.replace(/^bk-/, '');
     const requestedTargetDate = booking.requestedDate || booking.date;
     const availableWindows = buildDateChangeSlots(
-      bookings.filter((item) => item.id !== booking.id),
+      availabilityBookings.filter((item) => item.id !== booking.id),
       booking,
       requestedTargetDate,
     );
@@ -1811,7 +1905,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           endTime: nextEndTime,
           description: booking.purpose,
           attendeesCount: Number(booking.attendees),
-          status: booking.status,
+          status: 'APPROVED',
           rejectionReason: booking.adminNote || '',
           dateChangeRequested: false,
           dateChangeApproved: true,
@@ -1840,6 +1934,28 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           item.id === booking.id
             ? {
                 ...item,
+                status: savedBooking.status ?? 'APPROVED',
+                date: requestedTargetDate,
+                startTime: savedBooking.startTime?.slice(0, 5) ?? nextStartTime,
+                endTime: savedBooking.endTime?.slice(0, 5) ?? nextEndTime,
+                dateChangeRequested: false,
+                dateChangeApproved: true,
+                requestedDate: '',
+                requestedStartTime: '',
+                requestedEndTime: '',
+                previousDate: savedBooking.previousDate ?? booking.date,
+                previousStartTime: savedBooking.previousStartTime?.slice(0, 5) ?? booking.startTime,
+                previousEndTime: savedBooking.previousEndTime?.slice(0, 5) ?? booking.endTime,
+              }
+            : item,
+        ),
+      );
+      setAllBookings((current) =>
+        current.map((item) =>
+          item.id === booking.id
+            ? {
+                ...item,
+                status: savedBooking.status ?? 'APPROVED',
                 date: requestedTargetDate,
                 startTime: savedBooking.startTime?.slice(0, 5) ?? nextStartTime,
                 endTime: savedBooking.endTime?.slice(0, 5) ?? nextEndTime,
@@ -1860,6 +1976,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
         current?.id === booking.id
           ? {
               ...current,
+              status: savedBooking.status ?? 'APPROVED',
               date: requestedTargetDate,
               startTime: savedBooking.startTime?.slice(0, 5) ?? nextStartTime,
               endTime: savedBooking.endTime?.slice(0, 5) ?? nextEndTime,
@@ -1896,6 +2013,117 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       await markNotificationAsReadApi(notificationId);
     } catch (error) {
       console.error('Failed to mark booking preview notification as read:', error);
+    }
+  };
+
+  const openDateChangeRejectModal = (booking) => {
+    setDateChangeRejectBooking(booking);
+    setDateChangeRejectReason('');
+  };
+
+  const handleRejectDateChangePermission = async () => {
+    if (!dateChangeRejectBooking) {
+      return;
+    }
+
+    const trimmedReason = dateChangeRejectReason.trim();
+    if (!trimmedReason) {
+      setSubmitMessage('Please enter a rejection reason.');
+      return;
+    }
+
+    const backendId = dateChangeRejectBooking.backendId || dateChangeRejectBooking.id.replace(/^bk-/, '');
+    setProcessingBookingId(dateChangeRejectBooking.id);
+    setProcessingAction('date-change-reject');
+
+    try {
+      const response = await fetch(`${BOOKINGS_API_URL}/${backendId}/date-change/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reason: trimmedReason,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          errorText?.trim()
+            ? `Backend error ${response.status}: ${errorText}`
+            : `Backend error ${response.status}: ${response.statusText || 'Date change rejection failed'}`,
+        );
+      }
+
+      const savedBooking = await response.json();
+      const nextDate = savedBooking.bookingDate ?? dateChangeRejectBooking.date;
+      const nextStart = savedBooking.startTime?.slice(0, 5) ?? dateChangeRejectBooking.startTime;
+      const nextEnd = savedBooking.endTime?.slice(0, 5) ?? dateChangeRejectBooking.endTime;
+
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === dateChangeRejectBooking.id
+            ? {
+                ...item,
+                status: savedBooking.status ?? 'APPROVED',
+                date: nextDate,
+                startTime: nextStart,
+                endTime: nextEnd,
+                dateChangeRequested: false,
+                dateChangeApproved: false,
+                requestedDate: '',
+                requestedStartTime: '',
+                requestedEndTime: '',
+              }
+            : item,
+        ),
+      );
+      setAllBookings((current) =>
+        current.map((item) =>
+          item.id === dateChangeRejectBooking.id
+            ? {
+                ...item,
+                status: savedBooking.status ?? 'APPROVED',
+                date: nextDate,
+                startTime: nextStart,
+                endTime: nextEnd,
+                dateChangeRequested: false,
+                dateChangeApproved: false,
+                requestedDate: '',
+                requestedStartTime: '',
+                requestedEndTime: '',
+              }
+            : item,
+        ),
+      );
+
+      setSelectedBooking((current) =>
+        current?.id === dateChangeRejectBooking.id
+          ? {
+              ...current,
+              status: savedBooking.status ?? 'APPROVED',
+              date: nextDate,
+              startTime: nextStart,
+              endTime: nextEnd,
+              dateChangeRequested: false,
+              dateChangeApproved: false,
+              requestedDate: '',
+              requestedStartTime: '',
+              requestedEndTime: '',
+            }
+          : current,
+      );
+
+      setDateChangeRejectBooking(null);
+      setDateChangeRejectReason('');
+      setSubmitMessage('Date change request rejected. User has been notified.');
+    } catch (error) {
+      console.error('Date change rejection failed:', error);
+      setSubmitMessage(error.message || 'Could not reject the date change request.');
+    } finally {
+      setProcessingBookingId(null);
+      setProcessingAction('');
     }
   };
 
@@ -1937,7 +2165,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       return;
     }
 
-    const bookingWindowValidationMessage = getBookingWindowValidationMessage(bookings, facility, editForm, editingBooking.id);
+    const bookingWindowValidationMessage = getBookingWindowValidationMessage(availabilityBookings, facility, editForm, editingBooking.id);
     if (bookingWindowValidationMessage) {
       setSubmitMessage(
         isEquipmentResource(facility)
@@ -2005,6 +2233,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       };
 
       setBookings((current) => current.map((booking) => (booking.id === editingBooking.id ? updatedBooking : booking)));
+      setAllBookings((current) => current.map((booking) => (booking.id === editingBooking.id ? updatedBooking : booking)));
       setEditingBooking(null);
       setEditForm(initialForm);
       setSubmitMessage(
@@ -2022,6 +2251,18 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
 
   const applyPersistedBookingStatus = (bookingId, savedBooking, fallbackAdminNote = '') => {
     setBookings((current) =>
+      current.map((booking) =>
+        booking.id === bookingId
+          ? {
+              ...booking,
+              status: savedBooking.status ?? booking.status,
+              urgentApproval: Boolean(savedBooking.urgentApproval ?? booking.urgentApproval),
+              adminNote: savedBooking.rejectionReason ?? fallbackAdminNote,
+            }
+          : booking,
+      ),
+    );
+    setAllBookings((current) =>
       current.map((booking) =>
         booking.id === bookingId
           ? {
@@ -3070,7 +3311,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             <div className={styles.dateChangeRequestList}>
               {dateChangeRequests.map((booking) => {
                 const freeWindows = buildDateChangeSlots(
-                  bookings.filter((item) => item.id !== booking.id),
+                  availabilityBookings.filter((item) => item.id !== booking.id),
                   booking,
                   booking.requestedDate,
                 );
@@ -3102,11 +3343,27 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                       <Button
                         variant="secondary"
                         onClick={() => handleApproveDateChangePermission(booking)}
-                        disabled={!freeWindows.length || (processingBookingId === booking.id && processingAction === 'date-change')}
+                        disabled={
+                          !freeWindows.length ||
+                          (processingBookingId === booking.id &&
+                            (processingAction === 'date-change' || processingAction === 'date-change-reject'))
+                        }
                       >
                         {processingBookingId === booking.id && processingAction === 'date-change'
                           ? 'Granting...'
                           : 'Allow Date Change'}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => openDateChangeRejectModal(booking)}
+                        disabled={
+                          processingBookingId === booking.id &&
+                          (processingAction === 'date-change' || processingAction === 'date-change-reject')
+                        }
+                      >
+                        {processingBookingId === booking.id && processingAction === 'date-change-reject'
+                          ? 'Rejecting...'
+                          : 'Reject Request'}
                       </Button>
                     </div>
                   </article>
@@ -3674,7 +3931,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       mockFacilities.find((facility) => facility.id === form.facilityId);
     const selectedFacilityIsEquipment = isEquipmentResource(selectedFacility);
     const selectedFacilityReservedUnits = selectedFacilityIsEquipment
-      ? getOverlappingBookedQuantity(bookings, form.facilityId, form.date, form.startTime, form.endTime)
+      ? getOverlappingBookedQuantity(availabilityBookings, form.facilityId, form.date, form.startTime, form.endTime)
       : 0;
     const selectedFacilityAvailableUnits = selectedFacilityIsEquipment
       ? Math.max(0, Number(selectedFacility?.capacity ?? 0) - selectedFacilityReservedUnits)
@@ -3686,7 +3943,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
     const availableStartTimeSlots = isReleasedSlotLocked
       ? [releasedSlotPrefill.startTime]
       : getCreateBookingStartTimeSlots(
-          bookings,
+          availabilityBookings,
           selectedFacility,
           form.date,
           form.attendees,
@@ -3859,7 +4116,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 <h3>Booking Tips</h3>
                   <ul className={styles.tipList}>
                     <li>Book at least 24 hours in advance</li>
-                    <li>Maximum booking duration is 4 hours</li>
+                    <li>Maximum booking duration is 2 hours</li>
                     <li>Cancellations must be 12 hours before</li>
                     <li>{selectedFacilityIsEquipment ? 'Add the exact quantity you need before submitting.' : 'Match the attendee count to the room capacity.'}</li>
                     <li>You&apos;ll receive a QR code for check-in</li>
@@ -3930,6 +4187,8 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             const meta = getBookingMeta(booking);
             const BookingMetaIcon = meta.countIcon;
             const remainingTime = formatRemainingDuration(getBookingEndTimestamp(booking) - currentTime);
+            const cancellationRestrictionMessage = getCancellationRestrictionMessage(booking);
+            const isCancelBlocked = Boolean(cancellationRestrictionMessage);
 
             return (
               <Card key={booking.id} className={styles.myBookingCard}>
@@ -3992,6 +4251,8 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                     <button
                       type="button"
                       className={styles.deleteButton}
+                      disabled={isCancelBlocked}
+                      title={isCancelBlocked ? cancellationRestrictionMessage : ''}
                       onClick={() => handleCancelBooking(booking.id)}
                       aria-label={booking.status === 'REJECTED' ? 'Delete booking' : 'Cancel booking'}
                     >
@@ -4027,6 +4288,63 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           {activeSection === PAGE_SECTIONS.SUGGESTIONS ? renderSuggestionsView() : null}
         </>
       )}
+
+      <Modal
+        isOpen={Boolean(isAdmin && dateChangeRejectBooking)}
+        onClose={() => {
+          setDateChangeRejectBooking(null);
+          setDateChangeRejectReason('');
+        }}
+        title="Reject Date Change Request"
+        description={
+          dateChangeRejectBooking
+            ? `${dateChangeRejectBooking.requesterName} - ${dateChangeRejectBooking.facilityName}`
+            : ''
+        }
+        footer={
+          isAdmin && dateChangeRejectBooking ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDateChangeRejectBooking(null);
+                  setDateChangeRejectReason('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRejectDateChangePermission}
+                disabled={
+                  !dateChangeRejectReason.trim() ||
+                  (processingBookingId === dateChangeRejectBooking.id && processingAction === 'date-change-reject')
+                }
+              >
+                {processingBookingId === dateChangeRejectBooking.id && processingAction === 'date-change-reject'
+                  ? 'Rejecting...'
+                  : 'Confirm Rejection'}
+              </Button>
+            </>
+          ) : null
+        }
+      >
+        {isAdmin && dateChangeRejectBooking ? (
+          <div className={styles.reviewModalBody}>
+            <textarea
+              className={styles.reviewReasonInput}
+              rows="5"
+              value={dateChangeRejectReason}
+              onChange={(event) => setDateChangeRejectReason(event.target.value)}
+              placeholder="Enter reason for date change rejection..."
+              required
+            />
+            <div className={joinClassNames(styles.reviewNotice, styles.reviewNoticeReject)}>
+              This date change request will be rejected and the user will receive your reason as a notification.
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         isOpen={Boolean(isAdmin && selectedBooking?.status === 'PENDING')}
@@ -4144,7 +4462,11 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
               ) : null}
               <Button variant="secondary" icon={PencilLine} onClick={() => openEditBooking(selectedBooking)}>Edit Booking</Button>
               {['PENDING', 'APPROVED', 'REJECTED'].includes(selectedBooking.status) ? (
-                <Button variant="danger" onClick={() => handleCancelBooking(selectedBooking.id)}>
+                <Button
+                  variant="danger"
+                  onClick={() => handleCancelBooking(selectedBooking.id)}
+                  disabled={Boolean(getCancellationRestrictionMessage(selectedBooking))}
+                >
                   {selectedBooking.status === 'REJECTED' ? 'Delete Booking' : 'Cancel Booking'}
                 </Button>
               ) : null}
@@ -4187,6 +4509,11 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                   {selectedBooking.dateChangeRequested
                     ? 'Date change permission is waiting for admin approval.'
                     : 'Approved bookings need admin permission before the calendar date can be changed.'}
+                </small>
+              ) : null}
+              {getCancellationRestrictionMessage(selectedBooking) ? (
+                <small className={styles.dateChangeHint}>
+                  {getCancellationRestrictionMessage(selectedBooking)}
                 </small>
               ) : null}
             </div>
@@ -4247,7 +4574,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
               const minimumEditBookingDate = getTodayDateKey();
               const editFacilityReservedUnits = editFacilityIsEquipment
                 ? getOverlappingBookedQuantity(
-                    bookings,
+                    availabilityBookings,
                     editForm.facilityId,
                     editForm.date,
                     editForm.startTime,
@@ -4259,7 +4586,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 ? Math.max(0, Number(editFacility?.capacity ?? 0) - editFacilityReservedUnits)
                 : null;
               const availableEditStartTimeSlots = getAvailableStartTimeSlots(
-                bookings,
+                availabilityBookings,
                 editFacility,
                 editForm.date,
                 editForm.attendees,
@@ -4477,12 +4804,12 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 <strong>Free time on {formatDate(requestedDate)}</strong>
                 <div className={styles.dateChangeWindowList}>
                   {buildDateChangeSlots(
-                    bookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
+                    availabilityBookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
                     dateChangeRequestBooking,
                     requestedDate,
                   ).length ? (
                     buildDateChangeSlots(
-                      bookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
+                      availabilityBookings.filter((booking) => booking.id !== dateChangeRequestBooking.id),
                       dateChangeRequestBooking,
                       requestedDate,
                     )

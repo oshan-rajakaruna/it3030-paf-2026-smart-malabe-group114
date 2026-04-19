@@ -93,6 +93,11 @@ public class BookingController {
         return service.rejectBooking(id, payload.getOrDefault("reason", "Rejected by admin."));
     }
 
+    @PutMapping("/{id}/date-change/reject")
+    public Booking rejectDateChange(@PathVariable String id, @RequestBody Map<String, String> payload) {
+        return service.rejectDateChangeRequest(id, payload.getOrDefault("reason", "Date change request rejected by admin."));
+    }
+
     @PutMapping("/{id}/cancel")
     public Booking cancel(@PathVariable String id) {
         return service.cancelBooking(id);
