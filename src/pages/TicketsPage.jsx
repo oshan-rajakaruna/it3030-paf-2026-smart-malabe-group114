@@ -6,6 +6,7 @@ import {
   Clock3,
   MessageSquareText,
   ShieldAlert,
+  Trash2,
   UserRoundCog,
   Wrench,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ import {
   addComment,
   assignTechnician,
   createTicket,
+  deleteTicket,
   getAllTickets,
   getAttachments,
   getComments,
@@ -54,13 +56,13 @@ const initialForm = {
   attachments: [],
 };
 
-const CATEGORY_MAP = {
-  electrical: 'ELECTRICAL',
-  network: 'NETWORK',
-  equipment: 'EQUIPMENT',
-  facility: 'FACILITY',
-  other: 'OTHER',
-};
+const CATEGORY_OPTIONS = [
+  { value: 'ELECTRICAL', label: 'Electrical' },
+  { value: 'NETWORK', label: 'Network' },
+  { value: 'EQUIPMENT', label: 'Equipment' },
+  { value: 'FACILITY', label: 'Facility' },
+  { value: 'OTHER', label: 'Other' },
+];
 
 const PRIORITY_MAP = {
   low: 'LOW',
@@ -129,6 +131,7 @@ export default function TicketsPage() {
   const [commentsError, setCommentsError] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [deletingTicketId, setDeletingTicketId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [submitMessage, setSubmitMessage] = useState('');
@@ -343,7 +346,7 @@ export default function TicketsPage() {
     setError('');
     setSubmitMessage('');
 
-    const normalizedCategory = CATEGORY_MAP[form.category.trim().toLowerCase()] ?? 'OTHER';
+    const normalizedCategory = form.category || 'OTHER';
     const normalizedPriority = PRIORITY_MAP[form.priority.trim().toLowerCase()] ?? 'MEDIUM';
     const selectedResource = resources.find((resource) => resource.id === form.resourceName);
     const location =
@@ -451,6 +454,35 @@ export default function TicketsPage() {
     }
   };
 
+  const handleDeleteTicket = async (ticket) => {
+    if (!isAdmin || !ticket?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete ticket "${ticket.title || ticket.id}"? This will also remove its comments and attachments.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingTicketId(ticket.id);
+    setError('');
+    setSubmitMessage('');
+
+    try {
+      await deleteTicket(ticket.id);
+      await loadTickets();
+      if (selectedTicket?.id === ticket.id) {
+        setSelectedTicket(null);
+      }
+      setSubmitMessage('Ticket deleted successfully.');
+    } catch (deleteError) {
+      console.error('Failed to delete ticket:', deleteError);
+      setError(deleteError.message || 'Failed to delete ticket.');
+    } finally {
+      setDeletingTicketId('');
+    }
+  };
+
   const ticketColumns = [
     {
       key: 'title',
@@ -486,9 +518,22 @@ export default function TicketsPage() {
       header: 'Details',
       align: 'right',
       render: (ticket) => (
-        <Button variant="secondary" size="sm" onClick={() => setSelectedTicket(ticket)}>
-          View ticket
-        </Button>
+        <div className={styles.tableActions}>
+          <Button variant="secondary" size="sm" onClick={() => setSelectedTicket(ticket)}>
+            View ticket
+          </Button>
+          {isAdmin ? (
+            <Button
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              onClick={() => void handleDeleteTicket(ticket)}
+              disabled={deletingTicketId === ticket.id}
+            >
+              {deletingTicketId === ticket.id ? 'Deleting...' : 'Delete'}
+            </Button>
+          ) : null}
+        </div>
       ),
     },
   ];
@@ -531,16 +576,15 @@ export default function TicketsPage() {
             options={resourceOptions}
             placeholder="Select a resource"
           />
-          <FormField id="category" label="Category">
-            <input
-              id="category"
-              name="category"
-              className={fieldStyles.control}
-              value={form.category}
-              onChange={handleInputChange}
-              placeholder="e.g. HVAC, AV Equipment, Access Control"
-            />
-          </FormField>
+          <SelectField
+            id="category"
+            label="Category"
+            name="category"
+            value={form.category}
+            onChange={handleInputChange}
+            options={CATEGORY_OPTIONS}
+            placeholder="Select a category"
+          />
           <SelectField
             id="priority"
             label="Priority"
@@ -833,6 +877,16 @@ export default function TicketsPage() {
               <Button variant="secondary" onClick={() => setSelectedTicket(null)}>
                 Close
               </Button>
+              {isAdmin ? (
+                <Button
+                  variant="danger"
+                  icon={Trash2}
+                  onClick={() => void handleDeleteTicket(selectedTicket)}
+                  disabled={deletingTicketId === selectedTicket.id}
+                >
+                  {deletingTicketId === selectedTicket.id ? 'Deleting...' : 'Delete ticket'}
+                </Button>
+              ) : null}
               {!isUser ? <Button onClick={handleModalWorkflowUpdate}>Update workflow</Button> : null}
             </>
           ) : null

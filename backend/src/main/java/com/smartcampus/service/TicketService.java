@@ -178,6 +178,29 @@ public class TicketService {
         return ticketAttachmentRepository.findByTicketId(ticketId);
     }
 
+    public void deleteTicket(String ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+
+        List<TicketAttachment> attachments = ticketAttachmentRepository.findByTicketId(ticketId);
+        attachments.forEach((attachment) -> {
+            String rawFilePath = attachment.getFilePath();
+            if (rawFilePath == null || rawFilePath.isBlank()) {
+                return;
+            }
+
+            try {
+                Files.deleteIfExists(Paths.get(rawFilePath));
+            } catch (IOException ignored) {
+                // Preserve ticket deletion even if a local file was already removed manually.
+            }
+        });
+
+        ticketAttachmentRepository.deleteByTicketId(ticketId);
+        ticketCommentRepository.deleteByTicketId(ticketId);
+        ticketRepository.delete(ticket);
+    }
+
     private TicketResponse mapToResponse(Ticket ticket) {
         return TicketResponse.builder()
             .id(ticket.getId())

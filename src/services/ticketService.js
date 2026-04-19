@@ -100,3 +100,14 @@ export async function getAttachments(id) {
   const response = await fetch(`${BASE_URL}/${id}/attachments`);
   return handleResponse(response);
 }
+
+export async function deleteTicket(id) {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Failed to delete ticket');
+  }
+}
