@@ -69,14 +69,6 @@ const ADMIN_TABS = {
 };
 const DATE_CHANGE_DISMISS_KEY = 'bookings.dismissedApprovedDateChanges';
 const DATE_CHANGE_SLOT_MINUTES = 120;
-const EARLY_TEST_BOOKING_START_SLOT = '07:20';
-const SECOND_EARLY_TEST_BOOKING_START_SLOT = '07:28';
-const THIRD_EARLY_TEST_BOOKING_START_SLOT = '07:35';
-const EVENING_TEST_BOOKING_START_SLOT = '19:35';
-const LATE_TEST_BOOKING_START_SLOT = '21:15';
-const SECOND_LATE_TEST_BOOKING_START_SLOT = '21:25';
-const TEST_BOOKING_START_SLOT = '03:18';
-const TODAY_EXTRA_TEST_SLOT = '15:20';
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
 const DAY_MINUTES_START = 8 * 60;
 const DAY_MINUTES_END = 19 * 60;
@@ -454,61 +446,7 @@ function getAvailableStartTimeSlots(bookings, facility, date, attendees, exclude
 }
 
 function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
-  const regularSlots = getAvailableStartTimeSlots(bookings, facility, date, attendees);
-  const specialSlots = [];
-
-  if (!facility || !date) {
-    return [
-      EARLY_TEST_BOOKING_START_SLOT,
-      SECOND_EARLY_TEST_BOOKING_START_SLOT,
-      THIRD_EARLY_TEST_BOOKING_START_SLOT,
-      EVENING_TEST_BOOKING_START_SLOT,
-      LATE_TEST_BOOKING_START_SLOT,
-      SECOND_LATE_TEST_BOOKING_START_SLOT,
-      TEST_BOOKING_START_SLOT,
-      ...specialSlots,
-      ...regularSlots,
-    ];
-  }
-
-  [
-    EARLY_TEST_BOOKING_START_SLOT,
-    SECOND_EARLY_TEST_BOOKING_START_SLOT,
-    THIRD_EARLY_TEST_BOOKING_START_SLOT,
-    EVENING_TEST_BOOKING_START_SLOT,
-    LATE_TEST_BOOKING_START_SLOT,
-    SECOND_LATE_TEST_BOOKING_START_SLOT,
-    TEST_BOOKING_START_SLOT,
-    ...(date === getTodayDateKey() ? [TODAY_EXTRA_TEST_SLOT] : []),
-  ].forEach((slot) => {
-    if (
-      ![
-        EARLY_TEST_BOOKING_START_SLOT,
-        SECOND_EARLY_TEST_BOOKING_START_SLOT,
-        THIRD_EARLY_TEST_BOOKING_START_SLOT,
-        EVENING_TEST_BOOKING_START_SLOT,
-        LATE_TEST_BOOKING_START_SLOT,
-        SECOND_LATE_TEST_BOOKING_START_SLOT,
-      ].includes(slot) &&
-      !isStartSlotStillBookable(date, slot)
-    ) {
-      return;
-    }
-
-    const testDraft = {
-      date,
-      startTime: slot,
-      endTime: fromMinutes(toMinutes(slot) + DATE_CHANGE_SLOT_MINUTES),
-      attendees,
-    };
-
-    const hasTestConflict = getBookingWindowValidationMessage(bookings, facility, testDraft);
-    if (!hasTestConflict && !specialSlots.includes(slot)) {
-      specialSlots.push(slot);
-    }
-  });
-
-  return [...specialSlots, ...regularSlots];
+  return getAvailableStartTimeSlots(bookings, facility, date, attendees);
 }
 
 function getResourceAvailabilityValidationMessage(facility) {
@@ -4021,7 +3959,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                   <small className={styles.fieldHint}>
                     {isReleasedSlotLocked
                       ? `Released slot locked: ${formatTimeRange(form.startTime, form.endTime)}`
-                      : 'Test slots enabled: use `03:18` or today-only `15:20` if you need to verify the QR check-in flow right now.'}
+                      : 'Only available 2-hour booking slots are shown for the selected date.'}
                   </small>
                 </label>
 
