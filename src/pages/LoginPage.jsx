@@ -6,6 +6,7 @@ import styles from './LoginPage.module.css';
 import { ROUTE_PATHS } from '../routes/routeConfig';
 import { useAuth } from '../hooks/useAuth';
 import { createPendingSignup } from '../utils/adminStorage';
+import { getDefaultRouteForRole } from '../utils/authRouting';
 import GoogleMfaQrSetup from '../components/auth/GoogleMfaQrSetup';
 import logoImage from '../assets/logo.jpeg';
 
@@ -49,7 +50,7 @@ export default function LoginPage() {
       return false;
     }
 
-    const targetPath = ROUTE_PATHS.DASHBOARD;
+    const targetPath = getDefaultRouteForRole(backendRole);
     setGoogleChallenge(null);
     setGoogleOtpCode('');
     setTimeout(() => {
@@ -294,7 +295,7 @@ export default function LoginPage() {
         return;
       }
 
-      const targetPath = ROUTE_PATHS.DASHBOARD;
+      const targetPath = getDefaultRouteForRole(backendRole);
       navigate(targetPath, { replace: true });
     } catch (error) {
       console.error('Login API error', error);
