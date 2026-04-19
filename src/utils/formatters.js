@@ -22,11 +22,21 @@ export function formatDateTime(value) {
 }
 
 export function formatRoleLabel(role) {
-  return role.toLowerCase().replace(/\b\w/g, (character) => character.toUpperCase());
+  const normalizedRole = String(role || '');
+  if (normalizedRole.toUpperCase() === 'USER') {
+    return 'Student';
+  }
+
+  return normalizedRole.toLowerCase().replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 export function formatStatusLabel(status) {
-  return status
+  const normalizedStatus = String(status || '');
+  if (normalizedStatus.toUpperCase() === 'USER') {
+    return 'Student';
+  }
+
+  return normalizedStatus
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (character) => character.toUpperCase());

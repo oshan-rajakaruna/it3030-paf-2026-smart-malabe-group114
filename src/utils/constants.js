@@ -20,7 +20,7 @@ export const ROLES = {
 };
 
 export const ROLE_OPTIONS = [
-  { label: 'User', value: ROLES.USER, description: 'Students and staff request bookings and track tickets.' },
+  { label: 'Student', value: ROLES.USER, description: 'Students and staff request bookings and track tickets.' },
   { label: 'Admin', value: ROLES.ADMIN, description: 'Approves bookings, manages roles, and monitors operations.' },
   { label: 'Technician', value: ROLES.TECHNICIAN, description: 'Handles assigned incidents and updates resolutions.' },
 ];

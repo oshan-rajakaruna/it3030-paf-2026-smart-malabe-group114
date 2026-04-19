@@ -121,7 +121,7 @@ public class AuthService {
       return UserRole.TECHNICIAN;
     }
     if (normalizedIdNumber.startsWith("IT")) {
-      return UserRole.USER;
+      return UserRole.Student;
     }
     throw new BadRequestException("ID number must start with IT, AD, or TE");
   }
@@ -224,7 +224,7 @@ public class AuthService {
     if (normalizedEmail.isBlank()) {
       return OAuthLoginChallengeResponse.builder()
         .email("")
-        .role(UserRole.USER)
+        .role(UserRole.Student)
         .status(UserStatus.PENDING)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -234,7 +234,7 @@ public class AuthService {
     if (!GOOGLE_PROVIDER.equals(provider)) {
       return OAuthLoginChallengeResponse.builder()
         .email(normalizedEmail)
-        .role(UserRole.USER)
+        .role(UserRole.Student)
         .status(UserStatus.PENDING)
         .mfaRequired(false)
         .mfaSetupRequired(false)
@@ -253,7 +253,7 @@ public class AuthService {
           .name(fallbackName)
           .email(normalizedEmail)
           .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-          .role(UserRole.USER)
+          .role(UserRole.Student)
           .status(UserStatus.PENDING)
           .idNumber(null)
           .createdAt(LocalDateTime.now())
@@ -265,7 +265,7 @@ public class AuthService {
 
     boolean dirty = false;
     if (user.getRole() == null) {
-      user.setRole(UserRole.USER);
+      user.setRole(UserRole.Student);
       dirty = true;
     }
     if (user.getStatus() == null) {
@@ -358,7 +358,7 @@ public class AuthService {
     }
 
     if (user.getRole() == null) {
-      user.setRole(UserRole.USER);
+      user.setRole(UserRole.Student);
     }
     if (user.getStatus() == null) {
       user.setStatus(UserStatus.PENDING);
@@ -408,7 +408,7 @@ public class AuthService {
       .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
     if (user.getRole() == null) {
-      user.setRole(UserRole.USER);
+      user.setRole(UserRole.Student);
     }
     if (user.getStatus() == null) {
       user.setStatus(UserStatus.PENDING);

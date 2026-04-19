@@ -362,7 +362,7 @@ public class TicketService {
             return;
         }
 
-        if (commenterRole == UserRole.USER) {
+        if (commenterRole == UserRole.Student) {
             notifyUserIfEligible(
                 ticket.getAssignedTechnician(),
                 notifiedUsers,
@@ -494,7 +494,7 @@ public class TicketService {
                 return UserRole.TECHNICIAN;
             }
             if (actorId.equals(ticket.getCreatedBy())) {
-                return UserRole.USER;
+                return UserRole.Student;
             }
         }
 
