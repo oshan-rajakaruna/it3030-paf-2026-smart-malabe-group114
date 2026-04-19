@@ -67,6 +67,8 @@ const EARLY_TEST_BOOKING_START_SLOT = '07:20';
 const SECOND_EARLY_TEST_BOOKING_START_SLOT = '07:28';
 const THIRD_EARLY_TEST_BOOKING_START_SLOT = '07:35';
 const EVENING_TEST_BOOKING_START_SLOT = '19:35';
+const LATE_TEST_BOOKING_START_SLOT = '21:15';
+const SECOND_LATE_TEST_BOOKING_START_SLOT = '21:25';
 const TEST_BOOKING_START_SLOT = '03:18';
 const TODAY_EXTRA_TEST_SLOT = '15:20';
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
@@ -427,6 +429,8 @@ function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
       SECOND_EARLY_TEST_BOOKING_START_SLOT,
       THIRD_EARLY_TEST_BOOKING_START_SLOT,
       EVENING_TEST_BOOKING_START_SLOT,
+      LATE_TEST_BOOKING_START_SLOT,
+      SECOND_LATE_TEST_BOOKING_START_SLOT,
       TEST_BOOKING_START_SLOT,
       ...specialSlots,
       ...regularSlots,
@@ -438,6 +442,8 @@ function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
     SECOND_EARLY_TEST_BOOKING_START_SLOT,
     THIRD_EARLY_TEST_BOOKING_START_SLOT,
     EVENING_TEST_BOOKING_START_SLOT,
+    LATE_TEST_BOOKING_START_SLOT,
+    SECOND_LATE_TEST_BOOKING_START_SLOT,
     TEST_BOOKING_START_SLOT,
     ...(date === getTodayDateKey() ? [TODAY_EXTRA_TEST_SLOT] : []),
   ].forEach((slot) => {
@@ -447,6 +453,8 @@ function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
         SECOND_EARLY_TEST_BOOKING_START_SLOT,
         THIRD_EARLY_TEST_BOOKING_START_SLOT,
         EVENING_TEST_BOOKING_START_SLOT,
+        LATE_TEST_BOOKING_START_SLOT,
+        SECOND_LATE_TEST_BOOKING_START_SLOT,
       ].includes(slot) &&
       !isStartSlotStillBookable(date, slot)
     ) {
@@ -573,21 +581,7 @@ function getVisibleBookingsForUser(mappedBookings, student, isAdmin) {
     return mappedBookings;
   }
 
-  const exactUserBookings = mappedBookings.filter((booking) => String(booking.requesterId) === String(student.id));
-
-  if (exactUserBookings.length || !mappedBookings.length) {
-    return exactUserBookings;
-  }
-
-  console.warn(
-    'Bookings were loaded from the backend, but none matched the current frontend user id. Showing all backend bookings instead.',
-    {
-      currentUserId: student.id,
-      backendUserIds: [...new Set(mappedBookings.map((booking) => booking.requesterId))],
-    },
-  );
-
-  return mappedBookings;
+  return mappedBookings.filter((booking) => String(booking.requesterId) === String(student.id));
 }
 
 function extractNumericId(value, fallback = 1) {
@@ -1285,7 +1279,7 @@ export default function BookingsPage() {
     setSubmitMessage('');
 
     const bookingPayload = {
-      userId: String(extractNumericId(student.id, 1)),
+      userId: student.id,
       resourceId: String(slot.resourceId),
       bookingDate: slot.bookingDate,
       startTime: slot.availableFrom,
