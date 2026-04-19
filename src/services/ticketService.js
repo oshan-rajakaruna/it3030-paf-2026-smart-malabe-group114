@@ -84,6 +84,34 @@ export async function getComments(id) {
   return handleResponse(response);
 }
 
+export async function updateComment(ticketId, commentId, data) {
+  const response = await fetch(`${BASE_URL}/${ticketId}/comments/${commentId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse(response);
+}
+
+export async function deleteComment(ticketId, commentId, { userId, admin = false }) {
+  const query = new URLSearchParams({
+    userId,
+    admin: String(admin),
+  });
+
+  const response = await fetch(`${BASE_URL}/${ticketId}/comments/${commentId}?${query.toString()}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Failed to delete comment');
+  }
+}
+
 export async function uploadAttachment(id, file) {
   const formData = new FormData();
   formData.append('file', file);

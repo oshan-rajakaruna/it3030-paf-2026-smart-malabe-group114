@@ -31,10 +31,12 @@ import {
   addComment,
   assignTechnician,
   createTicket,
+  deleteComment,
   deleteTicket,
   getAllTickets,
   getAttachments,
   getComments,
+  updateComment,
   updateTicketResolution,
   updateTicketStatus,
   uploadAttachment,
@@ -218,6 +220,8 @@ export default function TicketsPage() {
   const [modalActionError, setModalActionError] = useState('');
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState('');
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -310,6 +314,8 @@ export default function TicketsPage() {
       setModalActionError('');
       setComments([]);
       setNewComment('');
+      setEditingCommentId('');
+      setEditingCommentText('');
       setCommentsLoading(false);
       setCommentsError('');
       setAttachments([]);
@@ -561,6 +567,77 @@ export default function TicketsPage() {
     } catch (commentError) {
       console.error('Failed to add comment:', commentError);
       setCommentsError(commentError.message || 'Failed to add comment.');
+    }
+  };
+
+  const canManageComment = (comment) =>
+    isAdmin
+    || comment?.userId === currentUser?.id
+    || comment?.userId === currentUser?.name;
+
+  const handleStartEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.commentText || '');
+    setCommentsError('');
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId('');
+    setEditingCommentText('');
+  };
+
+  const handleSaveEditedComment = async (comment) => {
+    if (!selectedTicket || !comment?.id || !editingCommentText.trim()) {
+      setCommentsError('Comment text cannot be empty.');
+      return;
+    }
+
+    setCommentsError('');
+
+    try {
+      await updateComment(selectedTicket.id, comment.id, {
+        userId: currentUser?.id || currentUser?.name || '',
+        commentText: editingCommentText.trim(),
+        admin: isAdmin,
+      });
+
+      const response = await getComments(selectedTicket.id);
+      setComments(response);
+      setEditingCommentId('');
+      setEditingCommentText('');
+    } catch (commentError) {
+      console.error('Failed to update comment:', commentError);
+      setCommentsError(commentError.message || 'Failed to update comment.');
+    }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    if (!selectedTicket || !comment?.id) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this comment?');
+    if (!confirmed) {
+      return;
+    }
+
+    setCommentsError('');
+
+    try {
+      await deleteComment(selectedTicket.id, comment.id, {
+        userId: currentUser?.id || currentUser?.name || '',
+        admin: isAdmin,
+      });
+
+      const response = await getComments(selectedTicket.id);
+      setComments(response);
+      if (editingCommentId === comment.id) {
+        setEditingCommentId('');
+        setEditingCommentText('');
+      }
+    } catch (commentError) {
+      console.error('Failed to delete comment:', commentError);
+      setCommentsError(commentError.message || 'Failed to delete comment.');
     }
   };
 
@@ -1112,9 +1189,47 @@ export default function TicketsPage() {
                     comments.length ? (
                       comments.map((comment) => (
                         <article key={comment.id} className={styles.comment}>
-                          <strong>{comment.userId || 'Unknown user'}</strong>
-                          <span>{comment.createdAt ? formatDateTime(comment.createdAt) : 'Not provided'}</span>
-                          <p>{comment.commentText || 'Not provided'}</p>
+                          <div className={styles.commentHeaderRow}>
+                            <div className={styles.commentMeta}>
+                              <strong>{comment.userId || 'Unknown user'}</strong>
+                              <span>
+                                {comment.createdAt ? formatDateTime(comment.createdAt) : 'Not provided'}
+                                {comment.updatedAt ? ' · Edited' : ''}
+                              </span>
+                            </div>
+                            {canManageComment(comment) ? (
+                              <div className={styles.commentActions}>
+                                <Button variant="ghost" size="sm" onClick={() => handleStartEditComment(comment)}>
+                                  Edit
+                                </Button>
+                                <Button variant="danger" size="sm" onClick={() => void handleDeleteComment(comment)}>
+                                  Delete
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                          {editingCommentId === comment.id ? (
+                            <>
+                              <TextAreaField
+                                id={`edit-comment-${comment.id}`}
+                                label="Edit comment"
+                                name={`edit-comment-${comment.id}`}
+                                rows={3}
+                                value={editingCommentText}
+                                onChange={(event) => setEditingCommentText(event.target.value)}
+                              />
+                              <div className={styles.commentEditActions}>
+                                <Button variant="secondary" size="sm" onClick={() => void handleSaveEditedComment(comment)}>
+                                  Save
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={handleCancelEditComment}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <p>{comment.commentText || 'Not provided'}</p>
+                          )}
                         </article>
                       ))
                     ) : (

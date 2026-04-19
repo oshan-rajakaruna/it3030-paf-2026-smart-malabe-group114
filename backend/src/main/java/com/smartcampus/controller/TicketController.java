@@ -7,6 +7,7 @@ import com.smartcampus.dto.ticket.AssignTechnicianRequest;
 import com.smartcampus.dto.ticket.CreateTicketRequest;
 import com.smartcampus.dto.ticket.TicketCommentResponse;
 import com.smartcampus.dto.ticket.TicketResponse;
+import com.smartcampus.dto.ticket.UpdateTicketCommentRequest;
 import com.smartcampus.dto.ticket.UpdateResolutionRequest;
 import com.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.smartcampus.model.TicketAttachment;
@@ -86,6 +87,26 @@ public class TicketController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<TicketCommentResponse>> getCommentsByTicketId(@PathVariable String id) {
         return ResponseEntity.ok(ticketService.getCommentsByTicketId(id));
+    }
+
+    @PutMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<TicketCommentResponse> updateComment(
+        @PathVariable String ticketId,
+        @PathVariable String commentId,
+        @RequestBody UpdateTicketCommentRequest request
+    ) {
+        return ResponseEntity.ok(ticketService.updateComment(ticketId, commentId, request));
+    }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+        @PathVariable String ticketId,
+        @PathVariable String commentId,
+        @RequestParam String userId,
+        @RequestParam(defaultValue = "false") boolean admin
+    ) {
+        ticketService.deleteComment(ticketId, commentId, userId, admin);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/attachments")
