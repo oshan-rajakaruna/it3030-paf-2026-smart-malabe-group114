@@ -7,6 +7,11 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background var(--transition-base);
 }
 
 .topRow {
@@ -67,4 +72,109 @@
 .meta {
   color: var(--text-soft);
   font-size: 0.88rem;
+}
+
+.card[data-variant='dashboard'] {
+  --accent-rgb: 124, 140, 255;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  background:
+    radial-gradient(circle at top right, rgba(var(--accent-rgb), 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%),
+    linear-gradient(180deg, var(--surface) 0%, var(--surface-muted) 100%);
+  border-color: rgba(var(--accent-rgb), 0.18);
+  box-shadow:
+    0 22px 44px rgba(2, 8, 23, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.card[data-variant='dashboard']::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.9), rgba(var(--accent-rgb), 0));
+  opacity: 0.9;
+}
+
+.card[data-variant='dashboard']::after {
+  content: '';
+  position: absolute;
+  right: -2.75rem;
+  bottom: -2.75rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.08);
+  filter: blur(14px);
+}
+
+.card[data-variant='dashboard']:hover {
+  transform: translateY(-4px);
+  border-color: rgba(var(--accent-rgb), 0.32);
+  box-shadow:
+    0 28px 56px rgba(2, 8, 23, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.card[data-tone='secondary'][data-variant='dashboard'] {
+  --accent-rgb: 34, 211, 238;
+}
+
+.card[data-tone='success'][data-variant='dashboard'] {
+  --accent-rgb: 34, 197, 94;
+}
+
+.card[data-tone='warning'][data-variant='dashboard'] {
+  --accent-rgb: 245, 158, 11;
+}
+
+.card[data-variant='dashboard'] .topRow,
+.card[data-variant='dashboard'] .body {
+  position: relative;
+  z-index: 1;
+}
+
+.card[data-variant='dashboard'] .iconWrap {
+  width: 3.15rem;
+  height: 3.15rem;
+  border-radius: 18px;
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.22), rgba(var(--accent-rgb), 0.12));
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.card[data-variant='dashboard'] .trend {
+  padding: 0.38rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.16);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--text-muted);
+}
+
+.card[data-variant='dashboard'] .body {
+  gap: 0.48rem;
+}
+
+.card[data-variant='dashboard'] .label {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card[data-variant='dashboard'] .value {
+  color: var(--text);
+  font-size: clamp(2rem, 2.25vw, 2.5rem);
+  line-height: 1.05;
+  text-shadow: 0 10px 24px rgba(2, 8, 23, 0.18);
+}
+
+.card[data-variant='dashboard'] .meta {
+  max-width: 27ch;
+  color: var(--text-soft);
+  line-height: 1.55;
 }

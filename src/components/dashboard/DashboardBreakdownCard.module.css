@@ -6,6 +6,12 @@
 .item {
   display: grid;
   gap: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+    var(--surface-muted);
 }
 
 .row {
@@ -29,11 +35,10 @@
 
 .track {
   width: 100%;
-  height: 0.55rem;
+  height: 0.6rem;
   border-radius: 999px;
   overflow: hidden;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .fill {
@@ -42,6 +47,7 @@
   min-width: 0.55rem;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--primary), var(--secondary));
+  box-shadow: 0 8px 18px rgba(34, 211, 238, 0.18);
 }
 
 .empty {

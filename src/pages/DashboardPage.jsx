@@ -13,6 +13,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 
 import DashboardBreakdownCard from '../components/dashboard/DashboardBreakdownCard';
+import DashboardDonutChartCard from '../components/dashboard/DashboardDonutChartCard';
 import DashboardQuickActions from '../components/dashboard/DashboardQuickActions';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -30,10 +31,19 @@ import { ROLES } from '../utils/constants';
 import { formatDate, formatDateTime, formatStatusLabel } from '../utils/formatters';
 import styles from './DashboardPage.module.css';
 
-function toBreakdownItems(breakdown = {}) {
-  return Object.entries(breakdown).map(([key, value]) => ({
+function toBreakdownItems(breakdown = {}, preferredOrder = []) {
+  const normalizedEntries = Object.entries(breakdown).map(([key, value]) => [String(key).toUpperCase(), Number(value || 0)]);
+  const normalizedMap = Object.fromEntries(normalizedEntries);
+
+  const orderedKeys = [
+    ...preferredOrder.filter((key) => normalizedMap[key] !== undefined),
+    ...normalizedEntries.map(([key]) => key).filter((key) => !preferredOrder.includes(key)),
+  ];
+
+  return orderedKeys.map((key) => ({
+    key,
     label: formatStatusLabel(key),
-    value: Number(value || 0),
+    value: normalizedMap[key],
   }));
 }
 
@@ -388,13 +398,19 @@ export default function DashboardPage() {
 
           <section className={styles.statsGrid}>
             {summaryStats.map((stat) => (
-              <StatCard key={stat.label} {...stat} />
+              <StatCard key={stat.label} {...stat} variant="dashboard" />
             ))}
           </section>
 
           <section className={styles.breakdownGrid}>
+            <DashboardDonutChartCard
+              title="Booking Status Breakdown"
+              subtitle="Live booking workflow split for pending, approved, rejected, and cancelled requests."
+              centerLabel="Bookings"
+              items={toBreakdownItems(summary.bookingsByStatus, ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'])}
+            />
             <DashboardBreakdownCard
-              title="Resources by Type"
+              title="Resource Type Breakdown"
               subtitle="Quick split of room, lab, and equipment inventory."
               items={toBreakdownItems(summary.resourcesByType)}
             />
@@ -402,11 +418,6 @@ export default function DashboardPage() {
               title="Resources by Status"
               subtitle="Operational state of the facilities catalogue."
               items={toBreakdownItems(summary.resourcesByStatus)}
-            />
-            <DashboardBreakdownCard
-              title="Bookings by Status"
-              subtitle="Current booking workflow distribution."
-              items={toBreakdownItems(summary.bookingsByStatus)}
             />
             <DashboardBreakdownCard
               title="Tickets by Status"
