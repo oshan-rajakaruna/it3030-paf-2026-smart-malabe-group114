@@ -362,7 +362,7 @@ public class TicketService {
             return;
         }
 
-        if (commenterRole == UserRole.USER || commenterRole == UserRole.Student) {
+        if (commenterRole == UserRole.USER || commenterRole == UserRole.STUDENT || commenterRole == UserRole.Student) {
             notifyUserIfEligible(
                 ticket.getAssignedTechnician(),
                 notifiedUsers,

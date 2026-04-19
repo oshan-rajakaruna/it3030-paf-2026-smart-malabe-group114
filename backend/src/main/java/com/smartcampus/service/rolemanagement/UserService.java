@@ -108,7 +108,7 @@ public class UserService {
   }
 
   private UserRole normalizeRole(UserRole role) {
-    return role == UserRole.Student ? UserRole.USER : role;
+    return role == UserRole.STUDENT || role == UserRole.Student ? UserRole.USER : role;
   }
 }
 

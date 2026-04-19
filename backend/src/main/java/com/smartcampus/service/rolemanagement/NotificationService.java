@@ -269,7 +269,7 @@ public class NotificationService {
     return switch (userRole) {
       case ADMIN -> NotificationAudienceRole.ADMIN;
       case TECHNICIAN -> NotificationAudienceRole.TECHNICIAN;
-      case USER, Student -> NotificationAudienceRole.STUDENT;
+      case USER, STUDENT, Student -> NotificationAudienceRole.STUDENT;
     };
   }
 
