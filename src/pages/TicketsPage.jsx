@@ -178,8 +178,6 @@ function validateCreateTicketForm(form, { isAdmin }) {
 
   if (isWhitespaceOnly(form.description)) {
     errors.description = 'Please describe the incident.';
-  } else if (trimmedDescription.length < 20) {
-    errors.description = 'Description must be at least 20 characters so technicians can understand the issue.';
   } else if (trimmedDescription.length > 1500) {
     errors.description = 'Description must be 1500 characters or fewer.';
   }
