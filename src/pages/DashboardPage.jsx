@@ -373,25 +373,25 @@ export default function DashboardPage() {
             </div>
 
             <div className={styles.highlightGrid}>
-              <article className={styles.highlightCard}>
-                <span>Pending bookings</span>
-                <strong>{summary.pendingBookings ?? 0}</strong>
-                <small>Requests waiting for review</small>
+              <article className={`${styles.highlightCard} ${styles.highlightSlate}`}>
+                <span className={styles.highlightLabel}>Pending bookings</span>
+                <strong className={styles.highlightValue}>{summary.pendingBookings ?? 0}</strong>
+                <small className={styles.highlightMeta}>Requests waiting for review</small>
               </article>
-              <article className={styles.highlightCard}>
-                <span>Open ticket queue</span>
-                <strong>{summary.openAndInProgressTickets ?? 0}</strong>
-                <small>Issues still in progress</small>
+              <article className={`${styles.highlightCard} ${styles.highlightIndigo}`}>
+                <span className={styles.highlightLabel}>Open ticket queue</span>
+                <strong className={styles.highlightValue}>{summary.openAndInProgressTickets ?? 0}</strong>
+                <small className={styles.highlightMeta}>Issues still in progress</small>
               </article>
-              <article className={styles.highlightCard}>
-                <span>Unread alerts</span>
-                <strong>{unreadAlertCount}</strong>
-                <small>Recent admin-facing notifications</small>
+              <article className={`${styles.highlightCard} ${styles.highlightCyan}`}>
+                <span className={styles.highlightLabel}>Unread alerts</span>
+                <strong className={styles.highlightValue}>{unreadAlertCount}</strong>
+                <small className={styles.highlightMeta}>Recent admin-facing notifications</small>
               </article>
-              <article className={styles.highlightCard}>
-                <span>Active resources</span>
-                <strong>{summary.activeResources ?? 0}</strong>
-                <small>Ready for bookings and operations</small>
+              <article className={`${styles.highlightCard} ${styles.highlightTeal}`}>
+                <span className={styles.highlightLabel}>Active resources</span>
+                <strong className={styles.highlightValue}>{summary.activeResources ?? 0}</strong>
+                <small className={styles.highlightMeta}>Ready for bookings and operations</small>
               </article>
             </div>
           </section>
