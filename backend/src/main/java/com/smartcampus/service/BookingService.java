@@ -5,6 +5,7 @@ import com.smartcampus.dto.CheckinResponse;
 import com.smartcampus.dto.CheckinStats;
 import com.smartcampus.dto.CheckedInBookingRow;
 import com.smartcampus.model.Booking;
+import com.smartcampus.model.BookingHistory;
 import com.smartcampus.model.Checkin;
 import com.smartcampus.model.Resource;
 import com.smartcampus.model.rolemanagement.NotificationAudienceRole;
@@ -12,6 +13,7 @@ import com.smartcampus.model.rolemanagement.NotificationChannel;
 import com.smartcampus.model.rolemanagement.NotificationModule;
 import com.smartcampus.model.rolemanagement.NotificationPriority;
 import com.smartcampus.model.rolemanagement.User;
+import com.smartcampus.repository.BookingHistoryRepository;
 import com.smartcampus.repository.BookingRepository;
 import com.smartcampus.repository.CheckinRepository;
 import com.smartcampus.repository.ResourceRepository;
@@ -40,6 +42,9 @@ public class BookingService {
 
     @Autowired
     private BookingRepository repo;
+
+    @Autowired
+    private BookingHistoryRepository bookingHistoryRepository;
 
     @Autowired
     private ResourceRepository resourceRepository;
@@ -93,6 +98,7 @@ public class BookingService {
         booking.setUpdatedAt(now);
 
         Booking saved = repo.save(booking);
+        saveBookingHistory(saved, saved.getStatus());
 
         try {
             notificationService.notifyRole(
@@ -205,11 +211,13 @@ public class BookingService {
     public void deleteBooking(String id) {
         Booking booking = repo.findById(id).orElseThrow();
         validateCancellationWindow(booking);
+        saveBookingHistory(booking, "DELETED");
         repo.deleteById(id);
     }
 
     public Booking updateBooking(String id, Booking incomingBooking) {
         Booking booking = repo.findById(id).orElseThrow();
+        String previousStatus = booking.getStatus();
         boolean wasDateChangeApproved = Boolean.TRUE.equals(booking.getDateChangeApproved());
 
         validateBookingWindow(
@@ -254,6 +262,9 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
 
         boolean isDateChangeApprovedNow = Boolean.TRUE.equals(saved.getDateChangeApproved());
         if (!wasDateChangeApproved && isDateChangeApprovedNow) {
@@ -440,9 +451,13 @@ public class BookingService {
 
     public Booking approveBooking(String id) {
         Booking booking = repo.findById(id).orElseThrow();
+        String previousStatus = booking.getStatus();
         booking.setStatus("APPROVED");
         booking.setUpdatedAt(LocalDateTime.now());
         Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
 
         if (saved.getUserId() != null && !saved.getUserId().isBlank()) {
             try {
@@ -465,10 +480,14 @@ public class BookingService {
 
     public Booking rejectBooking(String id, String reason) {
         Booking booking = repo.findById(id).orElseThrow();
+        String previousStatus = booking.getStatus();
         booking.setStatus("REJECTED");
         booking.setRejectionReason(reason);
         booking.setUpdatedAt(LocalDateTime.now());
         Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
 
         String safeReason = (reason == null || reason.isBlank())
             ? "Rejected by admin."
@@ -486,6 +505,7 @@ public class BookingService {
 
     public Booking rejectDateChangeRequest(String id, String reason) {
         Booking booking = repo.findById(id).orElseThrow();
+        String previousStatus = booking.getStatus();
 
         String safeReason = (reason == null || reason.isBlank())
             ? "Date change request rejected by admin."
@@ -500,6 +520,9 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
 
         notifyBookingUser(
             saved,
@@ -514,10 +537,15 @@ public class BookingService {
 
     public Booking cancelBooking(String id) {
         Booking booking = repo.findById(id).orElseThrow();
+        String previousStatus = booking.getStatus();
         validateCancellationWindow(booking);
         booking.setStatus("CANCELLED");
         booking.setUpdatedAt(LocalDateTime.now());
-        return repo.save(booking);
+        Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
+        return saved;
     }
 
     public void markNoShows() {
@@ -529,9 +557,13 @@ public class BookingService {
             .filter(booking -> booking.getBookingDate() != null && booking.getStartTime() != null)
             .filter(booking -> now.isAfter(getNoShowDeadline(booking)))
             .forEach(booking -> {
+                String previousStatus = booking.getStatus();
                 booking.setStatus("NO_SHOW");
                 booking.setUpdatedAt(now);
                 Booking saved = repo.save(booking);
+                if (hasStatusChanged(previousStatus, saved.getStatus())) {
+                    saveBookingHistory(saved, saved.getStatus());
+                }
                 notifyBookingUser(
                     saved,
                     "Booking Marked as No Show",
@@ -587,10 +619,14 @@ public class BookingService {
         LocalDateTime latestCheckinTime = getNoShowDeadline(booking);
 
         if (now.isAfter(latestCheckinTime)) {
+            String previousStatus = booking.getStatus();
             booking.setStatus("NO_SHOW");
             booking.setCheckedIn(false);
             booking.setUpdatedAt(now);
             Booking saved = repo.save(booking);
+            if (hasStatusChanged(previousStatus, saved.getStatus())) {
+                saveBookingHistory(saved, saved.getStatus());
+            }
             notifyBookingUser(
                 saved,
                 "Booking Marked as No Show",
@@ -605,15 +641,19 @@ public class BookingService {
             return response;
         }
 
+        String previousStatus = booking.getStatus();
         booking.setCheckedIn(true);
         booking.setCheckedInAt(now);
         booking.setStatus("CHECKED_IN");
         booking.setUpdatedAt(now);
-        repo.save(booking);
+        Booking saved = repo.save(booking);
+        if (hasStatusChanged(previousStatus, saved.getStatus())) {
+            saveBookingHistory(saved, saved.getStatus());
+        }
 
-        if (!checkinRepository.existsByBookingId(booking.getId())) {
+        if (!checkinRepository.existsByBookingId(saved.getId())) {
             Checkin checkin = new Checkin();
-            checkin.setBookingId(booking.getId());
+            checkin.setBookingId(saved.getId());
             checkin.setStatus("CHECKED_IN");
             checkinRepository.save(checkin);
         }
@@ -635,6 +675,26 @@ public class BookingService {
         LocalTime bookingStartMinute = bookingStartTime.truncatedTo(ChronoUnit.MINUTES);
 
         return checkedInMinute.isAfter(bookingStartMinute);
+    }
+
+    private boolean hasStatusChanged(String previousStatus, String nextStatus) {
+        if (previousStatus == null) {
+            return nextStatus != null;
+        }
+
+        return nextStatus == null || !previousStatus.equalsIgnoreCase(nextStatus);
+    }
+
+    private void saveBookingHistory(Booking booking, String status) {
+        if (booking == null || booking.getId() == null || booking.getId().isBlank()) {
+            return;
+        }
+
+        BookingHistory history = new BookingHistory();
+        history.setBookingId(booking.getId());
+        history.setUserId(booking.getUserId());
+        history.setStatus(status);
+        bookingHistoryRepository.save(history);
     }
 
     private void notifyBookingUser(
