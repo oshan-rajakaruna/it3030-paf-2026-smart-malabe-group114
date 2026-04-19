@@ -73,20 +73,25 @@ const DATE_CHANGE_SLOT_MINUTES = 120;
 const LIVE_BOOKING_SYNC_INTERVAL_MS = 5000;
 const DAY_MINUTES_START = 8 * 60;
 const DAY_MINUTES_END = 19 * 60;
+const BOOKING_SLOT_STEP_MINUTES = 30;
+const MIN_BOOKING_DURATION_MINUTES = 60;
+const MAX_BOOKING_DURATION_MINUTES = 4 * 60;
 const CANCELLATION_NOTICE_HOURS = 12;
 const weeklyTimeSlots = Array.from({ length: 12 }, (_, index) => `${(8 + index).toString().padStart(2, '0')}:00`);
 const bookingStartTimeSlots = Array.from({ length: 6 }, (_, index) => `${String(8 + index * 2).padStart(2, '0')}:00`);
 
-const initialForm = {
-  facilityId: '',
-  date: '2026-04-15',
-  startTime: '14:00',
-  endTime: '16:00',
-  purpose: '',
-  attendees: '24',
-};
+function getInitialForm() {
+  return {
+    facilityId: '',
+    date: getTodayDateKey(),
+    startTime: '14:00',
+    endTime: '16:00',
+    purpose: '',
+    attendees: '24',
+  };
+}
 
-const timelineSteps = ['Created', 'Pending', 'Approved', 'Cancelled'];
+const timelineSteps = ['Created', 'Pending', 'Approved', 'Checked In', 'Cancelled'];
 
 function toMinutes(value) {
   const [hours, minutes] = value.split(':').map(Number);
@@ -97,6 +102,48 @@ function fromMinutes(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
   const minutes = (totalMinutes % 60).toString().padStart(2, '0');
   return `${hours}:${minutes}`;
+}
+
+function normalizeTimeValue(value, fallback = '') {
+  return value ? String(value).slice(0, 5) : fallback;
+}
+
+function getResourceAvailabilityStartMinutes(facility) {
+  return toMinutes(normalizeTimeValue(facility?.availableFrom, fromMinutes(DAY_MINUTES_START)));
+}
+
+function getResourceAvailabilityEndMinutes(facility) {
+  return toMinutes(normalizeTimeValue(facility?.availableTo, fromMinutes(DAY_MINUTES_END)));
+}
+
+function getDurationLabel(minutes) {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours} hour${hours === 1 ? '' : 's'}`;
+}
+
+function getResourceStartTimeSlots(facility) {
+  if (!facility) {
+    return bookingStartTimeSlots;
+  }
+
+  const startMinutes = getResourceAvailabilityStartMinutes(facility);
+  const endMinutes = getResourceAvailabilityEndMinutes(facility);
+  const slots = [];
+
+  for (
+    let cursor = startMinutes;
+    cursor + MIN_BOOKING_DURATION_MINUTES <= endMinutes;
+    cursor += BOOKING_SLOT_STEP_MINUTES
+  ) {
+    slots.push(fromMinutes(cursor));
+  }
+
+  return slots;
 }
 
 function addDays(value, days) {
@@ -137,7 +184,47 @@ function overlaps(startA, endA, startB, endB) {
 }
 
 function isInactiveBookingStatus(status) {
-  return ['REJECTED', 'CANCELLED', 'NO_SHOW'].includes(status);
+  return ['REJECTED', 'CANCELLED', 'NO_SHOW'].includes(normalizeBookingStatus(status));
+}
+
+function normalizeBookingStatus(status) {
+  return String(status ?? '').trim().toUpperCase().replace(/-/g, '_');
+}
+
+function isTerminalDeleteStatus(status) {
+  return ['REJECTED', 'CHECKED_IN', 'NO_SHOW'].includes(normalizeBookingStatus(status));
+}
+
+function canShowBookingDeleteAction(status) {
+  return ['PENDING', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'NO_SHOW'].includes(normalizeBookingStatus(status));
+}
+
+function formatAvailableStartTimeMessage(slots) {
+  if (!slots.length) {
+    return 'No available start times remain for this date.';
+  }
+
+  return `Available start times: ${slots.join(', ')}. Pick a start time, then choose a duration.`;
+}
+
+function isAvailabilityMessagePositive(message) {
+  return /available|units are available|start times/i.test(message) && !/no available|already booked|cannot|must/i.test(message);
+}
+
+function cleanBackendMessage(errorText, fallback) {
+  if (!errorText?.trim()) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(errorText);
+    const message = parsed.message || parsed.error || fallback;
+    return String(message)
+      .replace(/^\d{3}\s+[A-Z_]+\s+"?/, '')
+      .replace(/"$/, '');
+  } catch {
+    return errorText;
+  }
 }
 
 function formatTimeRange(startTime, endTime) {
@@ -145,9 +232,52 @@ function formatTimeRange(startTime, endTime) {
 }
 
 function getTimelineIndex(status) {
-  if (status === 'CANCELLED') return 3;
-  if (status === 'APPROVED') return 2;
+  const normalizedStatus = normalizeBookingStatus(status);
+
+  if (normalizedStatus === 'CANCELLED') return 4;
+  if (normalizedStatus === 'CHECKED_IN') return 3;
+  if (normalizedStatus === 'APPROVED') return 2;
   return 1;
+}
+
+function getBookingFlowLabel(booking) {
+  const normalizedStatus = normalizeBookingStatus(booking?.status);
+
+  if (normalizedStatus === 'CHECKED_IN' || booking?.checkedIn) {
+    return 'Created -> Pending -> Approved -> Checked In';
+  }
+
+  if (normalizedStatus === 'APPROVED') {
+    return 'Created -> Pending -> Approved';
+  }
+
+  if (normalizedStatus === 'PENDING') {
+    return 'Created -> Pending (Awaiting approval)';
+  }
+
+  if (normalizedStatus === 'NO_SHOW') {
+    return 'Created -> Pending -> Approved -> No Show';
+  }
+
+  if (normalizedStatus === 'CANCELLED') {
+    return 'Created -> Pending -> Cancelled';
+  }
+
+  return 'Created -> Pending -> Rejected';
+}
+
+function getBookingFlowDotClass(booking) {
+  const normalizedStatus = normalizeBookingStatus(booking?.status);
+
+  if (normalizedStatus === 'APPROVED' || normalizedStatus === 'CHECKED_IN' || booking?.checkedIn) {
+    return styles.timelineApproved;
+  }
+
+  if (normalizedStatus === 'PENDING') {
+    return styles.timelinePending;
+  }
+
+  return styles.timelineRejected;
 }
 
 function getBookingDragState(booking) {
@@ -324,7 +454,7 @@ function getBookingStartTimestamp(booking) {
 }
 
 function getCancellationRestrictionMessage(booking) {
-  if (!booking || booking.status === 'REJECTED') {
+  if (!booking || isTerminalDeleteStatus(booking.status)) {
     return '';
   }
 
@@ -393,6 +523,19 @@ function getBookingWindowValidationMessage(bookings, facility, draft, excludedBo
     return '';
   }
 
+  const draftStartMinutes = toMinutes(draft.startTime);
+  const draftEndMinutes = toMinutes(draft.endTime);
+  const resourceStartMinutes = getResourceAvailabilityStartMinutes(facility);
+  const resourceEndMinutes = getResourceAvailabilityEndMinutes(facility);
+
+  if (draftEndMinutes <= draftStartMinutes) {
+    return 'End time must be after the selected start time.';
+  }
+
+  if (draftStartMinutes < resourceStartMinutes || draftEndMinutes > resourceEndMinutes) {
+    return `${facility.name} is available from ${fromMinutes(resourceStartMinutes)} to ${fromMinutes(resourceEndMinutes)}.`;
+  }
+
   if (isEquipmentResource(facility)) {
     const capacity = Number(facility.capacity ?? 0);
     const requestedUnits = Number(draft.attendees ?? 0);
@@ -427,27 +570,63 @@ function getBookingWindowValidationMessage(bookings, facility, draft, excludedBo
 
 function getAvailableStartTimeSlots(bookings, facility, date, attendees, excludedBookingId = '') {
   if (!facility || !date) {
-    return bookingStartTimeSlots;
+    return getResourceStartTimeSlots(facility);
   }
 
-  return bookingStartTimeSlots.filter((startTime) => {
+  return getResourceStartTimeSlots(facility).filter((startTime) => {
     if (!isStartSlotStillBookable(date, startTime)) {
       return false;
     }
 
-    const draft = {
-      date,
-      startTime,
-      endTime: fromMinutes(Math.min(toMinutes(startTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
-      attendees,
-    };
-
-    return !getBookingWindowValidationMessage(bookings, facility, draft, excludedBookingId);
+    return getAvailableDurationOptions(bookings, facility, date, startTime, attendees, excludedBookingId).length > 0;
   });
 }
 
 function getCreateBookingStartTimeSlots(bookings, facility, date, attendees) {
   return getAvailableStartTimeSlots(bookings, facility, date, attendees);
+}
+
+function getAvailableDurationOptions(bookings, facility, date, startTime, attendees, excludedBookingId = '') {
+  if (!facility || !date || !startTime) {
+    return [];
+  }
+
+  const startMinutes = toMinutes(startTime);
+  const resourceEndMinutes = getResourceAvailabilityEndMinutes(facility);
+  const maxDurationMinutes = Math.min(MAX_BOOKING_DURATION_MINUTES, resourceEndMinutes - startMinutes);
+  const durations = [];
+
+  for (
+    let duration = MIN_BOOKING_DURATION_MINUTES;
+    duration <= maxDurationMinutes;
+    duration += BOOKING_SLOT_STEP_MINUTES
+  ) {
+    const draft = {
+      date,
+      startTime,
+      endTime: fromMinutes(startMinutes + duration),
+      attendees,
+    };
+
+    if (!getBookingWindowValidationMessage(bookings, facility, draft, excludedBookingId)) {
+      durations.push(duration);
+    }
+  }
+
+  return durations;
+}
+
+function getFirstAvailableEndTime(bookings, facility, date, startTime, attendees, excludedBookingId = '') {
+  const [firstDuration] = getAvailableDurationOptions(bookings, facility, date, startTime, attendees, excludedBookingId);
+  return firstDuration ? fromMinutes(toMinutes(startTime) + firstDuration) : '';
+}
+
+function getDurationMinutes(startTime, endTime) {
+  if (!startTime || !endTime) {
+    return 0;
+  }
+
+  return toMinutes(endTime) - toMinutes(startTime);
 }
 
 function getResourceAvailabilityValidationMessage(facility) {
@@ -484,6 +663,8 @@ function mapBackendResource(resource) {
     capacity: resource.capacity ?? 0,
     status: resource.status ?? 'AVAILABLE',
     isActive: resource.isActive ?? true,
+    availableFrom: normalizeTimeValue(resource.availableFrom, fromMinutes(DAY_MINUTES_START)),
+    availableTo: normalizeTimeValue(resource.availableTo, fromMinutes(DAY_MINUTES_END)),
     description: resource.description ?? '',
   };
 }
@@ -647,9 +828,10 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ status: 'ALL', type: 'ALL', capacity: 'ALL', startDate: '', endDate: '' });
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(getInitialForm);
   const [conflictMessage, setConflictMessage] = useState('');
   const [submitMessage, setSubmitMessage] = useState('');
+  const [bookingActionMessage, setBookingActionMessage] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [createViewMode, setCreateViewMode] = useState(CREATE_VIEW_MODES.LIST);
   const [backendResources, setBackendResources] = useState([]);
@@ -658,7 +840,7 @@ export default function BookingsPage() {
   const [isBookingAvailableNowSlot, setIsBookingAvailableNowSlot] = useState(false);
   const [releasedSlotPrefill, setReleasedSlotPrefill] = useState(null);
   const [editingBooking, setEditingBooking] = useState(null);
-  const [editForm, setEditForm] = useState(initialForm);
+  const [editForm, setEditForm] = useState(getInitialForm);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [dateChangeRequestBooking, setDateChangeRequestBooking] = useState(null);
   const [requestedDate, setRequestedDate] = useState('');
@@ -891,15 +1073,23 @@ export default function BookingsPage() {
       mockFacilities.find((item) => item.id === form.facilityId);
     const bookingWindowValidationMessage = getBookingWindowValidationMessage(availabilityBookings, facility, form);
 
-    const slots = buildAvailability(availabilityBookings, form.facilityId, form.date).slice(0, 3);
+    const availableStartTimes = getCreateBookingStartTimeSlots(
+      availabilityBookings,
+      facility,
+      form.date,
+      form.attendees,
+    );
+    const availableStartTimeMessage = formatAvailableStartTimeMessage(availableStartTimes);
 
     if (bookingWindowValidationMessage) {
       setConflictMessage(
-        isEquipmentResource(facility)
+        bookingWindowValidationMessage.includes('available from')
           ? bookingWindowValidationMessage
-          : slots.length
-            ? `Time slot already booked. Available: ${slots.map((slot) => `${slot.startTime}-${slot.endTime}`).join(', ')}`
-            : 'Time slot already booked. No 1-hour availability remains for this date.',
+          : isEquipmentResource(facility)
+          ? bookingWindowValidationMessage
+          : availableStartTimes.length
+            ? `Time slot already booked. ${availableStartTimeMessage}`
+            : 'Time slot already booked. No available start times remain for this date.',
       );
       return;
     }
@@ -911,8 +1101,8 @@ export default function BookingsPage() {
       return;
     }
 
-    if (slots.length) {
-      setConflictMessage(`Available: ${slots.map((slot) => `${slot.startTime}-${slot.endTime}`).join(', ')}`);
+    if (availableStartTimes.length) {
+      setConflictMessage(availableStartTimeMessage);
       return;
     }
 
@@ -940,15 +1130,28 @@ export default function BookingsPage() {
     }
 
     const availableSlots = getCreateBookingStartTimeSlots(availabilityBookings, facility, form.date, form.attendees);
-    if (!availableSlots.length || availableSlots.includes(form.startTime)) {
+    if (!availableSlots.length) {
       return;
     }
 
-    const nextStartTime = availableSlots[0];
+    const nextStartTime = availableSlots.includes(form.startTime) ? form.startTime : availableSlots[0];
+    const durationOptions = getAvailableDurationOptions(
+      availabilityBookings,
+      facility,
+      form.date,
+      nextStartTime,
+      form.attendees,
+    );
+    const currentDuration = getDurationMinutes(nextStartTime, form.endTime);
+
+    if (availableSlots.includes(form.startTime) && durationOptions.includes(currentDuration)) {
+      return;
+    }
+
     setForm((current) => ({
       ...current,
       startTime: nextStartTime,
-      endTime: fromMinutes(Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
+      endTime: durationOptions.length ? fromMinutes(toMinutes(nextStartTime) + durationOptions[0]) : current.endTime,
     }));
   }, [availabilityBookings, backendResources, form.attendees, form.date, form.endTime, form.facilityId, form.startTime, releasedSlotPrefill]);
 
@@ -967,17 +1170,31 @@ export default function BookingsPage() {
       editingBooking.id,
     );
 
-    if (!availableSlots.length || availableSlots.includes(editForm.startTime)) {
+    if (!availableSlots.length) {
       return;
     }
 
-    const nextStartTime = availableSlots[0];
+    const nextStartTime = availableSlots.includes(editForm.startTime) ? editForm.startTime : availableSlots[0];
+    const durationOptions = getAvailableDurationOptions(
+      availabilityBookings,
+      facility,
+      editForm.date,
+      nextStartTime,
+      editForm.attendees,
+      editingBooking.id,
+    );
+    const currentDuration = getDurationMinutes(nextStartTime, editForm.endTime);
+
+    if (availableSlots.includes(editForm.startTime) && durationOptions.includes(currentDuration)) {
+      return;
+    }
+
     setEditForm((current) => ({
       ...current,
       startTime: nextStartTime,
-      endTime: fromMinutes(Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
+      endTime: durationOptions.length ? fromMinutes(toMinutes(nextStartTime) + durationOptions[0]) : current.endTime,
     }));
-  }, [availabilityBookings, backendResources, editForm.attendees, editForm.date, editForm.facilityId, editForm.startTime, editingBooking]);
+  }, [availabilityBookings, backendResources, editForm.attendees, editForm.date, editForm.endTime, editForm.facilityId, editForm.startTime, editingBooking]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1100,7 +1317,9 @@ export default function BookingsPage() {
             resource,
             date: targetDate,
             startTime: slots[0],
-            endTime: fromMinutes(Math.min(toMinutes(slots[0]) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END)),
+            endTime:
+              getFirstAvailableEndTime(availabilityBookings, resource, targetDate, slots[0], 1) ||
+              fromMinutes(Math.min(toMinutes(slots[0]) + DATE_CHANGE_SLOT_MINUTES, getResourceAvailabilityEndMinutes(resource))),
           };
         }
       }
@@ -1220,7 +1439,7 @@ export default function BookingsPage() {
         icon: CalendarRange,
         eyebrow: 'Low Demand Day',
         title: `${formatDate(soonestSmartSlot.date)} has cleaner availability`,
-        description: `${soonestSmartSlot.resource.name} still has a free 2-hour window ready to book.`,
+        description: `${soonestSmartSlot.resource.name} still has a free window ready to book.`,
         actionLabel: 'Use This Day',
         theme: 'blue',
         facilityId: String(soonestSmartSlot.resource.id),
@@ -1251,9 +1470,33 @@ export default function BookingsPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleDurationChange = (event) => {
+    const durationMinutes = Number(event.target.value);
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      endTime: fromMinutes(toMinutes(current.startTime) + durationMinutes),
+    }));
+  };
+
   const handleEditFormChange = (event) => {
     const { name, value } = event.target;
     setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleEditDurationChange = (event) => {
+    const durationMinutes = Number(event.target.value);
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return;
+    }
+
+    setEditForm((current) => ({
+      ...current,
+      endTime: fromMinutes(toMinutes(current.startTime) + durationMinutes),
+    }));
   };
 
   const handleStartTimeSlotChange = (nextStartTime) => {
@@ -1261,22 +1504,39 @@ export default function BookingsPage() {
       return;
     }
 
-    const nextEndMinutes = Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END);
+    const facility =
+      backendResources.find((item) => item.id === form.facilityId) ??
+      mockFacilities.find((item) => item.id === form.facilityId);
+    const nextEndTime =
+      releasedSlotPrefill?.endTime ||
+      getFirstAvailableEndTime(availabilityBookings, facility, form.date, nextStartTime, form.attendees) ||
+      form.endTime;
 
     setForm((current) => ({
       ...current,
       startTime: nextStartTime,
-      endTime: releasedSlotPrefill?.endTime ?? fromMinutes(nextEndMinutes),
+      endTime: nextEndTime,
     }));
   };
 
   const handleEditStartTimeSlotChange = (nextStartTime) => {
-    const nextEndMinutes = Math.min(toMinutes(nextStartTime) + DATE_CHANGE_SLOT_MINUTES, DAY_MINUTES_END);
+    const facility =
+      backendResources.find((item) => item.id === editForm.facilityId) ??
+      mockFacilities.find((item) => item.id === editForm.facilityId);
+    const nextEndTime =
+      getFirstAvailableEndTime(
+        availabilityBookings,
+        facility,
+        editForm.date,
+        nextStartTime,
+        editForm.attendees,
+        editingBooking?.id,
+      ) || editForm.endTime;
 
     setEditForm((current) => ({
       ...current,
       startTime: nextStartTime,
-      endTime: fromMinutes(nextEndMinutes),
+      endTime: nextEndTime,
     }));
   };
 
@@ -1357,7 +1617,8 @@ export default function BookingsPage() {
       endTime: slot.availableTo,
       description: slot.type === 'PARTIAL_SLOT' ? 'Quick booking from released no-show slot' : 'Quick booking from available-now board',
       attendeesCount: 1,
-      status: 'APPROVED',
+      status: 'PENDING',
+      urgentApproval: slot.type === 'PARTIAL_SLOT',
     };
 
     try {
@@ -1430,9 +1691,13 @@ export default function BookingsPage() {
     if (!bookingToDelete) return;
 
     const cancellationRestrictionMessage = getCancellationRestrictionMessage(bookingToDelete);
-    if (cancellationRestrictionMessage) {
-      setSubmitMessage(cancellationRestrictionMessage);
-      window.alert(cancellationRestrictionMessage);
+    const canDeleteWithoutCancellationWindow = isTerminalDeleteStatus(bookingToDelete.status);
+    if (!canDeleteWithoutCancellationWindow && cancellationRestrictionMessage) {
+      setBookingActionMessage({
+        tone: 'danger',
+        title: 'Cannot cancel this booking',
+        message: cancellationRestrictionMessage,
+      });
       return;
     }
 
@@ -1445,11 +1710,7 @@ export default function BookingsPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          errorText?.trim()
-            ? `Backend error ${response.status}: ${errorText}`
-            : `Backend error ${response.status}: ${response.statusText || 'Delete failed'}`,
-        );
+        throw new Error(cleanBackendMessage(errorText, response.statusText || 'Delete failed'));
       }
 
       setBookings((current) => current.filter((booking) => booking.id !== bookingId));
@@ -1460,10 +1721,20 @@ export default function BookingsPage() {
       if (qrBooking?.id === bookingId) {
         setQrBooking(null);
       }
-      setSubmitMessage('Booking cancelled and removed successfully.');
+      setBookingActionMessage({
+        tone: 'success',
+        title: isTerminalDeleteStatus(bookingToDelete.status) ? 'Booking deleted' : 'Booking cancelled',
+        message: isTerminalDeleteStatus(bookingToDelete.status)
+          ? 'This booking was removed from your bookings.'
+          : 'This booking was cancelled and the time slot is now available again.',
+      });
     } catch (error) {
       console.error('Booking deletion failed:', error);
-      setSubmitMessage(error.message || 'Booking cancellation failed due to an unexpected backend error.');
+      setBookingActionMessage({
+        tone: 'danger',
+        title: 'Cannot cancel this booking',
+        message: error.message || 'Booking cancellation failed due to an unexpected backend error.',
+      });
     }
   };
 
@@ -1571,7 +1842,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           : 'Booking created and synced with the backend successfully.',
       );
       setCreateViewMode(CREATE_VIEW_MODES.LIST);
-      setForm(initialForm);
+      setForm(getInitialForm());
       setActiveSection(PAGE_SECTIONS.CREATE);
     } catch (error) {
       console.error('Booking creation failed:', error);
@@ -2185,7 +2456,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       setBookings((current) => current.map((booking) => (booking.id === editingBooking.id ? updatedBooking : booking)));
       setAllBookings((current) => current.map((booking) => (booking.id === editingBooking.id ? updatedBooking : booking)));
       setEditingBooking(null);
-      setEditForm(initialForm);
+      setEditForm(getInitialForm());
       setSubmitMessage(
         nextStatus === 'PENDING'
           ? 'Booking updated and resubmitted for admin review.'
@@ -2997,21 +3268,40 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
       })
       .join(' ');
 
-    const renderAdminStatusPill = (status) => (
-      <span
-        className={joinClassNames(
-          styles.adminStatusPill,
-          status === 'APPROVED'
-            ? styles.adminStatusApproved
-            : status === 'PENDING'
-              ? styles.adminStatusPending
-              : styles.adminStatusRejected,
-        )}
-      >
-        {status === 'APPROVED' ? <CheckCircle2 size={15} /> : status === 'PENDING' ? <Clock3 size={15} /> : <XCircle size={15} />}
-        {status === 'NO_SHOW' ? 'No Show' : status.charAt(0) + status.slice(1).toLowerCase()}
-      </span>
-    );
+    const renderAdminStatusPill = (status) => {
+      const normalizedStatus = normalizeBookingStatus(status);
+      const isCheckedIn = normalizedStatus === 'CHECKED_IN';
+      const label =
+        normalizedStatus === 'NO_SHOW'
+          ? 'No Show'
+          : isCheckedIn
+            ? 'Checked In'
+            : normalizedStatus.charAt(0) + normalizedStatus.slice(1).toLowerCase();
+
+      return (
+        <span
+          className={joinClassNames(
+            styles.adminStatusPill,
+            normalizedStatus === 'APPROVED'
+              ? styles.adminStatusApproved
+              : normalizedStatus === 'PENDING'
+                ? styles.adminStatusPending
+                : isCheckedIn
+                  ? styles.adminStatusCheckedIn
+                  : styles.adminStatusRejected,
+          )}
+        >
+          {normalizedStatus === 'APPROVED' || isCheckedIn ? (
+            <CheckCircle2 size={15} />
+          ) : normalizedStatus === 'PENDING' ? (
+            <Clock3 size={15} />
+          ) : (
+            <XCircle size={15} />
+          )}
+          {label}
+        </span>
+      );
+    };
 
     const renderActionButtons = (booking) => {
       return (
@@ -3229,6 +3519,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             <select className={styles.select} value={filters.status} onChange={(event) => handleFilterChange('status', event.target.value)}>
               <option value="ALL">All statuses</option>
               <option value="APPROVED">Approved</option>
+              <option value="CHECKED_IN">Checked In</option>
               <option value="PENDING">Pending</option>
               <option value="REJECTED">Rejected</option>
               <option value="NO_SHOW">No Show</option>
@@ -3609,6 +3900,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
         <select className={styles.select} value={filters.status} onChange={(event) => handleFilterChange('status', event.target.value)}>
           <option value="ALL">All statuses</option>
           <option value="APPROVED">Approved</option>
+          <option value="CHECKED_IN">Checked In</option>
           <option value="PENDING">Pending</option>
           <option value="REJECTED">Rejected</option>
           <option value="NO_SHOW">No Show</option>
@@ -3898,9 +4190,16 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           form.date,
           form.attendees,
         );
-    const createDurationLabel = isReleasedSlotLocked
-      ? `${getDurationHours(form.startTime, form.endTime)} hours`
-      : '2 hours';
+    const availableDurationOptions = isReleasedSlotLocked
+      ? [getDurationMinutes(form.startTime, form.endTime)].filter((duration) => duration > 0)
+      : getAvailableDurationOptions(
+          availabilityBookings,
+          selectedFacility,
+          form.date,
+          form.startTime,
+          form.attendees,
+        );
+    const currentDurationMinutes = getDurationMinutes(form.startTime, form.endTime);
     const submitMessageIsError = /could not|backend error|failed|unexpected/i.test(submitMessage);
 
     const renderCreateBookingForm = () => (
@@ -3971,19 +4270,48 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                         </button>
                       ))
                     ) : (
-                      <span className={styles.dateChangeWindowPillMuted}>No 2-hour slots available on this day</span>
+                      <span className={styles.dateChangeWindowPillMuted}>No slots available on this day</span>
                     )}
                   </div>
                   <small className={styles.fieldHint}>
                     {isReleasedSlotLocked
                       ? `Released slot locked: ${formatTimeRange(form.startTime, form.endTime)}`
-                      : 'Only available 2-hour booking slots are shown for the selected date.'}
+                      : selectedFacility
+                        ? `Showing slots from ${normalizeTimeValue(selectedFacility.availableFrom, fromMinutes(DAY_MINUTES_START))} to ${normalizeTimeValue(selectedFacility.availableTo, fromMinutes(DAY_MINUTES_END))}.`
+                        : 'Select a resource to see its available time slots.'}
                   </small>
                 </label>
 
                 <label className={styles.formField}>
                   <span>Duration</span>
-                  <input type="text" className={styles.createInput} value={createDurationLabel} readOnly />
+                  {isReleasedSlotLocked ? (
+                    <input type="text" className={styles.createInput} value={getDurationLabel(currentDurationMinutes)} readOnly />
+                  ) : (
+                    <div className={styles.durationStudio}>
+                      {availableDurationOptions.length ? (
+                        availableDurationOptions.map((duration) => (
+                          <button
+                            key={duration}
+                            type="button"
+                            className={joinClassNames(
+                              styles.durationChip,
+                              currentDurationMinutes === duration && styles.durationChipActive,
+                            )}
+                            onClick={() =>
+                              handleDurationChange({
+                                target: { value: String(duration) },
+                              })
+                            }
+                          >
+                            <strong>{getDurationLabel(duration)}</strong>
+                            <span>{formatTimeRange(form.startTime, fromMinutes(toMinutes(form.startTime) + duration))}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <span className={styles.dateChangeWindowPillMuted}>No duration available</span>
+                      )}
+                    </div>
+                  )}
                 </label>
               </div>
 
@@ -4038,7 +4366,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
               </label>
 
               {conflictMessage ? (
-                <p className={joinClassNames(styles.bookingNotice, conflictMessage.startsWith('Available') ? styles.bookingNoticeSuccess : styles.bookingNoticeDanger)}>
+                <p className={joinClassNames(styles.bookingNotice, isAvailabilityMessagePositive(conflictMessage) ? styles.bookingNoticeSuccess : styles.bookingNoticeDanger)}>
                   {conflictMessage}
                 </p>
               ) : null}
@@ -4066,7 +4394,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 <h3>Booking Tips</h3>
                   <ul className={styles.tipList}>
                     <li>Book at least 24 hours in advance</li>
-                    <li>Maximum booking duration is 2 hours</li>
+                    <li>Duration changes based on the selected resource availability</li>
                     <li>Cancellations must be 12 hours before</li>
                     <li>{selectedFacilityIsEquipment ? 'Add the exact quantity you need before submitting.' : 'Match the attendee count to the room capacity.'}</li>
                     <li>You&apos;ll receive a QR code for check-in</li>
@@ -4168,10 +4496,8 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                   </div>
 
                   <div className={styles.bookingTimelineInline}>
-                    <span className={joinClassNames(styles.timelineStateDot, booking.status === 'APPROVED' ? styles.timelineApproved : booking.status === 'PENDING' ? styles.timelinePending : styles.timelineRejected)} />
-                    <span>
-                      {booking.status === 'APPROVED' ? 'Created -> Pending -> Approved' : booking.status === 'PENDING' ? 'Created -> Pending (Awaiting approval)' : 'Created -> Pending -> Rejected'}
-                    </span>
+                    <span className={joinClassNames(styles.timelineStateDot, getBookingFlowDotClass(booking))} />
+                    <span>{getBookingFlowLabel(booking)}</span>
                   </div>
 
                   {booking.checkedIn ? (
@@ -4197,14 +4523,14 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                   <Button variant="secondary" size="sm" onClick={() => handleDownloadBookingPdf(booking)}>
                     Download
                   </Button>
-                  {['PENDING', 'APPROVED', 'REJECTED'].includes(booking.status) ? (
+                  {canShowBookingDeleteAction(booking.status) ? (
                     <button
                       type="button"
                       className={styles.deleteButton}
-                      disabled={isCancelBlocked}
-                      title={isCancelBlocked ? cancellationRestrictionMessage : ''}
+                      disabled={!isTerminalDeleteStatus(booking.status) && isCancelBlocked}
+                      title={!isTerminalDeleteStatus(booking.status) && isCancelBlocked ? cancellationRestrictionMessage : ''}
                       onClick={() => handleCancelBooking(booking.id)}
-                      aria-label={booking.status === 'REJECTED' ? 'Delete booking' : 'Cancel booking'}
+                      aria-label={isTerminalDeleteStatus(booking.status) ? 'Delete booking' : 'Cancel booking'}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -4238,6 +4564,35 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
           {activeSection === PAGE_SECTIONS.SUGGESTIONS ? renderSuggestionsView() : null}
         </>
       )}
+
+      <Modal
+        isOpen={Boolean(bookingActionMessage)}
+        onClose={() => setBookingActionMessage(null)}
+        title={bookingActionMessage?.title}
+        description="Booking action"
+        footer={
+          <Button
+            variant={bookingActionMessage?.tone === 'danger' ? 'danger' : 'success'}
+            onClick={() => setBookingActionMessage(null)}
+          >
+            OK
+          </Button>
+        }
+      >
+        {bookingActionMessage ? (
+          <div
+            className={joinClassNames(
+              styles.bookingActionMessage,
+              bookingActionMessage.tone === 'danger'
+                ? styles.bookingActionMessageDanger
+                : styles.bookingActionMessageSuccess,
+            )}
+          >
+            {bookingActionMessage.tone === 'danger' ? <AlertTriangle size={24} /> : <CheckCircle2 size={24} />}
+            <p>{bookingActionMessage.message}</p>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         isOpen={Boolean(isAdmin && dateChangeRejectBooking)}
@@ -4411,13 +4766,16 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 </Button>
               ) : null}
               <Button variant="secondary" icon={PencilLine} onClick={() => openEditBooking(selectedBooking)}>Edit Booking</Button>
-              {['PENDING', 'APPROVED', 'REJECTED'].includes(selectedBooking.status) ? (
+              {canShowBookingDeleteAction(selectedBooking.status) ? (
                 <Button
                   variant="danger"
                   onClick={() => handleCancelBooking(selectedBooking.id)}
-                  disabled={Boolean(getCancellationRestrictionMessage(selectedBooking))}
+                  disabled={
+                    !isTerminalDeleteStatus(selectedBooking.status) &&
+                    Boolean(getCancellationRestrictionMessage(selectedBooking))
+                  }
                 >
-                  {selectedBooking.status === 'REJECTED' ? 'Delete Booking' : 'Cancel Booking'}
+                  {isTerminalDeleteStatus(selectedBooking.status) ? 'Delete Booking' : 'Cancel Booking'}
                 </Button>
               ) : null}
             </>
@@ -4469,7 +4827,15 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
             </div>
             <div className={styles.timeline}>
               {timelineSteps.map((step, index) => (
-                <div key={step} className={joinClassNames(styles.timelineStep, index <= getTimelineIndex(selectedBooking.status) && styles.timelineStepActive, selectedBooking.status === 'CANCELLED' && step === 'Cancelled' && styles.timelineStepCancelled)}>
+                <div
+                  key={step}
+                  className={joinClassNames(
+                    styles.timelineStep,
+                    index <= getTimelineIndex(selectedBooking.status) && styles.timelineStepActive,
+                    normalizeBookingStatus(selectedBooking.status) === 'CANCELLED' && step === 'Cancelled' && styles.timelineStepCancelled,
+                    normalizeBookingStatus(selectedBooking.status) === 'CHECKED_IN' && step === 'Checked In' && styles.timelineStepCheckedIn,
+                  )}
+                >
                   <span className={styles.timelineDot} />
                   <div>
                     <strong>{step}</strong>
@@ -4477,6 +4843,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                       {step === 'Created' ? 'Request captured by the student.' : null}
                       {step === 'Pending' ? 'Awaiting campus approval workflow.' : null}
                       {step === 'Approved' ? 'Reservation cleared for QR check-in.' : null}
+                      {step === 'Checked In' ? 'Student checked in with the booking QR code.' : null}
                       {step === 'Cancelled' ? 'Shown only when the booking was later withdrawn.' : null}
                     </p>
                   </div>
@@ -4491,7 +4858,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
         isOpen={Boolean(editingBooking)}
         onClose={() => {
           setEditingBooking(null);
-          setEditForm(initialForm);
+          setEditForm(getInitialForm());
         }}
         title={editingBooking ? `Refine ${editingBooking.facilityName}` : 'Edit Booking'}
         description="Update the key booking details in a cleaner, faster editing workspace."
@@ -4502,7 +4869,7 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 variant="secondary"
                 onClick={() => {
                   setEditingBooking(null);
-                  setEditForm(initialForm);
+                  setEditForm(getInitialForm());
                 }}
               >
                 Close
@@ -4542,6 +4909,15 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                 editForm.attendees,
                 editingBooking.id,
               );
+              const availableEditDurationOptions = getAvailableDurationOptions(
+                availabilityBookings,
+                editFacility,
+                editForm.date,
+                editForm.startTime,
+                editForm.attendees,
+                editingBooking.id,
+              );
+              const currentEditDurationMinutes = getDurationMinutes(editForm.startTime, editForm.endTime);
 
               return (
                 <>
@@ -4643,14 +5019,43 @@ attendees: Number(savedBooking.attendeesCount ?? form.attendees ?? 0),
                                 </button>
                               ))
                             ) : (
-                              <span className={styles.dateChangeWindowPillMuted}>No 2-hour slots available on this day</span>
+                              <span className={styles.dateChangeWindowPillMuted}>No slots available on this day</span>
                             )}
                           </div>
+                          {editFacility ? (
+                            <small className={styles.fieldHint}>
+                              Showing slots from {normalizeTimeValue(editFacility.availableFrom, fromMinutes(DAY_MINUTES_START))} to{' '}
+                              {normalizeTimeValue(editFacility.availableTo, fromMinutes(DAY_MINUTES_END))}.
+                            </small>
+                          ) : null}
                         </label>
 
                         <label className={styles.formField}>
                           <span>Duration</span>
-                          <input type="text" className={styles.createInput} value="2 hours" readOnly />
+                          <div className={styles.durationStudio}>
+                            {availableEditDurationOptions.length ? (
+                              availableEditDurationOptions.map((duration) => (
+                                <button
+                                  key={duration}
+                                  type="button"
+                                  className={joinClassNames(
+                                    styles.durationChip,
+                                    currentEditDurationMinutes === duration && styles.durationChipActive,
+                                  )}
+                                  onClick={() =>
+                                    handleEditDurationChange({
+                                      target: { value: String(duration) },
+                                    })
+                                  }
+                                >
+                                  <strong>{getDurationLabel(duration)}</strong>
+                                  <span>{formatTimeRange(editForm.startTime, fromMinutes(toMinutes(editForm.startTime) + duration))}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <span className={styles.dateChangeWindowPillMuted}>No duration available</span>
+                            )}
+                          </div>
                         </label>
                       </div>
 

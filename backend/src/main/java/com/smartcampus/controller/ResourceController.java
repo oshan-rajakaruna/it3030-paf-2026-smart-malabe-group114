@@ -1,6 +1,7 @@
 package com.smartcampus.controller;
 
 import com.smartcampus.dto.CreateResourceRequestDto;
+import com.smartcampus.dto.AvailableNowSlot;
 import com.smartcampus.dto.ResourceResponseDto;
 import com.smartcampus.dto.UpdateResourceRequestDto;
 import com.smartcampus.model.enums.ResourceStatus;
@@ -52,6 +53,11 @@ public class ResourceController {
         @RequestParam(required = false) String search
     ) {
         return ResponseEntity.ok(resourceService.getAllResources(type, location, status, isActive, minCapacity, search));
+    }
+
+    @GetMapping("/available-now")
+    public ResponseEntity<List<AvailableNowSlot>> getAvailableNowSlots() {
+        return ResponseEntity.ok(resourceService.getAvailableNowSlots());
     }
 
     @GetMapping("/{id}")
